@@ -23,10 +23,12 @@
   const needsFiles = (e: Emulator) => (checks.get(e.id) ?? []).some((c) => !c.ok && !c.optional);
 
   type Status = "ready" | "setup" | "none";
-  // One card per platform you have games for, plus any platform an emulator covers.
+  // One card per platform you have games for, any platform an emulator covers, and every
+  // platform OnionRing can get an emulator for (so you can set up a console before adding games).
   const rows = $derived.by(() => {
     const ids = new Set<string>([...app.counts.keys()].filter((p) => p !== "port"));
     for (const e of emulators) for (const p of e.platforms) ids.add(p);
+    for (const e of app.catalog?.emulators ?? []) for (const p of e.platforms) ids.add(p);
     return [...ids]
       .map((id) => {
         const emus = emulators.filter((e) => e.platforms.includes(id));
