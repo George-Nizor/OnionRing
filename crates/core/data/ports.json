@@ -1,0 +1,3632 @@
+[
+  {
+    "id": "bbport-windows",
+    "game": "Bloodborne",
+    "name": "bbport for Windows",
+    "kind": "Native port",
+    "original": [
+      "PlayStation 4"
+    ],
+    "repo": "Supermedo/bloodborne_pc",
+    "asset": "^Bloodborne-Windows\\.zip$",
+    "exe": "Play Bloodborne.exe",
+    "configureExe": "Bloodborne.exe",
+    "persist": [
+      "user",
+      "mods",
+      "out"
+    ],
+    "carry": [
+      "bbport.ini"
+    ],
+    "requires": "Your own decrypted Bloodborne dump (CUSA03173, v1.09 for the 60 FPS patches). Pick its folder once in the bbport launcher.",
+    "licence": "GPL-2.0-or-later",
+    "blurb": "The original PS4 game running natively on Windows, with Vulkan rendering, DLSS/FSR, unlocked frame rate and online play. Built on deadinside28's bbport.",
+    "art": "launcher/bloodborne.png",
+    "accent": "#c0392b",
+    "featured": true
+  },
+  {
+    "id": "actraiser-recompiled",
+    "game": "ActRaiser",
+    "name": "ActRaiser Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "SNES"
+    ],
+    "repo": "DerrickGold/ar-recomp",
+    "asset": "auto",
+    "prerelease": true,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By DerrickGold. Active.",
+    "featured": false
+  },
+  {
+    "id": "aerogauge-recompiled",
+    "game": "AeroGauge",
+    "name": "AeroGauge: Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "alondero/aerogauge-recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By alondero. Active.",
+    "featured": false
+  },
+  {
+    "id": "alien-resurrection-recompiled",
+    "game": "Alien Resurrection",
+    "name": "Alien Resurrection Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "alexbeavs-ps1-ports/alien-resurrection-recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Alexbeav. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "alone-in-the-dark-the-new-nightmare-recompiled",
+    "game": "Alone in the Dark: The New Nightmare",
+    "name": "Alone in the Dark: The New Nightmare Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "alexbeavs-ps1-ports/alone-in-the-dark-the-new-nightmare-recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Alexbeav. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "alundra-recompiled",
+    "game": "Alundra",
+    "name": "Alundra Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "alexbeavs-ps1-ports/alundra-recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Alexbeav. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "apeescaperecomp-ape-escape",
+    "game": "Ape Escape",
+    "name": "ApeEscapeRecomp (Ape Escape)",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "mstan/ApeEscapeRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By mstan. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "apocalypse-recompiled",
+    "game": "Apocalypse",
+    "name": "Apocalypse Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "alexbeavs-ps1-ports/apocalypse-recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Alexbeav. Active.",
+    "featured": false
+  },
+  {
+    "id": "automobili-lamborghini-recompiled",
+    "game": "Automobili Lamborghini",
+    "name": "Automobili Lamborghini: Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "alondero/automobililamborghini-recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By alondero. Active.",
+    "featured": false
+  },
+  {
+    "id": "banjo-recompiled-banjo-kazooie",
+    "game": "Banjo-Kazooie",
+    "name": "Banjo: Recompiled (Banjo-Kazooie)",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "BanjoRecomp/BanjoRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By BanjoRecomp. Slow.",
+    "featured": false
+  },
+  {
+    "id": "lighthouse-banjo-kazooie",
+    "game": "Banjo-Kazooie",
+    "name": "Lighthouse (Banjo-Kazooie)",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "HarbourMasters/Lighthouse",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By Harbour Masters. Active.",
+    "featured": false
+  },
+  {
+    "id": "renut-banjo-kazooie-nuts-bolts",
+    "game": "Banjo-Kazooie: Nuts & Bolts",
+    "name": "reNut (Banjo-Kazooie: Nuts & Bolts)",
+    "kind": "Native port",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "masterspike52/reNut",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By masterspike52. Active.",
+    "featured": false
+  },
+  {
+    "id": "banjo-tooie-recompiled",
+    "game": "Banjo-Tooie",
+    "name": "Banjo-Tooie: Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "Vidanox/BanjoTooieRecompiled",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By Vidanox. Active.",
+    "featured": false
+  },
+  {
+    "id": "battle-arena-toshinden-recompiled",
+    "game": "Battle Arena Toshinden",
+    "name": "Battle Arena Toshinden Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "mstan/BattleArenaToshindenRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By mstan. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "beetle-adventure-racing-recomp",
+    "game": "Beetle Adventure Racing!",
+    "name": "Beetle Adventure Racing! Recomp",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "danielgomesvieira2000/beetle-adventure-racing-recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By danielgomesvieira2000. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "re-blue-blue-dragon",
+    "game": "Blue Dragon",
+    "name": "re:Blue (Blue Dragon)",
+    "kind": "Native port",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "zolaware/reblue",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By zolaware. Active.",
+    "featured": false
+  },
+  {
+    "id": "bomberman-64-recompiled",
+    "game": "Bomberman 64",
+    "name": "Bomberman 64: Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "RevoSucks/BM64Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By RevoSucks. Slow.",
+    "featured": false
+  },
+  {
+    "id": "bomberman-fantasy-race-recompiled",
+    "game": "Bomberman Fantasy Race",
+    "name": "Bomberman Fantasy Race Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "TechnicallyComputers/Bomberman-Fantasy-Race-Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By TechnicallyComputers. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "bomberman-hero-recompiled",
+    "game": "Bomberman Hero",
+    "name": "Bomberman Hero: Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "RevoSucks/BMHeroRecomp",
+    "asset": "auto",
+    "prerelease": true,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By RevoSucks. Slow.",
+    "featured": false
+  },
+  {
+    "id": "bomberman-party-edition-recomp",
+    "game": "Bomberman Party Edition",
+    "name": "Bomberman Party Edition Recomp",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "TechnicallyComputers/BombermanPartyEditionRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By TechnicallyComputers. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "bomberman-world-recompiled",
+    "game": "Bomberman World",
+    "name": "Bomberman World Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "TechnicallyComputers/Bomberman-World-Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By TechnicallyComputers. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "brave-fencer-musashi-decomp-port-brave-fencer-musashi",
+    "game": "Brave Fencer Musashi",
+    "name": "brave-fencer-musashi-decomp-port (Brave Fencer Musashi)",
+    "kind": "Decomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "Blizz127/brave-fencer-musashi-decomp-port",
+    "asset": "auto",
+    "prerelease": true,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Blizz127. Active.",
+    "featured": false
+  },
+  {
+    "id": "augustus-caesar-iii",
+    "game": "Caesar III",
+    "name": "Augustus (Caesar III)",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "Keriew/augustus",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By Keriew. Stale.",
+    "featured": false
+  },
+  {
+    "id": "julius-caesar-iii",
+    "game": "Caesar III",
+    "name": "Julius (Caesar III)",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "bvschaik/julius",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By bvschaik. Stale.",
+    "featured": false
+  },
+  {
+    "id": "dethrace-carmageddon",
+    "game": "Carmageddon",
+    "name": "Dethrace (Carmageddon)",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "dethrace-labs/dethrace",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By dethrace-labs. Slow.",
+    "featured": false
+  },
+  {
+    "id": "castlevania-legacy-of-darkness-recompilation",
+    "game": "Castlevania: Legacy of Darkness",
+    "name": "Castlevania: Legacy of Darkness Recompilation",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "fliperama86/cvlod_recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By fliperama86. Active.",
+    "featured": false
+  },
+  {
+    "id": "symphonyrecomp-castlevania-symphony-of-the-night",
+    "game": "Castlevania: Symphony of the Night",
+    "name": "SymphonyRecomp (Castlevania: Symphony of the Night)",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "BlackLabelHQ/SymphonyRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Black Label HQ. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "doukutsu-rs-cave-story",
+    "game": "Cave Story",
+    "name": "doukutsu-rs (Cave Story)",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "doukutsu-rs/doukutsu-rs",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By doukutsu-rs. Slow.",
+    "featured": false
+  },
+  {
+    "id": "openloco-chris-sawyer-s-locomotion",
+    "game": "Chris Sawyer's Locomotion",
+    "name": "OpenLoco (Chris Sawyer's Locomotion)",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "OpenLoco/OpenLoco",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By OpenLoco. Active.",
+    "featured": false
+  },
+  {
+    "id": "openciv3-civilization-iii",
+    "game": "Civilization III",
+    "name": "OpenCiv3 (Civilization III)",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "C7-Game/OpenCiv3",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By C7-Game. Stale.",
+    "featured": false
+  },
+  {
+    "id": "openra-command-conquer-red-alert",
+    "game": "Command & Conquer: Red Alert",
+    "name": "OpenRA (Command & Conquer: Red Alert)",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "OpenRA/OpenRA",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By OpenRA. Slow.",
+    "featured": false
+  },
+  {
+    "id": "condemned2recomp-condemned-2-bloodshot",
+    "game": "Condemned 2: Bloodshot",
+    "name": "Condemned2Recomp (Condemned 2: Bloodshot)",
+    "kind": "Recomp",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "psxrestore/Condemned2Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By psxrestore. Active.",
+    "featured": false
+  },
+  {
+    "id": "conker-s-bad-fur-day-recompiled",
+    "game": "Conker's Bad Fur Day",
+    "name": "Conker's Bad Fur Day: Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "sciaschi/CBFD-Recompiled",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By sciaschi. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "conkerbfdreloaded-conker-s-bad-fur-day",
+    "game": "Conker's Bad Fur Day",
+    "name": "ConkerBFDReloaded (Conker's Bad Fur Day)",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "DahSidiAbdallah/ConkerBFDReloaded",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By dahmedvall95. Active.",
+    "featured": false
+  },
+  {
+    "id": "crash2recomp-crash-bandicoot-2-cortex-strikes-back",
+    "game": "Crash Bandicoot 2: Cortex Strikes Back",
+    "name": "Crash2Recomp (Crash Bandicoot 2: Cortex Strikes Back)",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "Zumbo06/Crash2Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Zumbo06. Active.",
+    "featured": false
+  },
+  {
+    "id": "crash-bandicoot-3-warped-recompiled",
+    "game": "Crash Bandicoot 3: Warped",
+    "name": "Crash Bandicoot 3: Warped Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "alexbeavs-ps1-ports/crash-bandicoot-3-warped-recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Alexbeav. Active.",
+    "featured": false
+  },
+  {
+    "id": "cut-the-rope-dx",
+    "game": "Cut the Rope",
+    "name": "Cut the Rope: DX",
+    "kind": "Native port",
+    "original": [
+      "Mobile"
+    ],
+    "repo": "yell0wsuit/cuttherope-dx",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original app/game data.",
+    "licence": null,
+    "blurb": "By yell0wsuit. Active.",
+    "featured": false
+  },
+  {
+    "id": "dead-rising-2-case-west-xenon-recomp",
+    "game": "Dead Rising 2: Case West",
+    "name": "Dead Rising 2: Case West Xenon Recomp",
+    "kind": "Recomp",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "wivi514/Dead_Rising_2_Case_West_Xenon_Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By wivi514. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "dead-rising-2-case-zero-xenon-recomp",
+    "game": "Dead Rising 2: Case Zero",
+    "name": "Dead Rising 2: Case Zero Xenon Recomp",
+    "kind": "Recomp",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "wivi514/Dead_Rising_2_Case_Zero_Xenon_Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By wivi514. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "dprecomp-deadly-premonition",
+    "game": "Deadly Premonition",
+    "name": "DPRecomp (Deadly Premonition)",
+    "kind": "Recomp",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "LittleBitUA/DPRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By LittleBitUA. Active.",
+    "featured": false
+  },
+  {
+    "id": "redahm-destroy-all-humans-path-of-the-furon",
+    "game": "Destroy All Humans! Path of the Furon",
+    "name": "ReDahm (Destroy All Humans! Path of the Furon)",
+    "kind": "Native port",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "masterspike52/redahm",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By masterspike52. Active.",
+    "featured": false
+  },
+  {
+    "id": "diablo-recompiled",
+    "game": "Diablo",
+    "name": "Diablo Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "alexbeavs-ps1-ports/diablo-recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Alexbeav. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "dkr-r-diddy-kong-racing",
+    "game": "Diddy Kong Racing",
+    "name": "DKR-R (Diddy Kong Racing)",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "ThatGuyMcd/DKR-R",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By ThatGuyMcd. Active.",
+    "featured": false
+  },
+  {
+    "id": "golden-balloon-diddy-kong-racing",
+    "game": "Diddy Kong Racing",
+    "name": "Golden Balloon (Diddy Kong Racing)",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "akratch/goldenballoon",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By akratch. Active.",
+    "featured": false
+  },
+  {
+    "id": "dino-crisis-recompiled",
+    "game": "Dino Crisis",
+    "name": "Dino Crisis Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "alexbeavs-ps1-ports/dino-crisis-recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Alexbeav. Active.",
+    "featured": false
+  },
+  {
+    "id": "dino-crisis-2-recompiled",
+    "game": "Dino Crisis 2",
+    "name": "Dino Crisis 2 Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "alexbeavs-ps1-ports/dino-crisis-2-recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Alexbeav. Active.",
+    "featured": false
+  },
+  {
+    "id": "dinosaur-planet-recompiled",
+    "game": "Dinosaur Planet",
+    "name": "Dinosaur Planet: Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "DinosaurPlanetRecomp/dino-recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By Dinosaur Planet: Recompiled. Slow.",
+    "featured": false
+  },
+  {
+    "id": "sdoj-recomp-dodonpachi-saidaioujou",
+    "game": "DoDonPachi SaiDaiOuJou",
+    "name": "SDOJ-Recomp (DoDonPachi SaiDaiOuJou)",
+    "kind": "Recomp",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "eandis/SDOJ-Recomp",
+    "asset": "auto",
+    "prerelease": true,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By eandis. Slow.",
+    "featured": false
+  },
+  {
+    "id": "dk64-rekongpiled-donkey-kong-64",
+    "game": "Donkey Kong 64",
+    "name": "DK64 Rekongpiled (Donkey Kong 64)",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "Rainchus/Donkey-Kong-64-Recompiled",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By Rainchus. Active.",
+    "featured": false
+  },
+  {
+    "id": "dkc1recomp-donkey-kong-country",
+    "game": "Donkey Kong Country",
+    "name": "DKC1Recomp (Donkey Kong Country)",
+    "kind": "Recomp",
+    "original": [
+      "SNES"
+    ],
+    "repo": "elliotttate/DKC1Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By elliotttate. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "dkc2recomp-donkey-kong-country-2-diddy-s-kong-quest",
+    "game": "Donkey Kong Country 2: Diddy's Kong Quest",
+    "name": "DKC2Recomp (Donkey Kong Country 2: Diddy's Kong Quest)",
+    "kind": "Recomp",
+    "original": [
+      "SNES"
+    ],
+    "repo": "elliotttate/DKC2Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By elliotttate. Active.",
+    "featured": false
+  },
+  {
+    "id": "dkc3recomp-donkey-kong-country-3-dixie-kong-s-double-trouble",
+    "game": "Donkey Kong Country 3: Dixie Kong's Double Trouble!",
+    "name": "DKC3Recomp (Donkey Kong Country 3: Dixie Kong's Double Trouble!)",
+    "kind": "Recomp",
+    "original": [
+      "SNES"
+    ],
+    "repo": "elliotttate/DKC3Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By elliotttate. Active.",
+    "featured": false
+  },
+  {
+    "id": "psydoom",
+    "game": "Doom",
+    "name": "PsyDoom",
+    "kind": "Native port",
+    "original": [
+      "PlayStation",
+      "PC (original release)"
+    ],
+    "repo": "BodbDearg/PsyDoom",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Bodb Dearg. Stale.",
+    "featured": false
+  },
+  {
+    "id": "gzdoom",
+    "game": "Doom",
+    "name": "GZDoom",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "ZDoom/gzdoom",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By ZDoom. Stale.",
+    "featured": false
+  },
+  {
+    "id": "uzdoom",
+    "game": "Doom",
+    "name": "UZDoom",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "UZDoom/UZDoom",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By UZDoom Team. Active.",
+    "featured": false
+  },
+  {
+    "id": "doom64-ex-enhanced-doom-64",
+    "game": "Doom 64",
+    "name": "DOOM64 EX+ Enhanced (Doom 64)",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "Styd051/DOOM64-EX-Plus-Enhanced",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By Styd051. Stale.",
+    "featured": false
+  },
+  {
+    "id": "dora64-doraemon-nobita-to-mittsu-no-seireiseki",
+    "game": "Doraemon: Nobita to Mittsu no Seireiseki",
+    "name": "Dora64 (Doraemon: Nobita to Mittsu no Seireiseki)",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "citrongames/Dora64",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By citrongames. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "drmarionesrecomp-dr-mario",
+    "game": "Dr. Mario",
+    "name": "DrMarioNesRecomp (Dr. Mario)",
+    "kind": "Recomp",
+    "original": [
+      "NES"
+    ],
+    "repo": "mstan/DrMarioNesRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By mstan. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "dr-mario-64-recompiled-plus",
+    "game": "Dr. Mario 64",
+    "name": "Dr. Mario 64: Recompiled Plus",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "theboy181/drmario64_recomp_plus",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By theboy181. Stale.",
+    "featured": false
+  },
+  {
+    "id": "dragon-ball-z-buu-s-fury-recomp",
+    "game": "Dragon Ball Z: Buu's Fury",
+    "name": "Dragon Ball Z: Buu's Fury Recomp",
+    "kind": "Recomp",
+    "original": [
+      "Game Boy Advance"
+    ],
+    "repo": "mstan/DragonBallZBuusFuryRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By mstan. Active.",
+    "featured": false
+  },
+  {
+    "id": "rigel-engine-duke-nukem-ii",
+    "game": "Duke Nukem II",
+    "name": "Rigel Engine (Duke Nukem II)",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "lethal-guitar/RigelEngine",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By lethal-guitar. Stale.",
+    "featured": false
+  },
+  {
+    "id": "phase-distorter-earthbound",
+    "game": "EarthBound",
+    "name": "Phase Distorter (EarthBound)",
+    "kind": "Native port",
+    "original": [
+      "SNES"
+    ],
+    "repo": "TheRunaway5/Phase-Distorter",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By TheRunaway5. Active.",
+    "featured": false
+  },
+  {
+    "id": "earthbound-native",
+    "game": "EarthBound",
+    "name": "EarthBound Native",
+    "kind": "Native port",
+    "original": [
+      "SNES"
+    ],
+    "repo": "seanstaggsQU/EarthboundNativePublic",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By seanstaggsQU. Active.",
+    "featured": false
+  },
+  {
+    "id": "earthworm-jim-hd-pc-port",
+    "game": "Earthworm Jim HD",
+    "name": "Earthworm Jim HD: PC Port",
+    "kind": "Recomp",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "TekRantGaming/earthworm-jim-hd-recompiled",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By TekRantGaming. Active.",
+    "featured": false
+  },
+  {
+    "id": "einh-nder-recompiled",
+    "game": "Einhänder",
+    "name": "Einhänder Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "strider973/Einhander-Recompiled",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By strider973. Active.",
+    "featured": false
+  },
+  {
+    "id": "eternalsonatareprise-eternal-sonata",
+    "game": "Eternal Sonata",
+    "name": "EternalSonataReprise (Eternal Sonata)",
+    "kind": "Native port",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "birabittoh/EternalSonataReprise",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By birabittoh. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "exit-recomp",
+    "game": "Exit",
+    "name": "EXIT Recomp",
+    "kind": "Recomp",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "FluffyQuack/ReXGlue-EXIT",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By FluffyQuack. Slow.",
+    "featured": false
+  },
+  {
+    "id": "exit-recomp-exit-2",
+    "game": "Exit 2",
+    "name": "EXIT Recomp (Exit 2)",
+    "kind": "Recomp",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "FluffyQuack/ReXGlue-EXIT",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By FluffyQuack. Slow.",
+    "featured": false
+  },
+  {
+    "id": "f-zero-recomp",
+    "game": "F-Zero",
+    "name": "F-Zero Recomp",
+    "kind": "Recomp",
+    "original": [
+      "SNES"
+    ],
+    "repo": "craigshaw/FZeroRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By Craig Shaw. Active.",
+    "featured": false
+  },
+  {
+    "id": "fzerosnesrecomp-f-zero",
+    "game": "F-Zero",
+    "name": "FZeroSNESRecomp (F-Zero)",
+    "kind": "Recomp",
+    "original": [
+      "SNES"
+    ],
+    "repo": "mstan/FZeroSNESRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By mstan. Active.",
+    "featured": false
+  },
+  {
+    "id": "g-diffuser-f-zero-x",
+    "game": "F-Zero X",
+    "name": "G-Diffuser (F-Zero X)",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "Zorkats/G-Diffuser",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By Zorkats. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "fable-ii-recompiled",
+    "game": "Fable II",
+    "name": "Fable II Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "himdo/Fable-2-Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By himdo. Active.",
+    "featured": false
+  },
+  {
+    "id": "mikupan-fatal-frame",
+    "game": "Fatal Frame",
+    "name": "MikuPan (Fatal Frame)",
+    "kind": "Native port",
+    "original": [
+      "PlayStation 2"
+    ],
+    "repo": "Mikompilation/MikuPan",
+    "asset": "auto",
+    "prerelease": true,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Mikompilation. Slow.",
+    "featured": false
+  },
+  {
+    "id": "final-fantasy-tactics-recompiled",
+    "game": "Final Fantasy Tactics",
+    "name": "Final Fantasy Tactics Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "NJH-1001/FinFanTacRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By NJH-1001. Active.",
+    "featured": false
+  },
+  {
+    "id": "aerofoil-glider-pro",
+    "game": "Glider PRO",
+    "name": "Aerofoil (Glider PRO)",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "elasota/Aerofoil",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By elasota. Stale.",
+    "featured": false
+  },
+  {
+    "id": "glover-r",
+    "game": "Glover",
+    "name": "Glover-R",
+    "kind": "Native port",
+    "original": [
+      "PlayStation",
+      "Nintendo 64"
+    ],
+    "repo": "ThatGuyMcd/Glover-R",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By ThatGuyMcd. Active.",
+    "featured": false
+  },
+  {
+    "id": "goldeneye-007-pc-port",
+    "game": "GoldenEye 007",
+    "name": "GoldenEye 007 PC Port",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "jkdansereau/goldeneye-pc-port",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By jkdansereau. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "harvest-moon-64-recompiled",
+    "game": "Harvest Moon 64",
+    "name": "Harvest Moon 64: Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "HarvestMoon64Recomp/HarvestMoon64Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By HarvestMoon64Recomp. Active.",
+    "featured": false
+  },
+  {
+    "id": "hell-night-dark-messiah-recompiled-hellnight",
+    "game": "Hellnight",
+    "name": "Hell Night: Dark Messiah Recompiled (Hellnight)",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "goodshepherd23/Hellnight-Recompiled",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By goodshepherd23. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "vcmi-heroes-of-might-and-magic-iii",
+    "game": "Heroes of Might and Magic III",
+    "name": "VCMI (Heroes of Might and Magic III)",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "vcmi/vcmi",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By VCMI Project. Active.",
+    "featured": false
+  },
+  {
+    "id": "hyrule-warriors-definitive-edition-recomp",
+    "game": "Hyrule Warriors: Definitive Edition",
+    "name": "Hyrule Warriors: Definitive Edition Recomp",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo Switch"
+    ],
+    "repo": "sonsegajp/HWDER",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own game dump + keys?.",
+    "licence": null,
+    "blurb": "By sonsegajp. Active.",
+    "featured": false
+  },
+  {
+    "id": "rechan-jackie-chan-stuntmaster",
+    "game": "Jackie Chan Stuntmaster",
+    "name": "ReChan (Jackie Chan Stuntmaster)",
+    "kind": "Native port",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "SilverwireGames/ReChan",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Silverwire Games. Slow.",
+    "featured": false
+  },
+  {
+    "id": "openjazz-jazz-jackrabbit",
+    "game": "Jazz Jackrabbit",
+    "name": "OpenJazz (Jazz Jackrabbit)",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "AlisterT/openjazz",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By AlisterT. Active.",
+    "featured": false
+  },
+  {
+    "id": "kameo-repowered-kameo-elements-of-power",
+    "game": "Kameo: Elements of Power",
+    "name": "Kameo RePowered (Kameo: Elements of Power)",
+    "kind": "Native port",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "birabittoh/KameoRePowered",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By birabittoh. Slow.",
+    "featured": false
+  },
+  {
+    "id": "verdite2-king-s-field",
+    "game": "King's Field",
+    "name": "Verdite2 (King's Field)",
+    "kind": "Native port",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "Voicedrew11/verdite2",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Voicedrew11. Active.",
+    "featured": false
+  },
+  {
+    "id": "verdite3-king-s-field-ii",
+    "game": "King's Field II",
+    "name": "Verdite3 (King's Field II)",
+    "kind": "Native port",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "Voicedrew11/verdite3",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Voicedrew11. Active.",
+    "featured": false
+  },
+  {
+    "id": "kirby-wii-recomp-kirby-s-return-to-dream-land",
+    "game": "Kirby's Return to Dream Land",
+    "name": "Kirby Wii Recomp (Kirby's Return to Dream Land)",
+    "kind": "Recomp",
+    "original": [
+      "Wii"
+    ],
+    "repo": "ExpansionPak/ModernGekko",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By ExpansionPak. Slow.",
+    "featured": false
+  },
+  {
+    "id": "klonoa-door-to-phantomile-recompiled",
+    "game": "Klonoa: Door to Phantomile",
+    "name": "Klonoa: Door to Phantomile Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "TechnicallyComputers/Klonoa-Door-to-Phantomile",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By TechnicallyComputers. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "chaotix-recompiled-knuckles-chaotix",
+    "game": "Knuckles' Chaotix",
+    "name": "Chaotix Recompiled (Knuckles' Chaotix)",
+    "kind": "Recomp",
+    "original": [
+      "Sega 32X"
+    ],
+    "repo": "YuutaTsubasa/ChaotixRecompiled",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By YuutaTsubasa. Active.",
+    "featured": false
+  },
+  {
+    "id": "legend-of-legaia-recompiled",
+    "game": "Legend of Legaia",
+    "name": "Legend of Legaia Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "SamSteProjects/legend-of-legaia-recomp",
+    "asset": "auto",
+    "prerelease": true,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By SamSteProjects. Active.",
+    "featured": false
+  },
+  {
+    "id": "legendary-wings-nes-to-pc",
+    "game": "Legendary Wings",
+    "name": "Legendary Wings NES to PC",
+    "kind": "Native port",
+    "original": [
+      "NES",
+      "Arcade"
+    ],
+    "repo": "retroreplay82/Legendary-Wings-NES-to-PC",
+    "asset": "auto",
+    "prerelease": true,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By dmb062082. Active.",
+    "featured": false
+  },
+  {
+    "id": "lost-odyssey-recompiled",
+    "game": "Lost Odyssey",
+    "name": "Lost Odyssey Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "freefrank/LostOdysseyRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By freefrank. Active.",
+    "featured": false
+  },
+  {
+    "id": "spaghettikart-mario-kart-64",
+    "game": "Mario Kart 64",
+    "name": "SpaghettiKart (Mario Kart 64)",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "harbourmasters/spaghettikart",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By Harbour Masters. Slow.",
+    "featured": false
+  },
+  {
+    "id": "mario-kart-super-circuit-recompiled",
+    "game": "Mario Kart: Super Circuit",
+    "name": "Mario Kart: Super Circuit Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Game Boy Advance"
+    ],
+    "repo": "mstan/MarioKartSuperCircuitRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By mstan. Active.",
+    "featured": false
+  },
+  {
+    "id": "mariotennisvirtualboyrecomp-mario-s-tennis",
+    "game": "Mario's Tennis",
+    "name": "MarioTennisVirtualBoyRecomp (Mario's Tennis)",
+    "kind": "Recomp",
+    "original": [
+      "Virtual Boy"
+    ],
+    "repo": "mstan/MarioTennisVirtualBoyRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By mstan. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "marvel-vs-capcom-clash-of-super-heroes-recompiled",
+    "game": "Marvel vs. Capcom: Clash of Super Heroes",
+    "name": "Marvel vs. Capcom: Clash of Super Heroes Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "TechnicallyComputers/Marvel-vs.-Capcom-Clash-of-Super-Heroes-Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By TechnicallyComputers. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "mc2-mechcommander-2",
+    "game": "MechCommander 2",
+    "name": "mc2 (MechCommander 2)",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "alariq/mc2",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By alariq. Slow (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "medievilrecomp",
+    "game": "MediEvil",
+    "name": "MediEvilRecomp",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "BlackLabelHQ/MediEvilRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By BlackLabelHQ. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "mega-man-64-recompiled",
+    "game": "Mega Man 64",
+    "name": "Mega Man 64: Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "MegaMan64Recomp/MegaMan64Recompiled",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By Mega Man 64: Recompiled. Slow.",
+    "featured": false
+  },
+  {
+    "id": "mega-man-x-snes-recomp",
+    "game": "Mega Man X",
+    "name": "Mega Man X SNES Recomp",
+    "kind": "Recomp",
+    "original": [
+      "SNES"
+    ],
+    "repo": "mstan/MegaManXSNESRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By mstan. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "megamanx2snesrecomp-mega-man-x2",
+    "game": "Mega Man X2",
+    "name": "MegaManX2SNESRecomp (Mega Man X2)",
+    "kind": "Recomp",
+    "original": [
+      "SNES"
+    ],
+    "repo": "mstan/MegaManX2Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By mstan. Active.",
+    "featured": false
+  },
+  {
+    "id": "megamanx4recomp-mega-man-x4",
+    "game": "Mega Man X4",
+    "name": "MegaManX4Recomp (Mega Man X4)",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "mstan/MegaManX4Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By mstan. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "megamanx5recomp-mega-man-x5",
+    "game": "Mega Man X5",
+    "name": "MegaManX5Recomp (Mega Man X5)",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "mstan/MegaManX5Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By mstan. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "megamanx6recomp-mega-man-x6",
+    "game": "Mega Man X6",
+    "name": "MegaManX6Recomp (Mega Man X6)",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "mstan/MegaManX6Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By mstan. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "megamanzerorecomp-mega-man-zero",
+    "game": "Mega Man Zero",
+    "name": "MegaManZeroRecomp (Mega Man Zero)",
+    "kind": "Recomp",
+    "original": [
+      "Game Boy Advance"
+    ],
+    "repo": "mstan/MegaManZeroRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By mstan. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "metal-slug-x-recompiled",
+    "game": "Metal Slug X",
+    "name": "Metal Slug X Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "TechnicallyComputers/Metal-Slug-X-Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By TechnicallyComputers. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "metroidprimeport-metroid-prime",
+    "game": "Metroid Prime",
+    "name": "MetroidPrimePort (Metroid Prime)",
+    "kind": "Native port",
+    "original": [
+      "Wii",
+      "Nintendo Switch",
+      "GameCube"
+    ],
+    "repo": "Odrannnn/MetroidPrimePort",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Odrannnn. Active.",
+    "featured": false
+  },
+  {
+    "id": "metroidprimehuntersrecomp-metroid-prime-hunters",
+    "game": "Metroid Prime Hunters",
+    "name": "MetroidPrimeHuntersRecomp (Metroid Prime Hunters)",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo DS"
+    ],
+    "repo": "mstan/MetroidPrimeHuntersRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By mstan. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "trouble-makers-mischief-makers",
+    "game": "Mischief Makers",
+    "name": "Trouble Makers (Mischief Makers)",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "ThiagoLira/trouble-makers-pc-recomp",
+    "asset": "auto",
+    "prerelease": true,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By ThiagoLira. Active.",
+    "featured": false
+  },
+  {
+    "id": "yakumo-monster-hunter-portable-3rd-hd-ver",
+    "game": "Monster Hunter Portable 3rd HD Ver.",
+    "name": "Yakumo (Monster Hunter Portable 3rd HD Ver.)",
+    "kind": "Native port",
+    "original": [
+      "PSP"
+    ],
+    "repo": "TeamGDB/Yakumo",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own UMD image.",
+    "licence": null,
+    "blurb": "By TeamGDB. Active.",
+    "featured": false
+  },
+  {
+    "id": "goemon-64-recompiled-mystical-ninja-starring-goemon",
+    "game": "Mystical Ninja Starring Goemon",
+    "name": "Goemon 64: Recompiled (Mystical Ninja Starring Goemon)",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "klorfmorf/Goemon64Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By klorfmorf. Stale.",
+    "featured": false
+  },
+  {
+    "id": "restuff-naughty-bear-gold-edition",
+    "game": "Naughty Bear Gold Edition",
+    "name": "ReStuff (Naughty Bear Gold Edition)",
+    "kind": "Native port",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "MaxDeadBear/NaughtyBear_ReStuff",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By MaxDeadBear. Active.",
+    "featured": false
+  },
+  {
+    "id": "nsmb-wii-multiplayer-decompilation-new-super-mario-bros-wii",
+    "game": "New Super Mario Bros. Wii",
+    "name": "NSMB Wii Multiplayer Decompilation (New Super Mario Bros. Wii)",
+    "kind": "Decomp",
+    "original": [
+      "Wii"
+    ],
+    "repo": "WitherBlitz/NSMB-Wii-Multiplayer-Decompilation",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By WitherBlitz. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "ninja-s-dawn-ninja-gaiden-ii",
+    "game": "Ninja Gaiden II",
+    "name": "Ninja's Dawn (Ninja Gaiden II)",
+    "kind": "Recomp",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "TheSaltTrader/Ninja-s-Dawn---A-Ninja-Gaiden-2-Recompilation-Project",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By TheSaltTrader. Active.",
+    "featured": false
+  },
+  {
+    "id": "ogre-battle-64-recomp-ogre-battle-64-person-of-lordly-caliber",
+    "game": "Ogre Battle 64: Person of Lordly Caliber",
+    "name": "Ogre Battle 64: Recomp (Ogre Battle 64: Person of Lordly Caliber)",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "lfarroco/ogre-battle-64-recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By lfarroco. Active.",
+    "featured": false
+  },
+  {
+    "id": "openomf-one-must-fall-2097",
+    "game": "One Must Fall 2097",
+    "name": "OpenOMF (One Must Fall 2097)",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "omf2097/openomf",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By omf2097. Slow.",
+    "featured": false
+  },
+  {
+    "id": "opence-halo-combat-evolved",
+    "game": "OpenCE (Halo: Combat Evolved)",
+    "name": "OpenCE (Halo: Combat Evolved)",
+    "kind": "Decomp",
+    "original": [
+      "Xbox"
+    ],
+    "repo": "OpenCommunityEdition/OpenCE",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original Xbox Halo disc dump.",
+    "licence": "CC0-1.0",
+    "blurb": "By Mitchell Hynes & community. Very active.",
+    "featured": false
+  },
+  {
+    "id": "openttd-patches",
+    "game": "OpenTTD",
+    "name": "OpenTTD-patches",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "JGRennison/OpenTTD-patches",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By JGRennison. Active.",
+    "featured": false
+  },
+  {
+    "id": "outpost-kaloki-x-pc-port",
+    "game": "Outpost Kaloki X",
+    "name": "Outpost Kaloki X PC Port",
+    "kind": "Recomp",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "TekRantGaming/outpost-kaloki-x-recompiled",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By TekRantGaming. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "paperboat-paper-mario",
+    "game": "Paper Mario",
+    "name": "PaperBoat (Paper Mario)",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "HarbourMasters/PaperBoat",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By Harbour Masters. Active.",
+    "featured": false
+  },
+  {
+    "id": "parappatherapper-recomp-parappa-the-rapper",
+    "game": "PaRappa The Rapper",
+    "name": "PaRappaTheRapper Recomp (PaRappa The Rapper)",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation",
+      "PlayStation 4",
+      "PSP"
+    ],
+    "repo": "kirby1237/PaRappaTheRapperRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Kirby1237. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "perfect-dark-pc-port",
+    "game": "Perfect Dark",
+    "name": "Perfect Dark PC Port",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "perfect-dark-pc-port/perfect_dark",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By perfect-dark-pc-port. Stale.",
+    "featured": false
+  },
+  {
+    "id": "perfect-dark-dab-s-mod",
+    "game": "Perfect Dark",
+    "name": "Perfect Dark Dab's Mod",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "DabDavis/perfect-dark-dabs-mod",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By DabDavis. Active.",
+    "featured": false
+  },
+  {
+    "id": "king-kong-pc-port-peter-jackson-s-king-kong",
+    "game": "Peter Jackson's King Kong",
+    "name": "King Kong PC Port (Peter Jackson's King Kong)",
+    "kind": "Recomp",
+    "original": [
+      "Mobile",
+      "Xbox 360",
+      "PlayStation 2",
+      "PC (original release)",
+      "Nintendo DS",
+      "PSP",
+      "Game Boy Advance",
+      "GameCube"
+    ],
+    "repo": "TekRantGaming/king-kong-recompiled",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original app/game data.",
+    "licence": null,
+    "blurb": "By TekRantGaming. Active.",
+    "featured": false
+  },
+  {
+    "id": "open-nectar-pikmin",
+    "game": "Pikmin",
+    "name": "Open Nectar (Pikmin)",
+    "kind": "Native port",
+    "original": [
+      "GameCube"
+    ],
+    "repo": "SSunnKing/Open-Nectar---Pikmin-Native-PC-Mobile-Port",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By SSunnKing. Active.",
+    "featured": false
+  },
+  {
+    "id": "birdman64-pilotwings-64",
+    "game": "Pilotwings 64",
+    "name": "Birdman64 (Pilotwings 64)",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "NoahVl/Birdman64",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By NoahVl. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "pilotwings-64-recompiled",
+    "game": "Pilotwings 64",
+    "name": "Pilotwings 64: Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "danielgomesvieira2000/pilotwings-64-recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By danielgomesvieira2000. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "emeraldrecomp-pokemon-emerald",
+    "game": "Pokemon Emerald",
+    "name": "EmeraldRecomp (Pokemon Emerald)",
+    "kind": "Recomp",
+    "original": [
+      "Game Boy Advance"
+    ],
+    "repo": "mstan/EmeraldRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By mstan. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "fireredleafgreenrecomp-pokemon-firered",
+    "game": "Pokemon FireRed",
+    "name": "FireRedLeafGreenRecomp (Pokemon FireRed)",
+    "kind": "Recomp",
+    "original": [
+      "Game Boy Advance"
+    ],
+    "repo": "mstan/FireRedLeafGreenRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By mstan. Slow (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "fireredleafgreenrecomp-pokemon-leafgreen",
+    "game": "Pokemon LeafGreen",
+    "name": "FireRedLeafGreenRecomp (Pokemon LeafGreen)",
+    "kind": "Recomp",
+    "original": [
+      "Game Boy Advance"
+    ],
+    "repo": "mstan/FireRedLeafGreenRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By mstan. Slow (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "pokeplatinum-pokemon-platinum",
+    "game": "Pokemon Platinum",
+    "name": "pokeplatinum (Pokemon Platinum)",
+    "kind": "Native port",
+    "original": [
+      "Nintendo DS"
+    ],
+    "repo": "cybervisi0n/pokeplatinum",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By cybervisi0n. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "g1r-deluxe-pokemon-red",
+    "game": "Pokemon Red",
+    "name": "G1R Deluxe (Pokemon Red)",
+    "kind": "Recomp",
+    "original": [
+      "Game Boy",
+      "Game Boy Advance",
+      "Game Boy Color"
+    ],
+    "repo": "bryanthaboi/gen1recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By bryanthaboi. Active.",
+    "featured": false
+  },
+  {
+    "id": "rubysapphirerecomp-pokemon-ruby",
+    "game": "Pokemon Ruby",
+    "name": "RubySapphireRecomp (Pokemon Ruby)",
+    "kind": "Recomp",
+    "original": [
+      "Game Boy Advance"
+    ],
+    "repo": "mstan/RubySapphireRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By mstan. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "rubysapphirerecomp-pokemon-sapphire",
+    "game": "Pokemon Sapphire",
+    "name": "RubySapphireRecomp (Pokemon Sapphire)",
+    "kind": "Recomp",
+    "original": [
+      "Game Boy Advance"
+    ],
+    "repo": "mstan/RubySapphireRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By mstan. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "snap64-recomp-pokemon-snap",
+    "game": "Pokemon Snap",
+    "name": "Snap64 Recomp (Pokemon Snap)",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "JackandBeans/Snap64Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By JackandBeans. Active.",
+    "featured": false
+  },
+  {
+    "id": "ss-anne-pokemon-stadium",
+    "game": "Pokemon Stadium",
+    "name": "SS Anne (Pokemon Stadium)",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "mstan/PokemonStadiumRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By mstan. Active.",
+    "featured": false
+  },
+  {
+    "id": "rage-racer-pc",
+    "game": "Rage Racer",
+    "name": "Rage Racer PC",
+    "kind": "Native port",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "khasinski/rage-racer-pc",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By khasinski. Active.",
+    "featured": false
+  },
+  {
+    "id": "rampage-through-time-recompiled",
+    "game": "Rampage Through Time",
+    "name": "Rampage Through Time Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "TechnicallyComputers/Rampage---Through-Time-Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By TechnicallyComputers. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "resident-evil-3-recompiled-resident-evil-3-nemesis",
+    "game": "Resident Evil 3: Nemesis",
+    "name": "Resident Evil 3 Recompiled (Resident Evil 3: Nemesis)",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "alexbeavs-ps1-ports/resident-evil-3-recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Alexbeav. Active.",
+    "featured": false
+  },
+  {
+    "id": "resident-evil-gaiden-recompiled",
+    "game": "Resident Evil Gaiden",
+    "name": "Resident Evil Gaiden: Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Game Boy Color"
+    ],
+    "repo": "sergiomanzur/regaiden-recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By sergiomanzur. Active.",
+    "featured": false
+  },
+  {
+    "id": "roadrash64recompiled-road-rash-64",
+    "game": "Road Rash 64",
+    "name": "RoadRash64Recompiled (Road Rash 64)",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "linkssy2/RoadRash64Recompiled",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By linkssy2. Active.",
+    "featured": false
+  },
+  {
+    "id": "rocket-r-rocket-robot-on-wheels",
+    "game": "Rocket: Robot on Wheels",
+    "name": "Rocket-R (Rocket: Robot on Wheels)",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "ThatGuyMcd/Rocket-R",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By ThatGuyMcd. Active.",
+    "featured": false
+  },
+  {
+    "id": "openrct2-rollercoaster-tycoon-2",
+    "game": "RollerCoaster Tycoon 2",
+    "name": "OpenRCT2 (RollerCoaster Tycoon 2)",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "OpenRCT2/OpenRCT2",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By OpenRCT2. Active.",
+    "featured": false
+  },
+  {
+    "id": "shantaerecomp",
+    "game": "Shantae",
+    "name": "shantaerecomp",
+    "kind": "Recomp",
+    "original": [
+      "Game Boy Color"
+    ],
+    "repo": "vibecodekun/shantaerecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By vibecodekun. Active.",
+    "featured": false
+  },
+  {
+    "id": "sheep-dog-n-wolf-rewooled",
+    "game": "Sheep, Dog 'n' Wolf",
+    "name": "Sheep, Dog 'n' Wolf: Rewooled",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "SDW-Community/Sheep-Dog-n-Wolf-Rewooled",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By SheepStealer2001. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "opensc2k-simcity-2000",
+    "game": "SimCity 2000",
+    "name": "OpenSC2K (SimCity 2000)",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "nicholas-ochoa/OpenSC2K",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By nicholas-ochoa. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "skate-3-recompiled",
+    "game": "Skate 3",
+    "name": "Skate 3: Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "mchughalex/skate3recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By mchughalex. Slow.",
+    "featured": false
+  },
+  {
+    "id": "snowboard-kids-2-recompiled",
+    "game": "Snowboard Kids 2",
+    "name": "Snowboard Kids 2: Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "cdlewis/snowboardkids2-recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By cdlewis. Slow.",
+    "featured": false
+  },
+  {
+    "id": "project-reignition-sonic-and-the-secret-rings",
+    "game": "Sonic and the Secret Rings",
+    "name": "Project Reignition (Sonic and the Secret Rings)",
+    "kind": "Native port",
+    "original": [
+      "Wii"
+    ],
+    "repo": "kumapauz/project-reignition",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By kumapauz. Stale.",
+    "featured": false
+  },
+  {
+    "id": "rsdkv3-decompilation-sonic-cd-2011",
+    "game": "Sonic CD (2011)",
+    "name": "RSDKv3 Decompilation (Sonic CD (2011))",
+    "kind": "Decomp",
+    "original": [
+      "Mobile",
+      "PC (original release)"
+    ],
+    "repo": "RSDKModding/RSDKv3-Decompilation",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original app/game data.",
+    "licence": null,
+    "blurb": "By RSDKModding. Stale.",
+    "featured": false
+  },
+  {
+    "id": "free-riders-recompiled-sonic-free-riders",
+    "game": "Sonic Free Riders",
+    "name": "Free Riders Recompiled (Sonic Free Riders)",
+    "kind": "Recomp",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "YuutaTsubasa/Free-Riders-Recompiled",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By YuutaTsubasa. Active.",
+    "featured": false
+  },
+  {
+    "id": "sonic-1-forever-sonic-the-hedgehog-2013",
+    "game": "Sonic the Hedgehog (2013)",
+    "name": "Sonic 1 Forever (Sonic the Hedgehog (2013))",
+    "kind": "Native port",
+    "original": [
+      "Mobile"
+    ],
+    "repo": "ElspethThePict/S1Forever",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original app/game data.",
+    "licence": null,
+    "blurb": "By ElspethThePict. Stale.",
+    "featured": false
+  },
+  {
+    "id": "sonicthehedgehog2recomp-sonic-the-hedgehog-2",
+    "game": "Sonic the Hedgehog 2",
+    "name": "SonicTheHedgehog2Recomp (Sonic the Hedgehog 2)",
+    "kind": "Recomp",
+    "original": [
+      "Sega Genesis"
+    ],
+    "repo": "mstan/SonicTheHedgehog2Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By mstan. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "unleashed-recompiled-sonic-unleashed",
+    "game": "Sonic Unleashed",
+    "name": "Unleashed Recompiled (Sonic Unleashed)",
+    "kind": "Recomp",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "hedge-dev/UnleashedRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By hedge-dev. Stale.",
+    "featured": false
+  },
+  {
+    "id": "sdl-sopwith",
+    "game": "Sopwith",
+    "name": "SDL Sopwith",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "fragglet/sdl-sopwith",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By fragglet. Stale.",
+    "featured": false
+  },
+  {
+    "id": "ring-out-soulcalibur-ii",
+    "game": "Soulcalibur II",
+    "name": "Ring Out (Soulcalibur II)",
+    "kind": "Native port",
+    "original": [
+      "GameCube"
+    ],
+    "repo": "jackpoison-prog/RingOut",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By jackpoison-prog. Active.",
+    "featured": false
+  },
+  {
+    "id": "space-station-silicon-valley-recompiled",
+    "game": "Space Station Silicon Valley",
+    "name": "Space Station Silicon Valley: Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "Cellenseres/SSSV_Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By Cellenseres. Slow.",
+    "featured": false
+  },
+  {
+    "id": "edgeoftimerecompiled-spider-man-edge-of-time",
+    "game": "Spider-Man: Edge of Time",
+    "name": "EdgeOfTimeRecompiled (Spider-Man: Edge of Time)",
+    "kind": "Recomp",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "goliathret/EdgeOfTimeRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By Graine25. Active.",
+    "featured": false
+  },
+  {
+    "id": "star-fox-enhanced",
+    "game": "Star Fox",
+    "name": "Star Fox Enhanced",
+    "kind": "Native port",
+    "original": [
+      "SNES"
+    ],
+    "repo": "kandowontu2/starfox-enhanced",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By kandowontu. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "starship-star-fox-64",
+    "game": "Star Fox 64",
+    "name": "Starship (Star Fox 64)",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "harbourmasters/starship",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By Harbour Masters. Stale.",
+    "featured": false
+  },
+  {
+    "id": "star-wars-episode-i-jedi-power-battles-recompiled",
+    "game": "Star Wars Episode I: Jedi Power Battles",
+    "name": "Star Wars Episode I: Jedi Power Battles Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "TechnicallyComputers/Star-wars---Episode-I---Jedi-Power-Battles-Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By TechnicallyComputers. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "mastersofteraskasirecomp-star-wars-masters-of-ter-s-k-si",
+    "game": "Star Wars: Masters of Teräs Käsi",
+    "name": "MastersOfTerasKasiRecomp (Star Wars: Masters of Teräs Käsi)",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "TechnicallyComputers/MastersOfTerasKasiRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By TechnicallyComputers. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "street-fighter-alpha-3-recompiled",
+    "game": "Street Fighter Alpha 3",
+    "name": "Street Fighter Alpha 3 Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "TechnicallyComputers/Street-Fighter-Alpha-3-Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By TechnicallyComputers. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "plus-alpha-recomp-street-fighter-ex-plus-alpha",
+    "game": "Street Fighter EX Plus Alpha",
+    "name": "Plus Alpha Recomp (Street Fighter EX Plus Alpha)",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "guimaraf/plusalpha-recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By guimaraf. Active.",
+    "featured": false
+  },
+  {
+    "id": "street-fighter-ex2-plus-recompiled",
+    "game": "Street Fighter EX2 Plus",
+    "name": "Street Fighter EX2 Plus Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "strider973/Street-Fighter-EX2-Plus-Recompiled",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By strider973. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "3sx-street-fighter-iii-3rd-strike-3sx",
+    "game": "Street Fighter III: 3rd Strike [3SX]",
+    "name": "3SX (Street Fighter III: 3rd Strike [3SX])",
+    "kind": "Native port",
+    "original": [
+      "PlayStation 2"
+    ],
+    "repo": "crowded-street/3sx",
+    "asset": "auto",
+    "prerelease": true,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Crowded Street. Slow.",
+    "featured": false
+  },
+  {
+    "id": "3sxw-street-fighter-iii-3rd-strike-3sxw",
+    "game": "Street Fighter III: 3rd Strike [3SXW]",
+    "name": "3SXW (Street Fighter III: 3rd Strike [3SXW])",
+    "kind": "Native port",
+    "original": [
+      "PlayStation 2"
+    ],
+    "repo": "guimaraf/3sxw",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By guimaraf. Active.",
+    "featured": false
+  },
+  {
+    "id": "strider-2-recompiled",
+    "game": "Strider 2",
+    "name": "Strider 2 Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "strider973/STRIDER-2-Recompiled",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By strider973. Active.",
+    "featured": false
+  },
+  {
+    "id": "suikoden-recompiled",
+    "game": "Suikoden",
+    "name": "Suikoden Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "alexbeavs-ps1-ports/suikoden-recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Alexbeav. Active.",
+    "featured": false
+  },
+  {
+    "id": "suikoden-ii-recompiled",
+    "game": "Suikoden II",
+    "name": "Suikoden II Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "alexbeavs-ps1-ports/suikoden-ii-recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Alexbeav. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "bombermanrecomp-super-bomberman",
+    "game": "Super Bomberman",
+    "name": "BombermanRecomp (Super Bomberman)",
+    "kind": "Recomp",
+    "original": [
+      "SNES"
+    ],
+    "repo": "elliotttate/BombermanRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By elliotttate. Active.",
+    "featured": false
+  },
+  {
+    "id": "ghostship-super-mario-64",
+    "game": "Super Mario 64",
+    "name": "Ghostship (Super Mario 64)",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "harbourmasters/ghostship",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By Harbour Masters. Active.",
+    "featured": false
+  },
+  {
+    "id": "infinite-mario-64-ever-super-mario-64",
+    "game": "Super Mario 64",
+    "name": "Infinite Mario 64 Ever (Super Mario 64)",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "Brawmario/infinite-mario-64-ever",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By Brawmario. Stale.",
+    "featured": false
+  },
+  {
+    "id": "super-mario-64-co-op-dx",
+    "game": "Super Mario 64",
+    "name": "Super Mario 64 Co-op DX",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "coop-deluxe/sm64coopdx",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By Coop Deluxe. Slow.",
+    "featured": false
+  },
+  {
+    "id": "super-mario-advance-4-recomp-super-mario-advance-4-super-mario-bros-3",
+    "game": "Super Mario Advance 4: Super Mario Bros. 3",
+    "name": "Super Mario Advance 4 Recomp (Super Mario Advance 4: Super Mario Bros. 3)",
+    "kind": "Recomp",
+    "original": [
+      "Game Boy Advance"
+    ],
+    "repo": "mstan/SuperMarioAdvance4Recomp",
+    "asset": "auto",
+    "prerelease": true,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By mstan. Slow.",
+    "featured": false
+  },
+  {
+    "id": "smas-launcher-super-mario-all-stars",
+    "game": "Super Mario All-Stars",
+    "name": "SMAS Launcher (Super Mario All-Stars)",
+    "kind": "Native port",
+    "original": [
+      "SNES"
+    ],
+    "repo": "qurious-pixel/SMAS_Launcher",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By qurious-pixel. Stale.",
+    "featured": false
+  },
+  {
+    "id": "super-mario-bros-remastered",
+    "game": "Super Mario Bros.",
+    "name": "Super Mario Bros. Remastered",
+    "kind": "Native port",
+    "original": [
+      "NES"
+    ],
+    "repo": "JHDev2006/Super-Mario-Bros.-Remastered-Public",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By JHDev2006. Active.",
+    "featured": false
+  },
+  {
+    "id": "strikers-super-mario-strikers",
+    "game": "Super Mario Strikers",
+    "name": "Strikers (Super Mario Strikers)",
+    "kind": "Native port",
+    "original": [
+      "GameCube"
+    ],
+    "repo": "new-coke/strikers",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By new-coke. Active.",
+    "featured": false
+  },
+  {
+    "id": "supermarioworldrecomp-super-mario-world",
+    "game": "Super Mario World",
+    "name": "SuperMarioWorldRecomp (Super Mario World)",
+    "kind": "Recomp",
+    "original": [
+      "SNES"
+    ],
+    "repo": "mstan/SuperMarioWorldRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By mstan. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "supermetroidsnesrecomp-super-metroid",
+    "game": "Super Metroid",
+    "name": "SuperMetroidSNESRecomp (Super Metroid)",
+    "kind": "Recomp",
+    "original": [
+      "SNES"
+    ],
+    "repo": "mstan/SuperMetroidRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By mstan. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "battleship-super-smash-bros",
+    "game": "Super Smash Bros.",
+    "name": "BattleShip (Super Smash Bros.)",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "JRickey/BattleShip",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By JRickey. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "melee-unlocked-super-smash-bros-melee",
+    "game": "Super Smash Bros. Melee",
+    "name": "Melee Unlocked (Super Smash Bros. Melee)",
+    "kind": "Native port",
+    "original": [
+      "GameCube"
+    ],
+    "repo": "Hero88go/melee-unlocked",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Hero88go. Active.",
+    "featured": false
+  },
+  {
+    "id": "melee-pc-super-smash-bros-melee",
+    "game": "Super Smash Bros. Melee",
+    "name": "melee-pc (Super Smash Bros. Melee)",
+    "kind": "Native port",
+    "original": [
+      "GameCube"
+    ],
+    "repo": "999sian/melee-pc",
+    "asset": "auto",
+    "prerelease": true,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By 999sian. Active.",
+    "featured": false
+  },
+  {
+    "id": "syphon-filter-pc",
+    "game": "Syphon Filter",
+    "name": "Syphon Filter PC",
+    "kind": "Native port",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "Madxbio97/SF-pc-port",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Madxbio97. Slow.",
+    "featured": false
+  },
+  {
+    "id": "syphon-filter-2-recompiled",
+    "game": "Syphon Filter 2",
+    "name": "Syphon Filter 2 Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "alexbeavs-ps1-ports/syphon-filter-2-recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Alexbeav. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "tails-adventure-remake",
+    "game": "Tails Adventure",
+    "name": "Tails Adventure Remake",
+    "kind": "Native port",
+    "original": [
+      "Sega Game Gear"
+    ],
+    "repo": "mechakotik/tails-adventure",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By Mechakotik. Slow.",
+    "featured": false
+  },
+  {
+    "id": "taisei-project",
+    "game": "Taisei Project",
+    "name": "Taisei Project",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "taisei-project/taisei",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By Taisei Project. Slow.",
+    "featured": false
+  },
+  {
+    "id": "tekken3recomp-tekken-3",
+    "game": "Tekken 3",
+    "name": "Tekken3Recomp (Tekken 3)",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "fabioap-cpu/Tekken3Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By fabioap-cpu. Active.",
+    "featured": false
+  },
+  {
+    "id": "blocksphere-tetrisphere",
+    "game": "Tetrisphere",
+    "name": "Blocksphere (Tetrisphere)",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "djultra64/Blocksphere",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By djultra64. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "daggerfall-unity-the-elder-scrolls-ii-daggerfall",
+    "game": "The Elder Scrolls II: Daggerfall",
+    "name": "Daggerfall Unity (The Elder Scrolls II: Daggerfall)",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "Interkarma/daggerfall-unity",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By Interkarma. Stale.",
+    "featured": false
+  },
+  {
+    "id": "zeldaalttpsnesrecomp-the-legend-of-zelda-a-link-to-the-past",
+    "game": "The Legend of Zelda: A Link to the Past",
+    "name": "ZeldaAlttPSNESRecomp (The Legend of Zelda: A Link to the Past)",
+    "kind": "Recomp",
+    "original": [
+      "SNES"
+    ],
+    "repo": "mstan/ZeldaAlttPSNESRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By mstan. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "relic-of-the-past-the-legend-of-zelda-a-link-to-the-past",
+    "game": "The Legend of Zelda: A Link to the Past",
+    "name": "Relic of the Past (The Legend of Zelda: A Link to the Past)",
+    "kind": "Native port",
+    "original": [
+      "SNES"
+    ],
+    "repo": "drizztdourden08/relic-of-the-past",
+    "asset": "auto",
+    "prerelease": true,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By Drizztdourden_. Active.",
+    "featured": false
+  },
+  {
+    "id": "2-ship-2-harkinian-the-legend-of-zelda-majora-s-mask",
+    "game": "The Legend of Zelda: Majora's Mask",
+    "name": "2 Ship 2 Harkinian (The Legend of Zelda: Majora's Mask)",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "2ship2harkinian/2ship2harkinian",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By Harbour Masters. Active.",
+    "featured": false
+  },
+  {
+    "id": "zelda-64-recompiled-the-legend-of-zelda-majora-s-mask",
+    "game": "The Legend of Zelda: Majora's Mask",
+    "name": "Zelda 64: Recompiled (The Legend of Zelda: Majora's Mask)",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "Zelda64Recomp/Zelda64Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By Zelda 64: Recompiled Team. Stale.",
+    "featured": false
+  },
+  {
+    "id": "ship-of-harkinian-the-legend-of-zelda-ocarina-of-time",
+    "game": "The Legend of Zelda: Ocarina of Time",
+    "name": "Ship of Harkinian (The Legend of Zelda: Ocarina of Time)",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "harbourmasters/shipwright",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By Harbour Masters. Active.",
+    "featured": false
+  },
+  {
+    "id": "triaevum-the-legend-of-zelda-ocarina-of-time-3d",
+    "game": "The Legend of Zelda: Ocarina of Time 3D",
+    "name": "TriAevum (The Legend of Zelda: Ocarina of Time 3D)",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 3DS"
+    ],
+    "repo": "coccofresco/TriAevum",
+    "asset": "auto",
+    "prerelease": true,
+    "requires": "Your own decrypted dump.",
+    "licence": null,
+    "blurb": "By coccofresco. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "z2rs-the-legend-of-zelda-the-adventure-of-link",
+    "game": "The Legend of Zelda: The Adventure of Link",
+    "name": "z2rs (The Legend of Zelda: The Adventure of Link)",
+    "kind": "Native port",
+    "original": [
+      "NES"
+    ],
+    "repo": "troyedwardsjr/z2rs",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By troyedwardsjr. Active.",
+    "featured": false
+  },
+  {
+    "id": "bluewake-the-legend-of-zelda-the-wind-waker",
+    "game": "The Legend of Zelda: The Wind Waker",
+    "name": "BlueWake (The Legend of Zelda: The Wind Waker)",
+    "kind": "Native port",
+    "original": [
+      "GameCube"
+    ],
+    "repo": "chrissotraidis/bluewake",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By chrissotraidis. Active.",
+    "featured": false
+  },
+  {
+    "id": "zeldawwhdrecomp-the-legend-of-zelda-the-wind-waker-hd",
+    "game": "The Legend of Zelda: The Wind Waker HD",
+    "name": "ZeldaWWHDRecomp (The Legend of Zelda: The Wind Waker HD)",
+    "kind": "Recomp",
+    "original": [
+      "Wii U"
+    ],
+    "repo": "ZeldaWWHDRecomp/ZeldaWWHDRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own game dump.",
+    "licence": null,
+    "blurb": "By ZeldaWWHDRecomp. Active.",
+    "featured": false
+  },
+  {
+    "id": "the-simpsons-game-recompiled",
+    "game": "The Simpsons Game",
+    "name": "The Simpsons Game Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "YesterMester/TheSimpsonsGameRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By YesterMester. Active.",
+    "featured": false
+  },
+  {
+    "id": "simpsons-wrestling-recompiled-the-simpsons-wrestling",
+    "game": "The Simpsons Wrestling",
+    "name": "Simpsons Wrestling Recompiled (The Simpsons Wrestling)",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "TekRantGaming/simpsons-wrestling-recompiled",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By TekRantGaming. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "corsixth-theme-hospital",
+    "game": "Theme Hospital",
+    "name": "CorsixTH (Theme Hospital)",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "CorsixTH/CorsixTH",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data (retail/Steam/GOG)/GOG.",
+    "licence": null,
+    "blurb": "By CorsixTH. Active.",
+    "featured": false
+  },
+  {
+    "id": "trx-tomb-raider",
+    "game": "Tomb Raider",
+    "name": "TRX (Tomb Raider)",
+    "kind": "Native port",
+    "original": [
+      "PlayStation",
+      "Sega Saturn",
+      "PC (original release)"
+    ],
+    "repo": "LostArtefacts/TRX",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By LostArtefacts. Active.",
+    "featured": false
+  },
+  {
+    "id": "tombarecomp-tomba",
+    "game": "Tomba!",
+    "name": "TombaRecomp (Tomba!)",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "mstan/TombaRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By mstan. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "tomba2recomp-tomba-2-the-evil-swine-return",
+    "game": "Tomba! 2 - The Evil Swine Return",
+    "name": "Tomba2Recomp (Tomba! 2 - The Evil Swine Return)",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "mstan/Tomba2Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By mstan. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "project8recomp-tony-hawk-s-project-8",
+    "game": "Tony Hawk's Project 8",
+    "name": "Project8Recomp (Tony Hawk's Project 8)",
+    "kind": "Recomp",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "theokyr/Project8Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By theokyr. Active.",
+    "featured": false
+  },
+  {
+    "id": "twistedmetal4-recompiled-twisted-metal-4",
+    "game": "Twisted Metal 4",
+    "name": "TwistedMetal4 Recompiled (Twisted Metal 4)",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "TechnicallyComputers/TwistedMetal4Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By TechnicallyComputers. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "opentyrian",
+    "game": "Tyrian",
+    "name": "OpenTyrian",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "opentyrian/opentyrian",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By opentyrian. Active.",
+    "featured": false
+  },
+  {
+    "id": "opentyrian2000-tyrian-2000",
+    "game": "Tyrian 2000",
+    "name": "OpenTyrian2000 (Tyrian 2000)",
+    "kind": "Engine recreation",
+    "original": [
+      "PC (original release)"
+    ],
+    "repo": "andyvand/opentyrian2000",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own original game data.",
+    "licence": null,
+    "blurb": "By andyvand. Stale.",
+    "featured": false
+  },
+  {
+    "id": "ufc-3-recomp-ufc-undisputed-3",
+    "game": "UFC Undisputed 3",
+    "name": "UFC 3 Recomp (UFC Undisputed 3)",
+    "kind": "Recomp",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "paulogaab21/ufc3recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By paulogaab21. Active.",
+    "featured": false
+  },
+  {
+    "id": "valkyrierecomp-valkyrie-profile",
+    "game": "Valkyrie Profile",
+    "name": "ValkyrieRecomp (Valkyrie Profile)",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "Ed1z19/ValkyrieRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Ed1z19. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "vandal-hearts-pc",
+    "game": "Vandal Hearts",
+    "name": "Vandal Hearts PC",
+    "kind": "Native port",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "HalmyLyseas/VandalHearts-PcPort",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By HalmyLyseas. Active.",
+    "featured": false
+  },
+  {
+    "id": "virtual-pro-wrestling-2-recompiled-virtual-pro-wrestling-2-d-keish",
+    "game": "Virtual Pro Wrestling 2: Ōdō Keishō",
+    "name": "Virtual Pro Wrestling 2: Recompiled (Virtual Pro Wrestling 2: Ōdō Keishō)",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "jessetbh/VPW2Recomp",
+    "asset": "auto",
+    "prerelease": true,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By jessetbh. Slow.",
+    "featured": false
+  },
+  {
+    "id": "virtual-pro-wrestling-64-recompiled",
+    "game": "Virtual Pro Wrestling 64",
+    "name": "Virtual Pro Wrestling 64: Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "jessetbh/VPW64Recomp",
+    "asset": "auto",
+    "prerelease": true,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By jessetbh. Slow.",
+    "featured": false
+  },
+  {
+    "id": "viva-pinata-trouble-in-paradise-recompiled",
+    "game": "Viva Pinata: Trouble In Paradise",
+    "name": "Viva Pinata: Trouble In Paradise Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "SolarCookies/TiP-Recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By SolarCookies. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "warioware-twisted-recomp",
+    "game": "WarioWare: Twisted!",
+    "name": "WarioWare: Twisted! Recomp",
+    "kind": "Recomp",
+    "original": [
+      "Game Boy Advance"
+    ],
+    "repo": "mstan/WarioWareTwistedRecomp",
+    "asset": "auto",
+    "prerelease": true,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By mstan. Slow.",
+    "featured": false
+  },
+  {
+    "id": "racewave46-wave-race-64",
+    "game": "Wave Race 64",
+    "name": "RaceWave46 (Wave Race 64)",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "DomazinUS/RaceWave46",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By DomazinUS. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "wave-race-64-recompiled",
+    "game": "Wave Race 64",
+    "name": "Wave Race 64: Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "elliotttate/wave-race-64-recomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By elliotttate. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "wcw-vs-nwo-world-tour-recompiled",
+    "game": "WCW vs. nWo World Tour",
+    "name": "WCW vs. nWo World Tour: Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "jessetbh/WCWvsNWOWorldTourRecomp",
+    "asset": "auto",
+    "prerelease": true,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By jessetbh. Slow.",
+    "featured": false
+  },
+  {
+    "id": "wcw-nwo-revenge-recompiled",
+    "game": "WCW/nWo Revenge",
+    "name": "WCW/nWo Revenge: Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "jessetbh/WCWnWoRevengeRecomp",
+    "asset": "auto",
+    "prerelease": true,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By jessetbh. Slow.",
+    "featured": false
+  },
+  {
+    "id": "wipeout-xl-recompiled",
+    "game": "Wipeout XL",
+    "name": "Wipeout XL Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "NJH-1001/Wipeout2K97XL",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By NJH-1001. Active.",
+    "featured": false
+  },
+  {
+    "id": "wwf-no-mercy-recompiled",
+    "game": "WWF No Mercy",
+    "name": "WWF No Mercy: Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "jessetbh/WWFNoMercyRecomp",
+    "asset": "auto",
+    "prerelease": true,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By jessetbh. Slow.",
+    "featured": false
+  },
+  {
+    "id": "wwf-wrestlemania-2000-recompiled",
+    "game": "WWF WrestleMania 2000",
+    "name": "WWF WrestleMania 2000: Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "jessetbh/WWFWrestleMania2000Recomp",
+    "asset": "auto",
+    "prerelease": true,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By jessetbh. Slow.",
+    "featured": false
+  },
+  {
+    "id": "yu-gi-oh-forbidden-memories-recompiled",
+    "game": "Yu-Gi-Oh! Forbidden Memories",
+    "name": "Yu-Gi-Oh! Forbidden Memories - Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "PlayStation"
+    ],
+    "repo": "Unchiga/YuGiOhForbiddenMemoriesRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By Unchiga. Active.",
+    "featured": false
+  },
+  {
+    "id": "zeroracersvirtualboyrecomp-zero-racers",
+    "game": "Zero Racers",
+    "name": "ZeroRacersVirtualBoyRecomp (Zero Racers)",
+    "kind": "Recomp",
+    "original": [
+      "Virtual Boy"
+    ],
+    "repo": "mstan/ZeroRacersVirtualBoyRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By mstan. Active (README mentions AI tooling).",
+    "featured": false
+  }
+]

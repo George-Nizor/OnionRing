@@ -1,0 +1,21 @@
+[
+  {
+    "id": "bbport-windows",
+    "game": "Bloodborne",
+    "name": "bbport for Windows",
+    "kind": "Native port",
+    "original": ["PlayStation 4"],
+    "repo": "Supermedo/bloodborne_pc",
+    "asset": "^Bloodborne-Windows\\.zip$",
+    "exe": "Play Bloodborne.exe",
+    "configureExe": "Bloodborne.exe",
+    "persist": ["user", "mods", "out"],
+    "carry": ["bbport.ini"],
+    "requires": "Your own decrypted Bloodborne dump (CUSA03173, v1.09 for the 60 FPS patches). Pick its folder once in the bbport launcher.",
+    "licence": "GPL-2.0-or-later",
+    "blurb": "The original PS4 game running natively on Windows, with Vulkan rendering, DLSS/FSR, unlocked frame rate and online play. Built on deadinside28's bbport.",
+    "art": "launcher/bloodborne.png",
+    "accent": "#c0392b",
+    "featured": true
+  }
+]

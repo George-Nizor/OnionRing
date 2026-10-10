@@ -1,0 +1,31 @@
+# Weekly: re-resolve which ports in the reference catalog publish Windows builds on GitHub, and
+# open a pull request if crates/core/data/ports.json changed. Keeps the Ports page current
+# without anyone hand-editing JSON.
+name: Refresh ports catalog
+
+on:
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/build-ports.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: peter-evans/create-pull-request@v6
+        with:
+          branch: catalog/refresh
+          title: "Refresh ports catalog"
+          commit-message: "Refresh ports catalog from GitHub releases"
+          body: Automated weekly refresh of `crates/core/data/ports.json`.

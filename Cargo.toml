@@ -1,0 +1,23 @@
+[workspace]
+resolver = "3"
+members = ["src-tauri", "crates/core"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/George-Nizor/OnionRing"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+strip = true
+
+# Image decoding is the hot path for art processing; keep it fast in dev builds too.
+[profile.dev.package.image]
+opt-level = 3
+[profile.dev.package.png]
+opt-level = 3
+[profile.dev.package.zune-jpeg]
+opt-level = 3
