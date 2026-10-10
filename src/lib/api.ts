@@ -108,7 +108,7 @@ export interface BrowserGame {
   project: string;
   url: string;
   source: string | null;
-  status: "official" | "open-source" | "shareware" | "own-files" | "fan-original" | "custom";
+  status: "official" | "open-source" | "shareware" | "own-files" | "fan-original" | "link" | "custom";
   original: string | null;
   summary: string | null;
   needsFiles: string | null;

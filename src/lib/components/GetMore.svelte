@@ -32,6 +32,7 @@
     shareware: ["info", "Free demo"],
     "own-files": ["folder", "Your files"],
     "fan-original": ["star", "Fan made"],
+    link: ["globe", "Web link"],
     custom: ["plus", "Yours"],
   };
 
