@@ -5,7 +5,7 @@
 //! - system:   the console's photo from its Wikipedia article
 //! - emulator: the project's GitHub owner avatar (usually its logo), else Wikipedia
 //! - port:     first real image in the README, else the original game's box art, else the
-//!             repository's social preview image
+//!   repository's social preview image
 //! - browser:  the page's own preview image (og:image), else the source README
 
 use crate::art::{self, BASE, PATH_ENC, best_match};
