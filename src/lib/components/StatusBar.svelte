@@ -12,6 +12,7 @@
     systems: ["pad", "Systems"],
     tidy: ["broom", "Tidy up"],
     settings: ["gear", "Settings"],
+    stats: ["clock", "Play history"],
   };
   const here = $derived(NAMES[app.view.name]);
 

@@ -3,7 +3,7 @@ import { api, type Bootstrap, type CatalogView, type Game, type Platform, type P
 import { norm } from "./format";
 
 export type Theme = "pixel" | "paper";
-export type ViewName = "home" | "library" | "game" | "get" | "systems" | "tidy" | "settings";
+export type ViewName = "home" | "library" | "game" | "get" | "systems" | "tidy" | "settings" | "stats";
 export interface View {
   name: ViewName;
   gameId?: number;
