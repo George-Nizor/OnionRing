@@ -87,6 +87,14 @@ export function startGamepad(): () => void {
       if (y < -0.55) down.add("up");
       if (y > 0.55) down.add("down");
     }
+    // The pad is shared with whatever game is in front. Only act while OnionRing itself is the
+    // focused window; anything held when focus returns is ignored until it is released.
+    if (!document.hasFocus()) {
+      for (const a of down) held.set(a, Infinity);
+      for (const a of [...held.keys()]) if (!down.has(a)) held.delete(a);
+      raf = requestAnimationFrame(poll);
+      return;
+    }
     for (const a of down) {
       const since = held.get(a);
       const repeats = a === "up" || a === "down" || a === "left" || a === "right";
