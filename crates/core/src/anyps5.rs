@@ -163,7 +163,32 @@ pub fn convert(db: &crate::db::Db, root: &DataRoot, game: &crate::model::Game, p
         bail!("AnyPS5 could not convert {}: {line}", game.title);
     }
     db.kv_set(&kv_key(game.id), &exe.to_string_lossy())?;
+    if let Some(v) = installed(db, root) {
+        db.kv_set(&built_key(game.id), &v)?;
+    }
     Ok(exe)
+}
+
+fn built_key(game_id: i64) -> String {
+    format!("anyps5:built:{game_id}")
+}
+
+/// Install the newest AnyPS5 release when it is newer than the installed one. Returns the new
+/// version when it updated. Does nothing when AnyPS5 was never installed.
+pub fn update_if_newer(db: &crate::db::Db, root: &DataRoot, progress: &dyn Fn(&str)) -> Result<Option<String>> {
+    let Some(have) = installed(db, root) else { return Ok(None) };
+    let latest = github::latest(root, REPO, false)?;
+    if latest.tag_name == have {
+        return Ok(None);
+    }
+    install_latest(db, root, progress).map(Some)
+}
+
+/// A converted game was made with an older AnyPS5 than the one installed now, so it should be
+/// converted again before it is played (each AnyPS5 release fixes and adds a lot).
+pub fn stale(db: &crate::db::Db, root: &DataRoot, game_id: i64) -> bool {
+    let (Some(_), Some(now)) = (converted(db, game_id), installed(db, root)) else { return false };
+    db.kv_get(&built_key(game_id)).ok().flatten().as_deref() != Some(now.as_str())
 }
 
 /// The converted program for a game, when one exists.

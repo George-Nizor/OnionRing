@@ -144,7 +144,7 @@ class AppStore {
         const { [id]: _, ...rest } = this.installing;
         this.installing = rest;
         if (error) this.toast(error, "error", 9000);
-        else this.toast("Installed. It's in your library.", "ok");
+        else if (id !== "anyps5") this.toast("Installed. It's in your library.", "ok");
         this.loadCatalog();
       } else this.installing = { ...this.installing, [id]: message };
     });

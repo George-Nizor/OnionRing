@@ -1,6 +1,6 @@
 {
   "name": "onionring",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "One launcher for your emulators, native PC ports, recomps and decomps",
   "type": "module",
   "private": true,

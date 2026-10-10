@@ -323,11 +323,52 @@ fn start(app: &AppHandle, id: i64, plan: launch::Plan, track: bool) -> Res<()> {
 }
 
 #[tauri::command]
-fn launch_game(app: AppHandle, st: State<AppState>, id: i64) -> Res<()> {
-    let db = st.db()?;
-    let game = db.game(id).map_err(err)?;
-    let plan = launch::plan(&db, &st.cat(), &game).map_err(err)?;
-    start(&app, id, plan, true)
+async fn launch_game(app: AppHandle, id: i64) -> Res<()> {
+    blocking(move || {
+        let st = app.state::<AppState>();
+        let db = st.db()?;
+        let game = db.game(id).map_err(err)?;
+        // A PS5 game converted with an older AnyPS5 is converted again first.
+        if game.platform == "ps5" && onionring_core::anyps5::stale(&db, &st.root()?, id) {
+            let report = |m: &str| {
+                let _ = app.emit("install", InstallEvent { id: "anyps5".into(), message: m.to_string(), done: false, error: None });
+            };
+            report("Updating the PC version");
+            let res = {
+                let _guard = st.work.lock().unwrap();
+                onionring_core::anyps5::convert(&db, &st.root()?, &game, &report)
+            };
+            let error = res.as_ref().err().map(err);
+            let _ = app.emit("install", InstallEvent { id: "anyps5".into(), message: String::new(), done: true, error: error.clone() });
+            if let Some(e) = error {
+                return Err(e);
+            }
+        }
+        let plan = launch::plan(&db, &st.cat(), &game).map_err(err)?;
+        start(&app, id, plan, true)
+    })
+    .await
+}
+
+/// Keep AnyPS5 on its latest release: shortly after start, then every six hours. Quiet unless
+/// it fails to start up; converted games pick the new version up the next time they are played.
+fn keep_anyps5_current(app: &AppHandle) {
+    let app = app.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_secs(30));
+        loop {
+            let st = app.state::<AppState>();
+            if let (Ok(db), Ok(root)) = (st.db(), st.root()) {
+                let _guard = st.work.lock().unwrap();
+                match onionring_core::anyps5::update_if_newer(&db, &root, &|_| {}) {
+                    Ok(Some(v)) => eprintln!("AnyPS5 updated to {v}"),
+                    Ok(None) => {}
+                    Err(e) => eprintln!("AnyPS5 update check: {e:#}"),
+                }
+            }
+            std::thread::sleep(std::time::Duration::from_secs(6 * 3600));
+        }
+    });
 }
 
 #[tauri::command]
@@ -1003,6 +1044,7 @@ pub fn run() {
                     Ok(root) => {
                         use_root(app.handle(), root)?;
                         start_watching(app.handle());
+                        keep_anyps5_current(app.handle());
                     }
                     Err(e) => eprintln!("data root unavailable: {e:#}"),
                 }
