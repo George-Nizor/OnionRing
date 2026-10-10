@@ -33,7 +33,8 @@ function dataFolder(root) {
           return next();
         }
         res.setHeader("Content-Type", TYPES[extname(file).toLowerCase()] ?? "application/octet-stream");
-        res.setHeader("Cache-Control", "max-age=3600");
+        // The snapshot changes whenever it's regenerated; art doesn't.
+        res.setHeader("Cache-Control", extname(file).toLowerCase() === ".json" ? "no-store" : "max-age=3600");
         createReadStream(file).pipe(res);
       });
     },

@@ -100,6 +100,35 @@ pub struct PortDef {
     pub featured: bool,
 }
 
+/// A game that runs in a web page (WebAssembly/WebGL). Only legitimate builds are listed:
+/// official, open-source, shareware/demo data, fan-made originals, or "bring your own files".
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct BrowserGame {
+    pub id: String,
+    pub title: String,
+    pub project: String,
+    pub url: String,
+    #[serde(default)]
+    pub source: Option<String>,
+    /// official | open-source | shareware | own-files | fan-original
+    pub status: String,
+    #[serde(default)]
+    pub original: Option<String>,
+    #[serde(default)]
+    pub summary: Option<String>,
+    #[serde(default)]
+    pub needs_files: Option<String>,
+    /// "window": open in an OnionRing window; "link": open in the user's browser.
+    pub embed: String,
+    #[serde(default)]
+    pub controls: Option<String>,
+    #[serde(default)]
+    pub multiplayer: bool,
+    #[serde(default)]
+    pub verified: Option<String>,
+}
+
 #[derive(Deserialize, Default)]
 struct LocalCatalog {
     #[serde(default)]
@@ -108,12 +137,15 @@ struct LocalCatalog {
     emulators: Vec<EmulatorDef>,
     #[serde(default)]
     ports: Vec<PortDef>,
+    #[serde(default)]
+    browser: Vec<BrowserGame>,
 }
 
 pub struct Catalog {
     pub platforms: Vec<Platform>,
     pub emulators: Vec<EmulatorDef>,
     pub ports: Vec<PortDef>,
+    pub browser: Vec<BrowserGame>,
     pub(crate) hint_res: Vec<Option<Regex>>,
     pub(crate) exe_res: Vec<Regex>,
 }
@@ -137,12 +169,14 @@ impl Catalog {
         let mut platforms: Vec<Platform> = serde_json::from_str(include_str!("../data/platforms.json"))?;
         let mut emulators: Vec<EmulatorDef> = serde_json::from_str(include_str!("../data/emulators.json"))?;
         let mut ports: Vec<PortDef> = serde_json::from_str(include_str!("../data/ports.json"))?;
+        let mut browser: Vec<BrowserGame> = serde_json::from_str(include_str!("../data/browser-games.json"))?;
         if let Some(p) = local.filter(|p| p.exists()) {
             match std::fs::read_to_string(p).map_err(anyhow::Error::from).and_then(|s| Ok(serde_json::from_str::<LocalCatalog>(&s)?)) {
                 Ok(l) => {
                     merge(&mut platforms, l.platforms, |x| &x.id);
                     merge(&mut emulators, l.emulators, |x| &x.id);
                     merge(&mut ports, l.ports, |x| &x.id);
+                    merge(&mut browser, l.browser, |x| &x.id);
                 }
                 Err(e) => eprintln!("ignoring {}: {e}", p.display()),
             }
@@ -152,7 +186,7 @@ impl Catalog {
             .map(|p| if p.hints.is_empty() { Ok(None) } else { ci(&p.hints).map(Some) })
             .collect::<Result<Vec<_>>>()?;
         let exe_res = emulators.iter().map(|e| ci(&e.exe)).collect::<Result<Vec<_>>>()?;
-        Ok(Catalog { platforms, emulators, ports, hint_res, exe_res })
+        Ok(Catalog { platforms, emulators, ports, browser, hint_res, exe_res })
     }
 
     pub fn platform(&self, id: &str) -> Option<&Platform> {

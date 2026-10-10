@@ -2,7 +2,7 @@
   import { onMount, tick } from "svelte";
   import { open } from "@tauri-apps/plugin-dialog";
   import { openUrl } from "@tauri-apps/plugin-opener";
-  import { api, type CatalogView, type Emulator, type EmulatorDef, type PortDef, type UpdateInfo } from "$lib/api";
+  import { api, type BrowserGame, type CatalogView, type Emulator, type EmulatorDef, type PortDef, type UpdateInfo } from "$lib/api";
   import { app } from "$lib/store.svelte";
   import { focusFirst } from "$lib/nav";
   import { norm } from "$lib/format";
@@ -13,7 +13,19 @@
   let cat = $state<CatalogView | null>(null);
   let updates = $state<Record<string, UpdateInfo>>({});
   let consoleFilter = $state<string | null>(null);
-  let sheet = $state<{ kind: "port"; p: PortDef } | { kind: "emu"; e: EmulatorDef } | null>(null);
+  let sheet = $state<{ kind: "port"; p: PortDef } | { kind: "emu"; e: EmulatorDef } | { kind: "web"; b: BrowserGame } | null>(null);
+
+  /** What each kind of browser game is, as an icon and two words. */
+  const STATUS: Record<BrowserGame["status"], [string, string]> = {
+    official: ["check", "Free"],
+    "open-source": ["globe", "Open source"],
+    shareware: ["info", "Free demo"],
+    "own-files": ["folder", "Your files"],
+    "fan-original": ["star", "Fan made"],
+  };
+  function playWeb(b: BrowserGame) {
+    api.openBrowserGame(b.id).catch((e) => app.toast(String(e), "error"));
+  }
   let sheetEl = $state<HTMLElement>();
   const tab = $derived(app.view.tab ?? "ports");
 
@@ -130,9 +142,19 @@
       {/each}
     </div>
   {:else}
-    <div class="empty">
-      <Glyph name="globe" size={96} />
-      <p class="label">Checking which browser games are safe to add</p>
+    <div class="grid">
+      {#each cat?.browser ?? [] as b, i (b.id)}
+        <button class="cart" data-nav style:--i={Math.min(i, 20)} onclick={() => showSheet({ kind: "web", b })}
+          onmouseenter={(e) => (e.currentTarget as HTMLElement).focus({ preventScroll: true })}>
+          <span class="top label">{b.original ?? ""}</span>
+          <span class="name">{b.title}</span>
+          <span class="by">{b.project}</span>
+          <span class="state web">
+            <span class="kind label"><Glyph name={STATUS[b.status][0]} size={12} />{STATUS[b.status][1]}</span>
+            <Glyph name={b.embed === "window" ? "play" : "globe"} size={24} />
+          </span>
+        </button>
+      {/each}
     </div>
   {/if}
 </div>
@@ -162,6 +184,26 @@
           </button>
           <button class="btn big" data-nav onclick={() => fromFile(p.id)}><Glyph name="zip" size={24} />From a zip</button>
           <button class="btn big icon" data-nav onclick={() => openUrl(`https://github.com/${p.repo}`)} aria-label="Project page"><Glyph name="globe" size={24} /></button>
+        {/if}
+      </div>
+    {:else if sheet.kind === "web"}
+      {@const b = sheet.b}
+      <span class="label">{b.original ?? ""}</span>
+      <h2>{b.title}</h2>
+      <div class="by">{b.project}</div>
+      <div class="facts">
+        <span><Glyph name={STATUS[b.status][0]} size={24} />{STATUS[b.status][1]}</span>
+        {#if b.multiplayer}<span><Glyph name="pad" size={24} />Online</span>{/if}
+        <span><Glyph name={b.embed === "window" ? "play" : "globe"} size={24} />{b.embed === "window" ? "Plays in OnionRing" : "Opens in your browser"}</span>
+      </div>
+      {#if b.summary}<p class="needs"><Glyph name="info" size={24} /><span>{b.summary}</span></p>{/if}
+      {#if b.needsFiles}<p class="needs"><Glyph name="folder" size={24} /><span>{b.needsFiles}</span></p>{/if}
+      <div class="btns">
+        <button class="btn big primary" data-nav onclick={() => playWeb(b)}>
+          <Glyph name={b.embed === "window" ? "play" : "globe"} size={24} />{b.embed === "window" ? "Play" : "Open"}
+        </button>
+        {#if b.source}
+          <button class="btn big icon" data-nav onclick={() => openUrl(b.source!)} aria-label="Source code"><Glyph name="info" size={24} /></button>
         {/if}
       </div>
     {:else}
@@ -341,23 +383,14 @@
     top: auto;
     bottom: -2px;
   }
-  .empty {
-    display: grid;
-    place-items: center;
-    gap: 16px;
-    padding: 80px 0;
-    color: var(--faint);
+  .state.web {
+    align-self: stretch;
+    justify-content: space-between;
   }
-  .empty :global(svg) {
-    animation: spinslow 6s linear infinite;
-  }
-  :global(:root[data-theme="pixel"]) .empty :global(svg) {
-    animation: spinslow 2s steps(8) infinite;
-  }
-  @keyframes spinslow {
-    to {
-      transform: rotate(360deg);
-    }
+  .kind {
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 
   .scrim {

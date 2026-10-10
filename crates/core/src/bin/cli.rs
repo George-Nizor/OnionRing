@@ -147,7 +147,7 @@ fn main() -> Result<()> {
                 "games": db.games()?,
                 "emulators": launch::emulators(&db, &cat, 0)?,
                 "sources": db.sources()?,
-                "catalog": { "ports": cat.ports, "emulators": cat.emulators, "installed": install::installed_apps(&root) },
+                "catalog": { "ports": cat.ports, "emulators": cat.emulators, "browser": cat.browser, "installed": install::installed_apps(&root) },
                 "storage": storage::report(&root, &db)?,
             });
             std::fs::write(out, serde_json::to_string(&snap)?)?;

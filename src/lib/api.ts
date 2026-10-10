@@ -100,9 +100,25 @@ export interface InstalledApp {
   source: { repo: string | null; tag: string | null; sha256: string; verified: boolean; archive: string };
 }
 
+export interface BrowserGame {
+  id: string;
+  title: string;
+  project: string;
+  url: string;
+  source: string | null;
+  status: "official" | "open-source" | "shareware" | "own-files" | "fan-original";
+  original: string | null;
+  summary: string | null;
+  needsFiles: string | null;
+  embed: "window" | "link";
+  controls: string | null;
+  multiplayer: boolean;
+}
+
 export interface CatalogView {
   ports: PortDef[];
   emulators: EmulatorDef[];
+  browser: BrowserGame[];
   installed: InstalledApp[];
 }
 
@@ -181,6 +197,7 @@ export const api = {
   reclaim: (paths: string[]) => invoke<[number, number]>("reclaim", { paths }),
   restoreReclaimed: () => invoke<number>("restore_reclaimed"),
   reveal: (path: string) => invoke<void>("reveal", { path }),
+  openBrowserGame: (id: string) => invoke<void>("open_browser_game", { id }),
 };
 
 export const src = (path: string | null | undefined) => (path ? convertFileSrc(path) : null);

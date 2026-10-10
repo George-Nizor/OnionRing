@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import { api, type Emulator } from "$lib/api";
+  import { api, type BrowserGame, type Emulator } from "$lib/api";
   import { app } from "$lib/store.svelte";
   import { focusFirst, move, startGamepad, type PadAction } from "$lib/nav";
   import StatusBar from "$lib/components/StatusBar.svelte";
@@ -20,6 +20,7 @@
 
   let emulators = $state<Emulator[]>([]);
   let portCount = $state(0);
+  let browser = $state<BrowserGame[]>([]);
   let setup = $state(false);
   let pad = $state(false);
   let main = $state<HTMLElement>();
@@ -39,7 +40,12 @@
     setup = !app.boot?.dataRoot;
     if (setup) return;
     await loadEmulators();
-    api.catalog().then((c) => (portCount = c.ports.length - c.installed.filter((i) => i.kind === "port").length)).catch(() => {});
+    api.catalog()
+      .then((c) => {
+        portCount = c.ports.length - c.installed.filter((i) => i.kind === "port").length;
+        browser = c.browser;
+      })
+      .catch(() => {});
     await tick();
     focusFirst(main);
   }
@@ -132,7 +138,7 @@
       {#key app.view.name + (app.view.gameId ?? "")}
         <div class="view">
           {#if app.view.name === "home"}
-            <Home {emulators} {portCount} />
+            <Home {emulators} {portCount} {browser} />
           {:else if app.view.name === "library"}
             <Library />
           {:else if app.view.name === "game"}

@@ -1,6 +1,6 @@
 //! Tauri shell: exposes the core to the UI as commands, streams progress as events.
 
-use onionring_core::catalog::{Catalog, EmulatorDef, Platform, PortDef};
+use onionring_core::catalog::{BrowserGame, Catalog, EmulatorDef, Platform, PortDef};
 use onionring_core::db::Db;
 use onionring_core::install::{self, ArchiveMode, InstalledApp, Target, UpdateInfo};
 use onionring_core::model::{Copy, Emulator, Game, Progress, ScanSummary, Source};
@@ -246,6 +246,7 @@ fn set_emulator_args(st: State<AppState>, id: String, args: Option<Vec<String>>)
 struct CatalogView {
     ports: Vec<PortDef>,
     emulators: Vec<EmulatorDef>,
+    browser: Vec<BrowserGame>,
     installed: Vec<InstalledApp>,
 }
 
@@ -253,7 +254,62 @@ struct CatalogView {
 fn catalog(st: State<AppState>) -> Res<CatalogView> {
     let cat = st.cat();
     let installed = st.shared.lock().unwrap().root.as_ref().map(install::installed_apps).unwrap_or_default();
-    Ok(CatalogView { ports: cat.ports.clone(), emulators: cat.emulators.clone(), installed })
+    Ok(CatalogView { ports: cat.ports.clone(), emulators: cat.emulators.clone(), browser: cat.browser.clone(), installed })
+}
+
+/// The site a URL belongs to (last two host labels), so a game can move between its own
+/// subdomains but any other link leaves for the user's browser.
+fn site(u: &tauri::Url) -> String {
+    let host = u.host_str().unwrap_or_default();
+    let labels: Vec<&str> = host.split('.').collect();
+    labels[labels.len().saturating_sub(2)..].join(".")
+}
+
+/// Open a browser game. "window" games get their own OnionRing window: no access to the app
+/// (it is not in any capability), it stays on the game's site, popups and outside links open in
+/// the user's browser, and notification/location requests are refused. "link" games open in
+/// the user's browser directly.
+#[tauri::command]
+fn open_browser_game(app: AppHandle, st: State<AppState>, id: String) -> Res<()> {
+    use tauri::webview::{NewWindowResponse, PermissionKind, PermissionResponse};
+    use tauri_plugin_opener::OpenerExt;
+    let cat = st.cat();
+    let g = cat.browser.iter().find(|b| b.id == id).ok_or("That game is not in the list.")?;
+    let url: tauri::Url = g.url.parse().map_err(err)?;
+    if g.embed != "window" {
+        return app.opener().open_url(g.url.clone(), None::<&str>).map_err(err);
+    }
+    let label = format!("play-{}", id.replace(|c: char| !c.is_ascii_alphanumeric(), "-"));
+    if let Some(w) = app.get_webview_window(&label) {
+        let _ = w.unminimize();
+        return w.set_focus().map_err(err);
+    }
+    let home = site(&url);
+    let (nav_app, popup_app) = (app.clone(), app.clone());
+    tauri::WebviewWindowBuilder::new(&app, &label, tauri::WebviewUrl::External(url))
+        .title(&g.title)
+        .inner_size(1280.0, 800.0)
+        .min_inner_size(640.0, 400.0)
+        .center()
+        .zoom_hotkeys_enabled(false)
+        .on_navigation(move |u| {
+            let ok = matches!(u.scheme(), "about" | "blob" | "data") || site(u) == home;
+            if !ok {
+                let _ = nav_app.opener().open_url(u.as_str(), None::<&str>);
+            }
+            ok
+        })
+        .on_new_window(move |u, _| {
+            let _ = popup_app.opener().open_url(u.as_str(), None::<&str>);
+            NewWindowResponse::Deny
+        })
+        .on_permission_request(|_, kind| match kind {
+            PermissionKind::Notifications | PermissionKind::Geolocation => PermissionResponse::Deny,
+            _ => PermissionResponse::Default,
+        })
+        .build()
+        .map_err(err)?;
+    Ok(())
 }
 
 #[derive(Serialize, Clone)]
@@ -418,6 +474,7 @@ pub fn run() {
             reclaim,
             restore_reclaimed,
             reveal,
+            open_browser_game,
         ])
         .run(tauri::generate_context!())
         .expect("error while running OnionRing");

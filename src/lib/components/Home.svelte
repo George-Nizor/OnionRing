@@ -1,12 +1,14 @@
 <script lang="ts">
-  import type { Emulator } from "$lib/api";
+  import { api, type BrowserGame, type Emulator } from "$lib/api";
   import { app } from "$lib/store.svelte";
   import { bytes, playtime } from "$lib/format";
   import Art from "./Art.svelte";
   import Glyph from "./Glyph.svelte";
   import Tile from "./Tile.svelte";
 
-  let { emulators, portCount = 0 }: { emulators: Emulator[]; portCount?: number } = $props();
+  let { emulators, portCount = 0, browser = [] }: { emulators: Emulator[]; portCount?: number; browser?: BrowserGame[] } = $props();
+  // Ready to play with nothing to supply first.
+  const instant = $derived(browser.filter((b) => !b.needsFiles && b.embed === "window").slice(0, 12));
 
   const g = $derived(app.spotlight);
   const platform = $derived(g ? app.platforms.get(g.platform) : undefined);
@@ -106,6 +108,31 @@
         </button>
       </div>
     </div>
+
+    {#if instant.length}
+      <div class="row-block">
+        <div class="row-head"><Glyph name="globe" size={24} /><span class="label">Play in a window, no install</span></div>
+        <div class="row">
+          {#each instant as b, i (b.id)}
+            <button
+              class="sys web"
+              data-nav
+              style:--i={i}
+              onclick={() => api.openBrowserGame(b.id).catch((e) => app.toast(String(e), "error"))}
+              onmouseenter={(e) => (e.currentTarget as HTMLElement).focus({ preventScroll: true })}
+              aria-label="Play {b.title}"
+            >
+              <span class="wt">{b.title}</span>
+              <span class="meta label"><Glyph name="play" size={12} />{b.original?.replace(/\s*\(.*\)/, "") ?? ""}</span>
+            </button>
+          {/each}
+          <button class="more" data-nav onclick={() => app.go({ name: "get", tab: "browser" })} onmouseenter={(e) => (e.currentTarget as HTMLElement).focus({ preventScroll: true })} aria-label="All browser games">
+            <Glyph name="plus" size={48} />
+            <span class="label">{browser.length} in all</span>
+          </button>
+        </div>
+      </div>
+    {/if}
   </section>
 </div>
 
@@ -246,6 +273,15 @@
     font-weight: 800;
     font-size: 44px;
     line-height: 1;
+  }
+  .sys.web {
+    width: 190px;
+  }
+  .wt {
+    font-family: var(--title);
+    font-weight: 800;
+    font-size: 21px;
+    line-height: 1.05;
   }
   .sys .meta {
     display: flex;

@@ -13,10 +13,10 @@ export async function installMock(dataRoot: string) {
     if (!lower.startsWith(base)) return "";
     return `/__onionring/${p.slice(base.length).replace(/^[\\/]+/, "").split(/[\\/]/).map(encodeURIComponent).join("/")}`;
   };
-  const snap = await fetch("/__onionring/Cache/ui-snapshot.json").then((r) => r.json());
+  const snap = await fetch("/__onionring/Cache/ui-snapshot.json", { cache: "no-store" }).then((r) => r.json());
   mockWindows("main");
   mockIPC(
-    (cmd) => {
+    (cmd, args) => {
       switch (cmd) {
         case "bootstrap": return snap.bootstrap;
         case "games": return snap.games;
@@ -26,6 +26,11 @@ export async function installMock(dataRoot: string) {
         case "storage_report": return snap.storage;
         case "check_updates": return [];
         case "game_copies": return [];
+        case "open_browser_game": {
+          const g = snap.catalog.browser?.find((b: { id: string }) => b.id === (args as { id: string }).id);
+          if (g) window.open(g.url, "_blank");
+          return null;
+        }
         case "scan_library": return { games: snap.games.length, newGames: 0, emulators: snap.emulators.length, copies: 0, missing: 0, millis: 50 };
         default: return null;
       }
