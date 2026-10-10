@@ -1,6 +1,7 @@
 <script lang="ts">
   // Plays a short theme-specific transition whenever the view changes:
   // pixel = stepped blinds wiping across; paper = an e-ink full refresh (black, then white).
+  import { untrack } from "svelte";
   import { app } from "$lib/store.svelte";
 
   let n = $state(0);
@@ -11,7 +12,8 @@
       first = false;
       return;
     }
-    n++;
+    // Only the view is a dependency; bumping the counter must not re-run this effect.
+    untrack(() => n++);
   });
 </script>
 

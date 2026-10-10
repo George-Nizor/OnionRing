@@ -12,3 +12,6 @@ vite.config.ts.timestamp-*
 # Never commit signing keys
 *.key
 *.key.pub
+
+.shots
+.art-preview
