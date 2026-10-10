@@ -4,9 +4,7 @@
   import { app } from "$lib/store.svelte";
   import { focusFirst, move, startGamepad, type PadAction } from "$lib/nav";
   import StatusBar from "$lib/components/StatusBar.svelte";
-  import HintBar from "$lib/components/HintBar.svelte";
   import Menu from "$lib/components/Menu.svelte";
-  import Search from "$lib/components/Search.svelte";
   import Transition from "$lib/components/Transition.svelte";
   import Toasts from "$lib/components/Toasts.svelte";
   import Home from "$lib/components/Home.svelte";
@@ -17,12 +15,12 @@
   import Tidy from "$lib/components/Tidy.svelte";
   import Settings from "$lib/components/Settings.svelte";
   import Setup from "$lib/components/Setup.svelte";
+  import Stats from "$lib/components/Stats.svelte";
 
   let emulators = $state<Emulator[]>([]);
   let portCount = $state(0);
   let browser = $state<BrowserGame[]>([]);
   let setup = $state(false);
-  let pad = $state(false);
   let main = $state<HTMLElement>();
 
   async function loadEmulators() {
@@ -52,18 +50,14 @@
 
   onMount(() => {
     const stop = startGamepad();
-    const onConnect = () => (pad = true);
     const onPad = (e: Event) => {
-      pad = true;
       const a = (e as CustomEvent<PadAction>).detail;
       if (a !== "lb" && a !== "rb") act(a);
     };
-    window.addEventListener("gamepadconnected", onConnect);
     window.addEventListener("pad", onPad);
     boot();
     return () => {
       stop();
-      window.removeEventListener("gamepadconnected", onConnect);
       window.removeEventListener("pad", onPad);
     };
   });
@@ -88,9 +82,12 @@
       case "a":
         el?.click();
         return true;
-      case "b":
+      case "b": {
+        const fromSearch = app.searchOpen;
         app.back();
+        if (fromSearch) tick().then(() => focusFirst(main));
         return true;
+      }
       case "x": {
         const id = Number(el?.dataset.gameId);
         const g = app.games.find((x) => x.id === id);
@@ -98,8 +95,7 @@
         return !!g;
       }
       case "y":
-        app.searchOpen = !app.searchOpen;
-        app.menuOpen = false;
+        app.openSearch();
         return true;
       case "start": case "select": case "menu":
         app.menuOpen = !app.menuOpen;
@@ -113,7 +109,10 @@
     const typing = (e.target as HTMLElement)?.closest("input, textarea, select");
     const keys: Record<string, string> = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right", Escape: "b" };
     if (typing) {
-      if (e.key === "Escape") {
+      if (e.ctrlKey && e.key.toLowerCase() === "k") {
+        app.openSearch();
+        e.preventDefault();
+      } else if (e.key === "Escape") {
         (e.target as HTMLElement).blur();
         act("b");
         e.preventDefault();
@@ -127,15 +126,23 @@
     if (!a && e.key.toLowerCase() === "m") a = "menu";
     if (a && act(a)) e.preventDefault();
   }
+
+  // The mouse's back button goes back, like a browser.
+  function onmouseup(e: MouseEvent) {
+    if (e.button === 3) {
+      e.preventDefault();
+      act("b");
+    }
+  }
 </script>
 
-<svelte:window onkeydown={onkey} />
+<svelte:window onkeydown={onkey} {onmouseup} />
 
 <div class="shell">
   {#if app.loaded && !setup}
     <StatusBar />
     <main bind:this={main}>
-      {#key app.view.name + (app.view.gameId ?? "")}
+      {#key app.view.name + (app.view.gameId ?? "") + (app.view.item ?? "")}
         <div class="view">
           {#if app.view.name === "home"}
             <Home {emulators} {portCount} {browser} />
@@ -149,15 +156,15 @@
             <Systems {emulators} onchange={loadEmulators} />
           {:else if app.view.name === "tidy"}
             <Tidy />
+          {:else if app.view.name === "stats"}
+            <Stats />
           {:else}
             <Settings />
           {/if}
         </div>
       {/key}
     </main>
-    <HintBar {pad} />
     <Transition />
-    <Search />
     <Menu />
   {/if}
   {#if setup}

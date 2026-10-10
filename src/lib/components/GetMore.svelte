@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { onMount, tick } from "svelte";
+  import { tick } from "svelte";
   import { open } from "@tauri-apps/plugin-dialog";
   import { openUrl } from "@tauri-apps/plugin-opener";
-  import { api, type BrowserGame, type CatalogView, type Emulator, type EmulatorDef, type PortDef, type ReleaseDetails, type UpdateInfo } from "$lib/api";
+  import { api, type AvailableUpdate, type BrowserGame, type CatalogView, type Emulator, type EmulatorDef, type PortDef, type ReleaseDetails } from "$lib/api";
   import { app } from "$lib/store.svelte";
   import { focusFirst } from "$lib/nav";
   import { bytes, norm } from "$lib/format";
@@ -12,9 +12,18 @@
   let { emulators }: { emulators: Emulator[] } = $props();
 
   let cat = $state<CatalogView | null>(null);
-  let updates = $state<Record<string, UpdateInfo>>({});
+  let updates = $state<AvailableUpdate[] | null>(null);
   let consoleFilter = $state<string | null>(null);
   let sheet = $state<{ kind: "port"; p: PortDef } | { kind: "emu"; e: EmulatorDef } | { kind: "web"; b: BrowserGame } | { kind: "add" } | null>(null);
+  let sheetEl = $state<HTMLElement>();
+  const tab = $derived(app.view.tab ?? "ports");
+
+  const TABS: [string, string, string][] = [
+    ["ports", "cart", "Ports"],
+    ["emulators", "pad", "Emulators"],
+    ["browser", "globe", "Browser"],
+    ["updates", "refresh", "Updates"],
+  ];
 
   /** What each kind of browser game is, as an icon and two words. */
   const STATUS: Record<BrowserGame["status"], [string, string]> = {
@@ -25,30 +34,40 @@
     "fan-original": ["star", "Fan made"],
     custom: ["plus", "Yours"],
   };
-  let newTitle = $state("");
-  let newUrl = $state("");
-  async function addOwn() {
-    try {
-      const g = await api.addBrowserGame(newTitle, newUrl);
-      newTitle = newUrl = "";
-      await load();
-      app.toast(`Added ${g.title}`, "ok");
-      sheet = { kind: "web", b: g };
-    } catch (e) {
-      app.toast(String(e), "error");
-    }
-  }
-  async function removeOwn(b: BrowserGame) {
-    await api.removeBrowserGame(b.id);
-    sheet = null;
-    await load();
-  }
-  function playWeb(b: BrowserGame) {
-    api.openBrowserGame(b.id).catch((e) => app.toast(String(e), "error"));
-  }
-  let sheetEl = $state<HTMLElement>();
-  const tab = $derived(app.view.tab ?? "ports");
 
+  // ---- console names in the catalog -> platform ids (for console art) and short labels
+  const clean = (raw: string) => raw.replace(/\s*\(.*?\)\s*/g, " ").trim();
+  const PLATFORM: Record<string, string> = {
+    playstation: "ps1", "playstation 1": "ps1", "playstation 2": "ps2", "playstation 3": "ps3", "playstation 4": "ps4", "playstation 5": "ps5",
+    psp: "psp", "playstation portable": "psp",
+    "nintendo 64": "n64", n64: "n64", snes: "snes", "super nintendo": "snes", "super nes": "snes", nes: "nes", famicom: "nes",
+    "nintendo entertainment system": "nes", gamecube: "gc", wii: "wii", "wii u": "wiiu", "nintendo switch": "switch", switch: "switch",
+    "nintendo ds": "nds", "nintendo 3ds": "3ds", "game boy": "gb", "game boy color": "gbc", "game boy advance": "gba",
+    "sega genesis": "genesis", genesis: "genesis", "mega drive": "genesis", "sega mega drive": "genesis", "sega 32x": "genesis",
+    dreamcast: "dreamcast", "sega dreamcast": "dreamcast", xbox: "xbox", "xbox 360": "xbox", pc: "port", "ms-dos": "port", dos: "port", windows: "port",
+  };
+  function platformOf(raw: string | null | undefined): string | null {
+    if (!raw) return null;
+    const c = clean(raw).toLowerCase();
+    if (PLATFORM[c]) return PLATFORM[c];
+    for (const p of app.platforms.values()) if (p.name.toLowerCase() === c || p.short.toLowerCase() === c) return p.id;
+    return null;
+  }
+  const SHORT: Record<string, string> = {
+    "Nintendo 64": "N64", PlayStation: "PS1", "PlayStation 2": "PS2", "PlayStation 3": "PS3", "PlayStation 4": "PS4", "Super Nintendo": "SNES",
+    "Nintendo Entertainment System": "NES", "Nintendo DS": "DS", "Nintendo 3DS": "3DS", "Nintendo Switch": "Switch", "Game Boy Advance": "GBA",
+    "Game Boy Color": "GBC", "Sega Genesis": "Genesis", "Sega Dreamcast": "Dreamcast", "Sega Game Gear": "Game Gear", "Sega Saturn": "Saturn", "Sega 32X": "32X",
+  };
+  const short = (raw: string) => {
+    const o = clean(raw);
+    return SHORT[o] ?? (o.length > 12 ? o.split(" ").map((w) => w[0]).join("").toUpperCase() : o);
+  };
+  /** The project's own name, without a trailing "(Game title)" that the card already shows. */
+  const projectName = (p: PortDef) => p.name.replace(/\s*\(([^()]*)\)\s*$/, (m, g: string) => (norm(g) === norm(p.game) ? "" : m)).trim() || p.name;
+  const day = (iso: string | null | undefined) =>
+    iso ? new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : null;
+
+  // ---- data
   async function load() {
     cat = await api.catalog();
     // Arriving from search with something to show.
@@ -62,38 +81,60 @@
       else if (b) showSheet({ kind: "web", b });
     }
   }
-  onMount(() => {
-    load();
-    api.checkUpdates().then((u) => (updates = Object.fromEntries(u.map((x) => [x.id, x])))).catch(() => {});
-  });
-  // Reload the catalog when an install finishes.
+  const loadUpdates = () => api.availableUpdates().then((u) => (updates = u)).catch(() => (updates = updates ?? []));
+  // Load once, then again whenever an install finishes.
+  let busyCount = -1;
   $effect(() => {
-    void Object.keys(app.installing).length;
-    load();
+    const n = Object.keys(app.installing).length;
+    if (busyCount === -1 || n < busyCount) {
+      load();
+      loadUpdates();
+    }
+    busyCount = n;
   });
 
   const installed = $derived(new Map((cat?.installed ?? []).map((a) => [a.id, a])));
+  const upById = $derived(new Map((updates ?? []).map((u) => [u.id, u])));
   const consoles = $derived.by(() => {
     const c = new Map<string, number>();
     for (const p of cat?.ports ?? []) for (const o of p.original) c.set(o, (c.get(o) ?? 0) + 1);
     return [...c.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
   });
-  const ports = $derived(
-    (cat?.ports ?? [])
-      .filter((p) => !consoleFilter || p.original.includes(consoleFilter))
-      .filter((p) => !app.query || norm(`${p.game} ${p.name}`).includes(norm(app.query)))
-      .sort((a, b) => Number(installed.has(b.id)) - Number(installed.has(a.id)) || Number(b.featured) - Number(a.featured) || a.game.localeCompare(b.game)),
+  const sorted = $derived(
+    [...(cat?.ports ?? [])].sort(
+      (a, b) => Number(installed.has(b.id)) - Number(installed.has(a.id)) || Number(b.featured) - Number(a.featured) || a.game.localeCompare(b.game),
+    ),
   );
-  const short = (raw: string) => {
-    const o = raw.replace(/\s*\(.*?\)\s*/g, " ").trim();
-    return (
-      ({ "Nintendo 64": "N64", PlayStation: "PS1", "PlayStation 2": "PS2", "PlayStation 4": "PS4", GameCube: "GC", "Super Nintendo": "SNES", "Sega Dreamcast": "DC", "Nintendo Entertainment System": "NES" } as Record<string, string>)[o] ??
-      (o.length > 10 ? o.split(" ").map((w) => w[0]).join("").toUpperCase() : o)
-    );
-  };
+  // Several ports of one game share its picture: only the first card shows it, the rest show the console.
+  const picOwner = $derived.by(() => {
+    const m = new Map<string, string>();
+    for (const p of sorted) if (!m.has(p.game)) m.set(p.game, p.id);
+    return m;
+  });
+  const ports = $derived(
+    sorted
+      .filter((p) => !consoleFilter || p.original.includes(consoleFilter)),
+  );
 
   const found = (e: EmulatorDef) => emulators.find((x) => x.id === e.id || x.id.startsWith(`${e.id}-`));
+  const baseId = (id: string) => id.replace(/-\d+$/, "");
+  const defOf = (id: string) => cat?.emulators.find((e) => e.id === baseId(id));
+  const emuStatus = (e: EmulatorDef, f: Emulator | undefined) =>
+    f ? (f.managed ? "Installed by OnionRing" : "Found on this PC") : e.repo ? "Ready to install" : "From its website";
 
+  /** Where an update's picture comes from. */
+  function upArt(u: AvailableUpdate): { kind: "port" | "emulator"; id: string; system: string | null } {
+    if (u.kind === "port") {
+      const p = cat?.ports.find((x) => x.id === u.id);
+      return { kind: "port", id: u.id, system: platformOf(p?.original[0]) };
+    }
+    const plat = emulators.find((x) => x.id === u.id)?.platforms[0] ?? defOf(u.id)?.platforms[0] ?? null;
+    return { kind: "emulator", id: baseId(u.id), system: plat };
+  }
+  const managedUps = $derived((updates ?? []).filter((u) => u.managed));
+  const otherUps = $derived((updates ?? []).filter((u) => !u.managed));
+
+  // ---- actions
   let rel = $state<ReleaseDetails | null>(null);
   let relLoading = $state(false);
   async function showSheet(s: NonNullable<typeof sheet>) {
@@ -114,6 +155,17 @@
     app.installing = { ...app.installing, [id]: "Starting" };
     api.installLatest(id).catch(() => {});
   }
+  let updatingAll = $state(false);
+  async function updateAll() {
+    const list = managedUps.filter((u) => !app.installing[u.id]);
+    updatingAll = true;
+    app.installing = { ...app.installing, ...Object.fromEntries(list.map((u) => [u.id, "Waiting"])) };
+    for (const u of list) {
+      app.installing = { ...app.installing, [u.id]: "Starting" };
+      await api.installLatest(u.id).catch(() => {});
+    }
+    updatingAll = false;
+  }
   async function fromFile(id: string) {
     const file = await open({ multiple: false, filters: [{ name: "Archives", extensions: ["zip", "7z"] }] });
     if (typeof file === "string") {
@@ -125,86 +177,206 @@
     const x = m?.match(/(\d+)%/);
     return x ? Number(x[1]) / 100 : m ? 0.15 : 0;
   };
+
+  let newTitle = $state("");
+  let newUrl = $state("");
+  async function addOwn() {
+    try {
+      const g = await api.addBrowserGame(newTitle, newUrl);
+      newTitle = newUrl = "";
+      await load();
+      app.toast(`Added ${g.title}`, "ok");
+      showSheet({ kind: "web", b: g });
+    } catch (e) {
+      app.toast(String(e), "error");
+    }
+  }
+  async function removeOwn(b: BrowserGame) {
+    await api.removeBrowserGame(b.id);
+    sheet = null;
+    await load();
+  }
+  function playWeb(b: BrowserGame) {
+    api.openBrowserGame(b.id).catch((e) => app.toast(String(e), "error"));
+  }
+  const hover = (e: MouseEvent) => (e.currentTarget as HTMLElement).focus({ preventScroll: true });
+  const host = (u: string) => {
+    try {
+      return new URL(u).host.replace(/^www\./, "");
+    } catch {
+      return u;
+    }
+  };
 </script>
 
 <div class="get">
-  <div class="tabs">
-    {#each [["ports", "cart", "Ports"], ["emulators", "pad", "Emulators"], ["browser", "globe", "Browser"]] as [id, icon, label] (id)}
+  <nav class="tabs">
+    {#each TABS as [id, icon, label] (id)}
       <button class="tab" class:on={tab === id} data-nav onclick={() => { app.view = { ...app.view, tab: id }; sheet = null; }}>
-        <Glyph name={icon} size={36} /><span>{label}</span>
+        <Glyph name={icon} size={24} /><span>{label}</span>
+        {#if id === "updates" && updates?.length}<span class="badge" aria-label="{updates.length} updates">{updates.length}</span>{/if}
       </button>
     {/each}
-  </div>
+  </nav>
 
   {#if tab === "ports"}
-    <div class="filters">
-      <button class="f" class:on={!consoleFilter} data-nav onclick={() => (consoleFilter = null)}>All <em>{cat?.ports.length ?? ""}</em></button>
-      {#each consoles as [c, n] (c)}
-        <button class="f" class:on={consoleFilter === c} data-nav onclick={() => (consoleFilter = c)} title={c}>{short(c)} <em>{n}</em></button>
-      {/each}
+    <div class="bar">
+      <div class="filters">
+        <button class="f" class:on={!consoleFilter} data-nav onclick={() => (consoleFilter = null)}>All <em>{cat?.ports.length ?? ""}</em></button>
+        {#each consoles as [c, n] (c)}
+          <button class="f" class:on={consoleFilter === c} data-nav onclick={() => (consoleFilter = c)} title={c}>{short(c)} <em>{n}</em></button>
+        {/each}
+      </div>
     </div>
     <div class="grid">
       {#each ports as p, i (p.id)}
         {@const inst = installed.get(p.id)}
         {@const busy = app.installing[p.id]}
-        <button class="cart" data-nav style:--i={Math.min(i, 20)} onclick={() => showSheet({ kind: "port", p })}
-          onmouseenter={(e) => (e.currentTarget as HTMLElement).focus({ preventScroll: true })}>
-          <span class="cp"><Pic kind="port" id={p.id} icon="cart" /></span>
-          <span class="top label">{p.original.map(short).join(" ")}</span>
-          <span class="name">{p.game}</span>
-          <span class="by">{p.name}</span>
-          <span class="state">
-            {#if busy}
-              <span class="prog" style:--p={pct(busy)}></span>
-            {:else if inst}
-              <Glyph name={updates[p.id]?.available ? "refresh" : "check"} size={24} />
-            {:else}
-              <Glyph name="get" size={24} />
-            {/if}
+        <button class="card" data-nav style:--i={Math.min(i, 24)} onclick={() => showSheet({ kind: "port", p })} onmouseenter={hover}>
+          <span class="cp">
+            <Pic kind="port" id={p.id} icon="cart" system={platformOf(p.original[0])} plate={p.original[0] ? short(p.original[0]) : null} skip={picOwner.get(p.game) !== p.id} />
+          </span>
+          <span class="body">
+            <span class="name">{p.game}</span>
+            <span class="by">{projectName(p)}</span>
+          </span>
+          <span class="foot">
+            <span class="chips">{#each p.original.slice(0, 2) as o (o)}<span class="chip">{short(o)}</span>{/each}</span>
+            <span class="state" class:hot={inst && upById.has(p.id)}>
+              {#if busy}
+                <span class="prog" style:--p={pct(busy)}></span>
+              {:else if inst && upById.has(p.id)}
+                <span class="label">Update</span><Glyph name="refresh" size={24} />
+              {:else if inst}
+                <Glyph name="check" size={24} />
+              {:else}
+                <Glyph name="get" size={24} />
+              {/if}
+            </span>
+          </span>
+        </button>
+      {:else}
+        <p class="empty">No ports for that console yet.</p>
+      {/each}
+    </div>
+  {:else if tab === "emulators"}
+    <div class="grid">
+      {#each cat?.emulators ?? [] as e, i (e.id)}
+        {@const f = found(e)}
+        {@const busy = app.installing[e.id]}
+        {@const up = f ? upById.get(f.id) : undefined}
+        <button class="card" data-nav style:--i={i} onclick={() => showSheet({ kind: "emu", e })} onmouseenter={hover}>
+          <span class="cp"><Pic kind="emulator" id={e.id} icon="pad" system={e.platforms[0]} skip /></span>
+          <span class="body">
+            <span class="name">{e.name}</span>
+            <span class="by">{emuStatus(e, f)}{f?.version ? ` · ${f.version}` : ""}</span>
+          </span>
+          <span class="foot">
+            <span class="chips">{#each e.platforms.slice(0, 3) as p (p)}<span class="chip">{(app.platforms.get(p)?.short ?? p).replace("WII", "Wii")}</span>{/each}</span>
+            <span class="state" class:hot={!!up}>
+              {#if busy}<span class="prog" style:--p={pct(busy)}></span>
+              {:else if up}<span class="label">Update</span><Glyph name="refresh" size={24} />
+              {:else if f}<Glyph name={f.managed ? "check" : "folder"} size={24} />
+              {:else}<Glyph name={e.repo ? "get" : "globe"} size={24} />{/if}
+            </span>
           </span>
         </button>
       {/each}
     </div>
-  {:else if tab === "emulators"}
-    <div class="grid emus">
-      {#each cat?.emulators ?? [] as e, i (e.id)}
-        {@const f = found(e)}
-        {@const busy = app.installing[e.id]}
-        <button class="cart" data-nav style:--i={i} onclick={() => showSheet({ kind: "emu", e })}
-          onmouseenter={(ev) => (ev.currentTarget as HTMLElement).focus({ preventScroll: true })}>
-          <span class="cp light"><Pic kind="emulator" id={e.id} icon="pad" fit="contain" /></span>
-          <span class="top label">{e.platforms.map((p) => app.platforms.get(p)?.short ?? p).join(" ")}</span>
-          <span class="name">{e.name}</span>
-          <span class="by">{f ? (f.managed ? "Installed by OnionRing" : "Found on this PC") : e.repo ? "Ready to install" : "From its website"}</span>
-          <span class="state">
-            {#if busy}<span class="prog" style:--p={pct(busy)}></span>
-            {:else if f}<Glyph name={f.managed ? "check" : "folder"} size={24} />
-            {:else}<Glyph name={e.repo ? "get" : "globe"} size={24} />{/if}
+  {:else if tab === "browser"}
+    <div class="grid">
+      <button class="card add" data-nav onclick={() => showSheet({ kind: "add" })} onmouseenter={hover}>
+        <span class="plus"><Glyph name="plus" size={48} /></span>
+        <span class="name">Add your own</span>
+        <span class="by">Any game that runs in a browser</span>
+      </button>
+      {#each cat?.browser ?? [] as b, i (b.id)}
+        <button class="card" data-nav style:--i={Math.min(i, 24)} onclick={() => showSheet({ kind: "web", b })} onmouseenter={hover}>
+          <span class="cp"><Pic kind="browser" id={b.id} icon="globe" system={platformOf(b.original)} /></span>
+          <span class="body">
+            <span class="name">{b.title}</span>
+            <span class="by">{b.project}</span>
+          </span>
+          <span class="foot">
+            <span class="kind label"><Glyph name={STATUS[b.status][0]} size={12} />{STATUS[b.status][1]}</span>
+            <span class="state"><Glyph name={b.embed === "window" ? "play" : "globe"} size={24} /></span>
           </span>
         </button>
       {/each}
     </div>
   {:else}
-    <div class="grid">
-      <button class="cart add" data-nav onclick={() => showSheet({ kind: "add" })}
-        onmouseenter={(e) => (e.currentTarget as HTMLElement).focus({ preventScroll: true })}>
-        <Glyph name="plus" size={48} />
-        <span class="name">Add your own</span>
-      </button>
-      {#each cat?.browser ?? [] as b, i (b.id)}
-        <button class="cart" data-nav style:--i={Math.min(i, 20)} onclick={() => showSheet({ kind: "web", b })}
-          onmouseenter={(e) => (e.currentTarget as HTMLElement).focus({ preventScroll: true })}>
-          <span class="cp"><Pic kind="browser" id={b.id} icon="globe" /></span>
-          <span class="top label">{b.original ?? ""}</span>
-          <span class="name">{b.title}</span>
-          <span class="by">{b.project}</span>
-          <span class="state web">
-            <span class="kind label"><Glyph name={STATUS[b.status][0]} size={12} />{STATUS[b.status][1]}</span>
-            <Glyph name={b.embed === "window" ? "play" : "globe"} size={24} />
-          </span>
-        </button>
-      {/each}
-    </div>
+    <!-- Updates -->
+    {#if updates === null}
+      <div class="done checking">
+        <span class="spin"><Glyph name="refresh" size={48} /></span>
+        <h2>Checking for new versions</h2>
+      </div>
+    {:else if !updates.length}
+      <div class="done">
+        {#if app.theme === "pixel"}
+          <span class="tick px"><Glyph name="check" size={96} /></span>
+        {:else}
+          <svg class="tick ink" viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="ring" cx="60" cy="60" r="52" pathLength="1" />
+            <path class="mark" d="M36 62 L53 78 L86 42" pathLength="1" />
+          </svg>
+        {/if}
+        <h2>Everything is up to date</h2>
+        <p>New versions of your emulators and ports show up here.</p>
+      </div>
+    {:else}
+      <div class="uphead">
+        <h2>{updates.length} new {updates.length === 1 ? "version" : "versions"}</h2>
+        {#if managedUps.length}
+          <button class="btn primary" data-nav onclick={updateAll} disabled={updatingAll}>
+            <Glyph name="refresh" size={24} />{managedUps.length > 1 ? `Update all ${managedUps.length}` : "Update"}
+          </button>
+        {/if}
+      </div>
+      <div class="ups">
+        {#each [...managedUps, ...otherUps] as u, i (u.id)}
+          {@const a = upArt(u)}
+          {@const busy = app.installing[u.id]}
+          {@const def = u.managed ? null : defOf(u.id)}
+          <article class="up" style:--i={i}>
+            <span class="thumb">
+              <Pic kind={a.kind} id={a.id} icon={a.kind === "port" ? "cart" : "pad"} system={a.system} skip={a.kind === "emulator"} />
+            </span>
+            <div class="who">
+              <span class="label">{u.kind === "port" ? "Port" : "Emulator"}{u.managed ? "" : " · on this PC"}</span>
+              <h3>{u.name}</h3>
+            </div>
+            <div class="vers">
+              <span class="old">{u.installed}</span>
+              <span class="arrow"><Glyph name="back" size={24} /></span>
+              <span class="new">{u.latest}</span>
+              {#if day(u.published)}<span class="when">{day(u.published)}</span>{/if}
+            </div>
+            <div class="acts">
+              {#if busy}
+                <span class="prog" style:--p={pct(busy)}></span>
+              {:else if u.managed}
+                <button class="btn primary" data-nav onclick={() => install(u.id)}><Glyph name="refresh" size={24} />Update</button>
+              {/if}
+            </div>
+            {#if !u.managed}
+              <div class="why">
+                <Glyph name="info" size={24} />
+                <p>You set this copy up yourself, so OnionRing leaves it alone. {def?.repo ? "Install a fresh copy that OnionRing keeps up to date, or get the new version from its download page." : "Get the new version from its download page."}</p>
+                <div class="whybtns">
+                  {#if def?.repo && !busy}
+                    <button class="btn" data-nav onclick={() => install(def.id)}><Glyph name="get" size={24} />Install fresh copy</button>
+                  {/if}
+                  {#if u.url}
+                    <button class="btn" data-nav onclick={() => openUrl(u.url!)}><Glyph name="globe" size={24} />Download page</button>
+                  {/if}
+                </div>
+              </div>
+            {/if}
+          </article>
+        {/each}
+      </div>
+    {/if}
   {/if}
 </div>
 
@@ -214,106 +386,115 @@
     {#if sheet.kind === "port"}
       {@const p = sheet.p}
       {@const inst = installed.get(p.id)}
-      {@const up = updates[p.id]}
-      <div class="hero"><Pic kind="port" id={p.id} icon="cart" /></div>
-      <span class="label">{p.kind} · {p.original.join(", ")}</span>
-      <h2>{p.game}</h2>
-      <div class="by">{p.name}</div>
-      {#if p.blurb}<p class="blurb">{p.blurb}</p>{/if}
-      {#if p.requires}<p class="needs"><Glyph name="alert" size={24} /><span>{p.requires}</span></p>{/if}
-      <dl class="details">
-        <dt><Glyph name="globe" size={24} /></dt><dd><button class="link" data-nav onclick={() => openUrl(`https://github.com/${p.repo}`)}>github.com/{p.repo}</button></dd>
-        {#if p.licence}<dt><Glyph name="info" size={24} /></dt><dd>{p.licence}</dd>{/if}
-        {#if rel}
-          <dt><Glyph name="refresh" size={24} /></dt><dd>{rel.tag}{rel.published ? `, ${new Date(rel.published).toLocaleDateString()}` : ""}</dd>
-          {#if rel.size}<dt><Glyph name="disk" size={24} /></dt><dd>{bytes(rel.size)} download{rel.asset ? ` (${rel.asset})` : ""}</dd>{/if}
-        {:else if relLoading}
-          <dt><Glyph name="refresh" size={24} /></dt><dd class="faint">Checking the latest release…</dd>
-        {/if}
-        {#if inst}<dt><Glyph name="check" size={24} /></dt><dd>{inst.version} installed{inst.source.verified ? ", hash checked" : ""}</dd>{/if}
-      </dl>
-      <div class="btns">
+      {@const up = upById.get(p.id)}
+      <div class="hero"><Pic kind="port" id={p.id} icon="cart" system={platformOf(p.original[0])} /></div>
+      <div class="sbody">
+        <div class="kicker"><span class="chip">{p.kind}</span>{#each p.original as o (o)}<span class="chip">{clean(o)}</span>{/each}</div>
+        <h2>{p.game}</h2>
+        <div class="sub">{projectName(p)}</div>
+        {#if p.blurb}<p class="blurb">{p.blurb}</p>{/if}
+        {#if p.requires}<div class="callout"><Glyph name="alert" size={24} /><div><span class="label">You will need</span><p>{p.requires}</p></div></div>{/if}
+        <dl class="facts">
+          <div><dt><Glyph name="globe" size={24} />Source</dt><dd><button class="link" data-nav onclick={() => openUrl(`https://github.com/${p.repo}`)}>github.com/{p.repo}</button></dd></div>
+          {#if p.licence}<div><dt><Glyph name="info" size={24} />Licence</dt><dd>{p.licence}</dd></div>{/if}
+          {#if rel}
+            <div><dt><Glyph name="refresh" size={24} />Latest</dt><dd>{rel.tag}{rel.published ? ` · ${day(rel.published)}` : ""}</dd></div>
+            {#if rel.size}<div><dt><Glyph name="disk" size={24} />Size</dt><dd>{bytes(rel.size)} download</dd></div>{/if}
+          {:else if relLoading}
+            <div><dt><Glyph name="refresh" size={24} />Latest</dt><dd class="faint">Checking…</dd></div>
+          {/if}
+          {#if inst}<div><dt><Glyph name="check" size={24} />Installed</dt><dd>{inst.version}{inst.source.verified ? " · download checked" : ""}</dd></div>{/if}
+        </dl>
+      </div>
+      <div class="actions">
         {#if app.installing[p.id]}
-          <div class="prog wide" style:--p={pct(app.installing[p.id])}></div>
-          <span class="label">{app.installing[p.id]}</span>
+          <div class="progress"><div class="prog wide" style:--p={pct(app.installing[p.id])}></div><span class="label">{app.installing[p.id]}</span></div>
         {:else}
           <button class="btn big primary" data-nav onclick={() => install(p.id)}>
-            <Glyph name={inst ? "refresh" : "get"} size={24} />{inst ? (up?.available ? `Update to ${up.latest}` : "Reinstall") : "Get"}
+            <Glyph name={inst ? "refresh" : "get"} size={24} />{inst ? (up ? `Update to ${up.latest}` : "Reinstall") : "Get"}
           </button>
           <button class="btn big" data-nav onclick={() => fromFile(p.id)}><Glyph name="zip" size={24} />From a zip</button>
-          <button class="btn big icon" data-nav onclick={() => openUrl(`https://github.com/${p.repo}`)} aria-label="Project page"><Glyph name="globe" size={24} /></button>
         {/if}
       </div>
     {:else if sheet.kind === "web"}
       {@const b = sheet.b}
-      <div class="hero"><Pic kind="browser" id={b.id} icon="globe" /></div>
-      <span class="label">{b.original ?? ""}</span>
-      <h2>{b.title}</h2>
-      <div class="by">{b.project}</div>
-      <div class="facts">
-        <span><Glyph name={STATUS[b.status][0]} size={24} />{STATUS[b.status][1]}</span>
-        {#if b.multiplayer}<span><Glyph name="pad" size={24} />Online</span>{/if}
-        <span><Glyph name={b.embed === "window" ? "play" : "globe"} size={24} />{b.embed === "window" ? "Plays in OnionRing" : "Opens in your browser"}</span>
+      <div class="hero"><Pic kind="browser" id={b.id} icon="globe" system={platformOf(b.original)} /></div>
+      <div class="sbody">
+        <div class="kicker">
+          <span class="chip"><Glyph name={STATUS[b.status][0]} size={12} />{STATUS[b.status][1]}</span>
+          {#if b.original}<span class="chip">{b.original}</span>{/if}
+          {#if b.multiplayer}<span class="chip"><Glyph name="pad" size={12} />Online</span>{/if}
+        </div>
+        <h2>{b.title}</h2>
+        <div class="sub">{b.project}</div>
+        {#if b.summary}<p class="blurb">{b.summary}</p>{/if}
+        {#if b.needsFiles}<div class="callout"><Glyph name="folder" size={24} /><div><span class="label">You will need</span><p>{b.needsFiles}</p></div></div>{/if}
+        <dl class="facts">
+          <div><dt><Glyph name={b.embed === "window" ? "play" : "globe"} size={24} />Plays</dt><dd>{b.embed === "window" ? "In its own OnionRing window" : "In your web browser"}</dd></div>
+          <div><dt><Glyph name="globe" size={24} />Website</dt><dd><button class="link" data-nav onclick={() => openUrl(b.url)}>{host(b.url)}</button></dd></div>
+          {#if b.source}<div><dt><Glyph name="info" size={24} />Source</dt><dd><button class="link" data-nav onclick={() => openUrl(b.source!)}>{b.source.replace(/^https?:\/\/(www\.)?/, "")}</button></dd></div>{/if}
+          {#if b.controls}<div><dt><Glyph name="pad" size={24} />Controls</dt><dd>{b.controls.replace("+", " and ").replace("both", "keyboard, mouse or controller")}</dd></div>{/if}
+        </dl>
       </div>
-      {#if b.summary}<p class="needs"><Glyph name="info" size={24} /><span>{b.summary}</span></p>{/if}
-      {#if b.needsFiles}<p class="needs"><Glyph name="folder" size={24} /><span>{b.needsFiles}</span></p>{/if}
-      <dl class="details">
-        <dt><Glyph name="globe" size={24} /></dt><dd><button class="link" data-nav onclick={() => openUrl(b.url)}>{new URL(b.url).host}</button></dd>
-        {#if b.source}<dt><Glyph name="info" size={24} /></dt><dd><button class="link" data-nav onclick={() => openUrl(b.source!)}>{b.source.replace(/^https?:\/\//, "")}</button></dd>{/if}
-        {#if b.controls}<dt><Glyph name="pad" size={24} /></dt><dd>{b.controls.replace("+", " and ").replace("both", "keyboard, mouse or controller")}</dd>{/if}
-      </dl>
-      <div class="btns">
+      <div class="actions">
         <button class="btn big primary" data-nav onclick={() => playWeb(b)}>
           <Glyph name={b.embed === "window" ? "play" : "globe"} size={24} />{b.embed === "window" ? "Play" : "Open"}
         </button>
-        {#if b.source}
-          <button class="btn big icon" data-nav onclick={() => openUrl(b.source!)} aria-label="Source code"><Glyph name="info" size={24} /></button>
-        {/if}
         {#if b.status === "custom"}
           <button class="btn big" data-nav onclick={() => removeOwn(b)}><Glyph name="close" size={24} />Remove</button>
         {/if}
       </div>
     {:else if sheet.kind === "add"}
-      <span class="label">Browser game</span>
-      <h2>Add your own</h2>
-      <label class="in"><span class="label">Name</span><input class="field" data-nav bind:value={newTitle} spellcheck="false" /></label>
-      <label class="in"><span class="label">Link</span><input class="field" data-nav bind:value={newUrl} placeholder="https://" spellcheck="false"
-        onkeydown={(e) => e.key === "Enter" && addOwn()} /></label>
-      <p class="needs"><Glyph name="info" size={24} /><span>Saved only on this PC. It plays in its own window, kept apart from OnionRing.</span></p>
-      <div class="btns">
+      <div class="sbody pad">
+        <div class="kicker"><span class="chip"><Glyph name="globe" size={12} />Browser game</span></div>
+        <h2>Add your own</h2>
+        <label class="in"><span class="label">Name</span><input class="field" data-nav bind:value={newTitle} spellcheck="false" /></label>
+        <label class="in"><span class="label">Link</span><input class="field" data-nav bind:value={newUrl} placeholder="https://" spellcheck="false"
+          onkeydown={(e) => e.key === "Enter" && addOwn()} /></label>
+        <div class="callout quiet"><Glyph name="info" size={24} /><div><p>Saved only on this PC. It plays in its own window, kept apart from OnionRing.</p></div></div>
+      </div>
+      <div class="actions">
         <button class="btn big primary" data-nav onclick={addOwn} disabled={!newTitle.trim() || !newUrl.trim()}><Glyph name="plus" size={24} />Add</button>
       </div>
     {:else}
       {@const e = sheet.e}
       {@const f = found(e)}
-      <div class="hero light"><Pic kind="emulator" id={e.id} icon="pad" fit="contain" /></div>
-      <span class="label">{e.platforms.map((p) => app.platforms.get(p)?.name ?? p).join(", ")}</span>
-      <h2>{e.name}</h2>
-      {#if f}<div class="by">{f.managed ? "Installed by OnionRing" : "Found on this PC"}{f.version ? `, version ${f.version}` : ""}</div>{/if}
-      {#if e.notes}<p class="needs"><Glyph name="info" size={24} /><span>{e.notes}</span></p>{/if}
-      {#if e.requires}<p class="needs"><Glyph name="alert" size={24} /><span>{e.requires}</span></p>{/if}
-      <dl class="details">
-        {#if e.repo}<dt><Glyph name="globe" size={24} /></dt><dd><button class="link" data-nav onclick={() => openUrl(`https://github.com/${e.repo}`)}>github.com/{e.repo}</button></dd>{/if}
-        {#if e.homepage}<dt><Glyph name="home" size={24} /></dt><dd><button class="link" data-nav onclick={() => openUrl(e.homepage!)}>{new URL(e.homepage).host}</button></dd>{/if}
-        {#if rel}
-          <dt><Glyph name="refresh" size={24} /></dt><dd>{rel.tag}{rel.published ? `, ${new Date(rel.published).toLocaleDateString()}` : ""}</dd>
-          {#if rel.size}<dt><Glyph name="disk" size={24} /></dt><dd>{bytes(rel.size)} download</dd>{/if}
-        {:else if relLoading}
-          <dt><Glyph name="refresh" size={24} /></dt><dd class="faint">Checking the latest release…</dd>
+      {@const up = f ? upById.get(f.id) : undefined}
+      <div class="hero"><Pic kind="emulator" id={e.id} icon="pad" system={e.platforms[0]} skip /></div>
+      <div class="sbody">
+        <div class="kicker">{#each e.platforms as p (p)}<span class="chip">{app.platforms.get(p)?.name ?? p}</span>{/each}</div>
+        <h2>{e.name}</h2>
+        <div class="sub">{emuStatus(e, f)}{f?.version ? `, version ${f.version}` : ""}</div>
+        {#if up}
+          <div class="callout hot"><Glyph name="refresh" size={24} /><div><span class="label">Version {up.latest} is out</span>
+            <p>{up.managed ? "OnionRing can update it for you." : "You set this copy up yourself, so OnionRing leaves it alone. Install a fresh copy, or get the new version from its download page."}</p></div></div>
         {/if}
-        {#if f}<dt><Glyph name="folder" size={24} /></dt><dd><button class="link" data-nav onclick={() => api.reveal(f.exe)}>Show on this PC</button></dd>{/if}
-      </dl>
-      <div class="btns">
+        {#if e.notes}<div class="callout quiet"><Glyph name="info" size={24} /><div><p>{e.notes}</p></div></div>{/if}
+        {#if e.requires}<div class="callout"><Glyph name="alert" size={24} /><div><span class="label">You will need</span><p>{e.requires}</p></div></div>{/if}
+        <dl class="facts">
+          {#if e.repo}<div><dt><Glyph name="globe" size={24} />Source</dt><dd><button class="link" data-nav onclick={() => openUrl(`https://github.com/${e.repo}`)}>github.com/{e.repo}</button></dd></div>{/if}
+          {#if e.homepage}<div><dt><Glyph name="home" size={24} />Website</dt><dd><button class="link" data-nav onclick={() => openUrl(e.homepage!)}>{host(e.homepage)}</button></dd></div>{/if}
+          {#if rel}
+            <div><dt><Glyph name="refresh" size={24} />Latest</dt><dd>{rel.tag}{rel.published ? ` · ${day(rel.published)}` : ""}</dd></div>
+            {#if rel.size}<div><dt><Glyph name="disk" size={24} />Size</dt><dd>{bytes(rel.size)} download</dd></div>{/if}
+          {:else if relLoading}
+            <div><dt><Glyph name="refresh" size={24} />Latest</dt><dd class="faint">Checking…</dd></div>
+          {/if}
+          {#if f}<div><dt><Glyph name="folder" size={24} />This PC</dt><dd><button class="link" data-nav onclick={() => api.reveal(f.exe)}>Show in its folder</button></dd></div>{/if}
+        </dl>
+      </div>
+      <div class="actions">
         {#if app.installing[e.id]}
-          <div class="prog wide" style:--p={pct(app.installing[e.id])}></div>
-          <span class="label">{app.installing[e.id]}</span>
+          <div class="progress"><div class="prog wide" style:--p={pct(app.installing[e.id])}></div><span class="label">{app.installing[e.id]}</span></div>
         {:else if e.repo}
-          <button class="btn big primary" data-nav onclick={() => install(e.id)}><Glyph name="get" size={24} />{f?.managed ? "Update" : "Install"}</button>
+          <button class="btn big primary" data-nav onclick={() => install(e.id)}><Glyph name={f ? "refresh" : "get"} size={24} />{f?.managed ? "Update" : f ? "Install fresh copy" : "Install"}</button>
+          {#if up?.url && !up.managed}<button class="btn big" data-nav onclick={() => openUrl(up.url!)}><Glyph name="globe" size={24} />Download page</button>{/if}
         {:else if e.homepage}
           <button class="btn big" data-nav onclick={() => openUrl(e.homepage!)}><Glyph name="globe" size={24} />Website</button>
         {/if}
       </div>
     {/if}
+    <button class="btn icon close" data-nav onclick={() => (sheet = null)} aria-label="Close"><Glyph name="close" size={24} /></button>
   </aside>
 {/if}
 
@@ -321,127 +502,372 @@
   .get {
     height: 100%;
     overflow-y: auto;
-    padding: 24px 56px 60px;
+    padding: 24px 56px 64px;
   }
+
+  /* ---- tabs ---------------------------------------------------------------------------- */
   .tabs {
     display: flex;
-    gap: 10px;
-    margin-bottom: 22px;
+    gap: 8px;
+    margin-bottom: 24px;
   }
   .tab {
     display: flex;
     align-items: center;
     gap: 12px;
-    height: 60px;
+    height: 52px;
     padding: 0 20px;
     font-family: var(--title);
-    font-size: 22px;
+    font-size: 21px;
     font-weight: 800;
   }
-  :global(:root[data-theme="pixel"]) .tab.on {
-    outline: var(--border) solid var(--line);
+  .badge {
+    display: grid;
+    place-items: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
+    font-family: var(--label);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
   }
+  :global(:root[data-theme="pixel"]) .tabs {
+    border-bottom: var(--border) solid var(--line);
+  }
+  :global(:root[data-theme="pixel"]) .tab:hover {
+    background: var(--hi-bg);
+    color: var(--hi-fg);
+  }
+  :global(:root[data-theme="pixel"]) .badge {
+    background: var(--fg);
+    color: var(--bg);
+    animation: pop 0.3s steps(3) both;
+  }
+  :global(:root[data-theme="pixel"]) .tab:is(.on, :hover, :focus-visible) .badge {
+    background: var(--hi-fg);
+    color: var(--hi-bg);
+  }
+  :global(:root[data-theme="paper"]) .tabs {
+    box-shadow: inset 0 -1px 0 var(--line);
+  }
+  :global(:root[data-theme="paper"]) .tab {
+    color: var(--muted);
+    transition: color 0.2s;
+  }
+  :global(:root[data-theme="paper"]) .tab:hover,
   :global(:root[data-theme="paper"]) .tab.on {
-    color: var(--accent);
+    color: var(--fg);
   }
   :global(:root[data-theme="paper"]) .tab.on::before {
     content: "";
     position: absolute;
-    left: 20px;
-    right: 20px;
-    bottom: 4px;
+    left: 16px;
+    right: 16px;
+    bottom: 0;
     height: 3px;
     background: var(--accent);
+    animation: ink 0.3s var(--ease) both;
+    transform-origin: left;
+  }
+  :global(:root[data-theme="paper"]) .tab.on :global(svg) {
+    color: var(--accent);
+  }
+  :global(:root[data-theme="paper"]) .badge {
+    border-radius: 12px;
+    background: var(--accent);
+    color: var(--panel);
+    animation: pop 0.4s var(--ease) both;
+  }
+
+  /* ---- filter chips ---------------------------------------------------------------------- */
+  .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
   }
   .filters {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 22px;
+    gap: 8px;
   }
   .f {
-    height: 38px;
-    padding: 0 12px;
+    height: 36px;
+    padding: 0 14px;
     font-family: var(--label);
     font-weight: 700;
     font-size: 14px;
   }
   .f em {
     font-style: normal;
-    opacity: 0.6;
+    opacity: 0.55;
     margin-left: 4px;
   }
-  :global(:root[data-theme="pixel"]) .f.on {
-    outline: var(--border) solid var(--line);
+  :global(:root[data-theme="pixel"]) .f {
+    border: 2px solid var(--line);
+    text-transform: uppercase;
+    font-size: 12px;
+  }
+  :global(:root[data-theme="pixel"]) .f:hover {
+    background: var(--hi-bg);
+    color: var(--hi-fg);
+  }
+  :global(:root[data-theme="paper"]) .f {
+    border-radius: 18px;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line) 30%, transparent);
+    transition: box-shadow 0.2s, background 0.2s;
+  }
+  :global(:root[data-theme="paper"]) .f:hover {
+    box-shadow: inset 0 0 0 1.5px var(--line);
   }
   :global(:root[data-theme="paper"]) .f.on {
-    color: var(--accent-2);
-    box-shadow: inset 0 -2px 0 var(--accent-2);
+    background: var(--fg);
+    color: var(--panel);
+    box-shadow: none;
   }
+  :global(:root[data-theme="paper"]) .f:focus-visible::after {
+    left: 14px;
+    right: 14px;
+  }
+
+  /* ---- cards ----------------------------------------------------------------------------- */
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(224px, 1fr));
+    gap: 24px 20px;
   }
-  .cart {
+  .card {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-    min-height: 150px;
-    padding: 14px 16px;
     text-align: left;
-    content-visibility: auto;
-    contain-intrinsic-size: 210px 150px;
+    min-width: 0;
     animation: rise 0.4s var(--ease) both;
-    animation-delay: calc(var(--i) * 18ms);
+    animation-delay: calc(var(--i) * 16ms);
   }
-  .cart .name {
+  .cp {
+    position: relative;
+    display: block;
+    aspect-ratio: 16 / 9;
+    flex: none;
+    background: var(--panel);
+    --sa-w: 144px;
+    overflow: hidden;
+  }
+  .body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 16px 0;
+    min-height: 82px;
+  }
+  .name {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
     font-family: var(--title);
     font-weight: 800;
-    font-size: 21px;
-    line-height: 1.05;
+    font-size: 19px;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
   }
-  .cart .by,
-  .sheet .by {
+  .by {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     font-family: var(--label);
     font-size: 13px;
-    color: var(--faint);
+    color: var(--muted);
   }
-  .cart:focus-visible .by {
-    color: inherit;
-  }
-  .state {
-    margin-top: auto;
-    align-self: flex-end;
-    min-height: 24px;
+  .foot {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: auto;
+    padding: 14px 16px 14px;
+    min-height: 54px;
   }
-  :global(:root[data-theme="pixel"]) .cart {
+  .chips,
+  .kicker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-width: 0;
+  }
+  .chips {
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 22px;
+    padding: 0 7px;
+    font-family: var(--label);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .state {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+    min-height: 24px;
+  }
+  .kind {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  :global(:root[data-theme="pixel"]) .card {
     border: var(--border) solid var(--line);
     animation-timing-function: steps(3);
   }
-  :global(:root[data-theme="paper"]) .cart {
-    background: var(--panel);
-    box-shadow: 0 0 0 1px var(--line);
-    transition: transform 0.3s var(--ease), box-shadow 0.3s;
+  :global(:root[data-theme="pixel"]) .cp {
+    border-bottom: var(--border) solid var(--line);
   }
-  :global(:root[data-theme="paper"]) .cart:focus-visible {
+  :global(:root[data-theme="pixel"]) .card :global(.art) {
+    filter: var(--img-filter);
+  }
+  :global(:root[data-theme="pixel"]) .chip {
+    box-shadow: inset 0 0 0 2px currentColor;
+  }
+  :global(:root[data-theme="pixel"]) .card:hover {
+    background: var(--hi-bg);
+    color: var(--hi-fg);
+  }
+  :global(:root[data-theme="pixel"]) .card:is(:hover, :focus-visible) .by {
+    color: inherit;
+  }
+  /* Marching ants around the tile under the pointer or focus. */
+  :global(:root[data-theme="pixel"]) .card:is(:hover, :focus-visible)::after {
+    content: "";
+    position: absolute;
+    inset: -9px;
+    pointer-events: none;
+    background:
+      linear-gradient(90deg, var(--fg) 50%, transparent 0) 0 0 / 8px 3px repeat-x,
+      linear-gradient(90deg, var(--fg) 50%, transparent 0) 0 100% / 8px 3px repeat-x,
+      linear-gradient(0deg, var(--fg) 50%, transparent 0) 0 0 / 3px 8px repeat-y,
+      linear-gradient(0deg, var(--fg) 50%, transparent 0) 100% 0 / 3px 8px repeat-y;
+    animation: ants 0.6s steps(2) infinite;
+  }
+  :global(:root[data-theme="pixel"]) .state.hot {
+    background: var(--fg);
+    color: var(--bg);
+    padding: 0 0 0 8px;
+  }
+  :global(:root[data-theme="pixel"]) .card:is(:hover, :focus-visible) .state.hot {
+    background: var(--hi-fg);
+    color: var(--hi-bg);
+  }
+
+  :global(:root[data-theme="paper"]) .card {
+    background: var(--panel);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--line) 22%, transparent);
+    transition:
+      transform 0.3s var(--ease),
+      box-shadow 0.3s var(--ease);
+  }
+  :global(:root[data-theme="paper"]) .cp {
+    box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--line) 22%, transparent);
+  }
+  :global(:root[data-theme="paper"]) .card:is(:hover, :focus-visible) {
     transform: translateY(-4px);
     box-shadow:
-      0 0 0 2px var(--line),
-      5px 5px 0 var(--line);
+      0 0 0 1.5px var(--line),
+      6px 6px 0 var(--line);
   }
-  :global(:root[data-theme="paper"]) .cart:focus-visible::after {
+  :global(:root[data-theme="paper"]) .card:is(:hover, :focus-visible) :global(.art) {
+    filter: var(--img-filter-focus);
+  }
+  :global(:root[data-theme="paper"]) .card:focus-visible::after {
     display: none;
   }
-  :global(:root[data-theme="paper"]) .cart .top {
-    color: var(--accent-2);
+  /* The red bookmark ribbon drops onto the tile under the pointer or focus. */
+  :global(:root[data-theme="paper"]) .card:is(:hover, :focus-visible)::before {
+    content: "";
+    position: absolute;
+    top: -4px;
+    right: 16px;
+    z-index: 2;
+    width: 16px;
+    height: 30px;
+    background: var(--accent);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 76%, 0 100%);
+    animation: ribbon 0.35s var(--ease) both;
   }
-  /* progress: segmented in pixel, a ruled line in paper */
+  @keyframes ribbon {
+    from {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+  }
+  :global(:root[data-theme="paper"]) .chip {
+    color: var(--accent-2);
+    padding: 0;
+    letter-spacing: 0.05em;
+  }
+  :global(:root[data-theme="paper"]) .chips {
+    gap: 10px;
+  }
+  :global(:root[data-theme="paper"]) .state.hot {
+    color: var(--accent);
+  }
+
+  .card.add {
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-align: center;
+    padding: 24px;
+  }
+  .card.add .name {
+    min-height: 0;
+  }
+  .card.add .plus {
+    display: grid;
+    place-items: center;
+    width: 88px;
+    height: 88px;
+    margin-bottom: 8px;
+  }
+  :global(:root[data-theme="pixel"]) .card.add {
+    border-style: dashed;
+  }
+  :global(:root[data-theme="pixel"]) .card.add .plus {
+    border: var(--border) solid currentColor;
+  }
+  :global(:root[data-theme="paper"]) .card.add {
+    background: transparent;
+    box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--line) 40%, transparent);
+  }
+  :global(:root[data-theme="paper"]) .card.add .plus {
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1.5px var(--line);
+    color: var(--accent);
+  }
+  .empty {
+    grid-column: 1 / -1;
+    margin: 48px 0;
+    text-align: center;
+    color: var(--muted);
+    font-size: 18px;
+  }
+
+  /* ---- progress: segmented in pixel, a ruled line in paper -------------------------------- */
   .prog {
-    width: 90px;
+    width: 96px;
     height: 14px;
     position: relative;
   }
@@ -472,95 +898,203 @@
     top: auto;
     bottom: -2px;
   }
-  .cart.add {
-    justify-content: center;
+
+  /* ---- updates --------------------------------------------------------------------------- */
+  .uphead {
+    display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
   }
-  :global(:root[data-theme="pixel"]) .cart.add {
-    border-style: dashed;
+  .uphead h2,
+  .done h2 {
+    margin: 0;
+    font-family: var(--title);
+    font-weight: 800;
+    font-size: 28px;
+    line-height: 1.1;
   }
-  :global(:root[data-theme="paper"]) .cart.add {
-    background: transparent;
-    box-shadow: inset 0 0 0 1.5px var(--line);
-  }
-  .in {
+  .ups {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin-top: 10px;
+    gap: 16px;
   }
-  .field {
-    height: 52px;
-    padding: 0 14px;
-    font-size: 17px;
-    background: var(--bg);
-    border: var(--border) solid var(--line);
-  }
-  .cp {
-    position: relative;
-    display: block;
-    width: calc(100% + 32px);
-    height: 120px;
-    margin: -14px -16px 6px;
-    background: var(--panel);
-  }
-  .cp.light,
-  .hero.light {
-    background: #fff;
-  }
-  :global(:root[data-theme="pixel"]) .cp {
-    border-bottom: var(--border) solid var(--line);
-  }
-  :global(:root[data-theme="paper"]) .cp {
-    border-bottom: 1px solid var(--line);
-  }
-  .hero {
-    position: relative;
-    flex: none;
-    height: 240px;
-    margin: -36px -34px 14px;
-    background: var(--panel);
-  }
-  :global(:root[data-theme="pixel"]) .hero {
-    border-bottom: var(--border) solid var(--line);
-  }
-  .blurb {
-    margin: 6px 0 0;
-    font-size: 16px;
-    color: var(--muted);
-  }
-  .details {
+  .up {
     display: grid;
-    grid-template-columns: 24px 1fr;
-    gap: 12px 14px;
+    grid-template-columns: 120px minmax(0, 1fr) auto auto;
     align-items: center;
-    margin: 18px 0 0;
-    font-family: var(--label);
-    font-size: 15px;
+    gap: 0 24px;
+    padding: 16px 20px 16px 16px;
+    animation: rise 0.4s var(--ease) both;
+    animation-delay: calc(var(--i) * 40ms);
   }
-  .details dd {
-    margin: 0;
-    overflow-wrap: anywhere;
+  .thumb {
+    position: relative;
+    width: 120px;
+    aspect-ratio: 3 / 2;
+    overflow: hidden;
+    background: var(--panel);
+    --sa-w: 96px;
   }
-  .link {
-    text-align: left;
-    text-decoration: underline;
-    text-underline-offset: 4px;
+  .who {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
   }
-  .faint {
+  .who .label {
     color: var(--faint);
   }
-  .state.web {
-    align-self: stretch;
-    justify-content: space-between;
+  .who h3 {
+    margin: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-family: var(--title);
+    font-weight: 800;
+    font-size: 24px;
+    line-height: 1.15;
   }
-  .kind {
-    display: flex;
+  .vers {
+    display: grid;
+    grid-template-columns: auto auto auto;
     align-items: center;
-    gap: 6px;
+    gap: 4px 10px;
+    font-family: var(--label);
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .vers .old {
+    color: var(--faint);
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+  }
+  .vers .arrow {
+    display: flex;
+    transform: scaleX(-1);
+  }
+  .vers .when {
+    grid-column: 1 / -1;
+    justify-self: end;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--faint);
+  }
+  .acts {
+    display: flex;
+    justify-content: flex-end;
+  }
+  .acts:empty {
+    display: none;
+  }
+  .why {
+    grid-column: 2 / -1;
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
+    padding-top: 14px;
+  }
+  .why p {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.4;
+    color: var(--muted);
+    max-width: 62ch;
+  }
+  .whybtns {
+    display: flex;
+    gap: 8px;
+  }
+  :global(:root[data-theme="pixel"]) .up {
+    border: var(--border) solid var(--line);
+    animation-timing-function: steps(3);
+  }
+  :global(:root[data-theme="pixel"]) .thumb {
+    box-shadow: 0 0 0 2px var(--line);
+  }
+  :global(:root[data-theme="pixel"]) .why {
+    border-top: 2px dashed var(--faint);
+  }
+  :global(:root[data-theme="paper"]) .up {
+    background: var(--panel);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--line) 22%, transparent);
+  }
+  :global(:root[data-theme="paper"]) .vers .new {
+    color: var(--accent);
+  }
+  :global(:root[data-theme="paper"]) .why {
+    border-top: 1px solid color-mix(in srgb, var(--line) 18%, transparent);
+  }
+  :global(:root[data-theme="paper"]) .why > :global(svg) {
+    color: var(--accent-2);
   }
 
+  .done {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 9vh 0 48px;
+    text-align: center;
+  }
+  .done p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 16px;
+  }
+  .tick {
+    display: grid;
+    place-items: center;
+    width: 160px;
+    height: 160px;
+    margin-bottom: 8px;
+  }
+  .tick.px {
+    border: var(--border) solid var(--line);
+    animation: wipe 0.6s steps(6) both;
+  }
+  @keyframes wipe {
+    from {
+      clip-path: inset(0 100% 0 0);
+    }
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+  .tick.ink {
+    fill: none;
+    stroke: var(--fg);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .tick.ink .ring {
+    stroke-width: 1.5;
+    stroke-dasharray: 1;
+    animation: draw 0.7s var(--ease) both;
+  }
+  .tick.ink .mark {
+    stroke: var(--accent);
+    stroke-width: 6;
+    stroke-dasharray: 1;
+    animation: draw 0.5s 0.45s var(--ease) both;
+  }
+  @keyframes draw {
+    from {
+      stroke-dashoffset: 1;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  .spin {
+    display: grid;
+    animation: blink 1s steps(2) infinite;
+  }
+
+  /* ---- details sheet --------------------------------------------------------------------- */
   .scrim {
     position: fixed;
     inset: 0;
@@ -570,7 +1104,7 @@
     background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.85) 0 2px, rgba(0, 0, 0, 0.6) 2px 4px);
   }
   :global(:root[data-theme="paper"]) .scrim {
-    background: rgba(238, 235, 227, 0.7);
+    background: rgba(238, 235, 227, 0.72);
   }
   .sheet {
     position: fixed;
@@ -578,13 +1112,10 @@
     right: 0;
     bottom: var(--hints);
     z-index: 45;
-    width: min(520px, 92vw);
-    padding: 36px 34px;
+    width: min(560px, 92vw);
     background: var(--bg);
-    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 10px;
   }
   :global(:root[data-theme="pixel"]) .sheet {
     border-left: var(--border) solid var(--line);
@@ -592,7 +1123,7 @@
   }
   :global(:root[data-theme="paper"]) .sheet {
     background: var(--panel);
-    border-left: 2px solid var(--line);
+    box-shadow: -1px 0 0 var(--line), -12px 0 0 color-mix(in srgb, var(--line) 6%, transparent);
     animation: sheetin 0.35s var(--ease) both;
   }
   @keyframes sheetin {
@@ -600,38 +1131,255 @@
       transform: translateX(100%);
     }
   }
+  .close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 2;
+    background: var(--bg);
+  }
+  :global(:root[data-theme="paper"]) .close {
+    background: var(--panel);
+  }
+  .hero {
+    position: relative;
+    flex: none;
+    aspect-ratio: 16 / 9;
+    max-height: 30vh;
+    width: 100%;
+    background: var(--panel);
+    --sa-w: 192px;
+  }
+  :global(:root[data-theme="pixel"]) .hero {
+    border-bottom: var(--border) solid var(--line);
+  }
+  :global(:root[data-theme="paper"]) .hero {
+    box-shadow: inset 0 -1px 0 var(--line);
+  }
+  .sbody {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 24px 32px 24px;
+  }
+  .sbody.pad {
+    padding-top: 40px;
+  }
+  .kicker {
+    margin-bottom: 4px;
+  }
+  :global(:root[data-theme="pixel"]) .kicker .chip {
+    box-shadow: inset 0 0 0 2px currentColor;
+  }
+  :global(:root[data-theme="paper"]) .kicker .chip {
+    padding: 0 9px;
+    border-radius: 11px;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-2) 55%, transparent);
+  }
   .sheet h2 {
     margin: 0;
     font-family: var(--title);
     font-weight: 800;
-    font-size: 40px;
-    line-height: 1.02;
+    font-size: 36px;
+    line-height: 1.05;
+    overflow-wrap: anywhere;
+  }
+  .sub {
+    font-family: var(--label);
+    font-size: 15px;
+    color: var(--muted);
+  }
+  .blurb {
+    margin: 8px 0 0;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+  .callout {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 12px;
+    margin-top: 12px;
+    padding: 14px 16px;
+  }
+  .callout p {
+    margin: 2px 0 0;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+  .callout .label {
+    display: block;
+  }
+  :global(:root[data-theme="pixel"]) .callout {
+    border: 2px solid var(--line);
+  }
+  :global(:root[data-theme="pixel"]) .callout.quiet {
+    border-style: dashed;
+    border-color: var(--faint);
+  }
+  :global(:root[data-theme="pixel"]) .callout.hot {
+    background: var(--fg);
+    color: var(--bg);
+  }
+  :global(:root[data-theme="paper"]) .callout {
+    background: color-mix(in srgb, var(--accent) 7%, var(--panel));
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+  :global(:root[data-theme="paper"]) .callout > :global(svg) {
+    color: var(--accent);
+  }
+  :global(:root[data-theme="paper"]) .callout.quiet {
+    background: color-mix(in srgb, var(--fg) 4%, var(--panel));
+    box-shadow: inset 3px 0 0 color-mix(in srgb, var(--fg) 30%, transparent);
+  }
+  :global(:root[data-theme="paper"]) .callout.quiet > :global(svg) {
+    color: var(--muted);
+  }
+  :global(:root[data-theme="paper"]) .callout.hot {
+    background: color-mix(in srgb, var(--accent-2) 8%, var(--panel));
+    box-shadow: inset 3px 0 0 var(--accent-2);
+  }
+  :global(:root[data-theme="paper"]) .callout.hot > :global(svg) {
+    color: var(--accent-2);
   }
   .facts {
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px 24px;
-    margin-top: 10px;
+    flex-direction: column;
+    margin: 16px 0 0;
   }
-  .facts span,
-  .needs {
+  .facts > div {
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+    min-height: 48px;
+    padding: 8px 0;
+  }
+  .facts dt {
     display: flex;
     align-items: center;
     gap: 10px;
     font-family: var(--label);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--faint);
+  }
+  .facts dd {
+    margin: 0;
+    font-family: var(--label);
     font-size: 15px;
+    overflow-wrap: anywhere;
   }
-  .needs {
-    margin: 10px 0 0;
-    align-items: flex-start;
+  :global(:root[data-theme="pixel"]) .facts dt {
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.06em;
   }
-  :global(:root[data-theme="paper"]) .needs {
-    color: var(--accent);
+  :global(:root[data-theme="pixel"]) .facts > div + div {
+    border-top: 2px dotted var(--faint);
   }
-  .btns {
+  :global(:root[data-theme="paper"]) .facts > div + div {
+    border-top: 1px solid color-mix(in srgb, var(--line) 15%, transparent);
+  }
+  .link {
+    text-align: left;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+  }
+  .link:hover {
+    text-decoration-thickness: 2px;
+  }
+  :global(:root[data-theme="paper"]) .link {
+    color: var(--accent-2);
+  }
+  :global(:root[data-theme="pixel"]) .link:hover {
+    background: var(--hi-bg);
+    color: var(--hi-fg);
+  }
+  .faint {
+    color: var(--faint);
+  }
+  .actions {
+    flex: none;
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 24px;
+    gap: 12px;
+    padding: 20px 32px 24px;
+  }
+  .actions:empty {
+    display: none;
+  }
+  :global(:root[data-theme="pixel"]) .actions {
+    border-top: var(--border) solid var(--line);
+  }
+  :global(:root[data-theme="paper"]) .actions {
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--line) 18%, transparent);
+  }
+  .progress {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .in {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .field {
+    height: 52px;
+    padding: 0 14px;
+    font-size: 17px;
+    background: var(--bg);
+    border: var(--border) solid var(--line);
+  }
+  :global(:root[data-theme="paper"]) .field {
+    border-width: 1.5px;
+    border-radius: var(--radius);
+  }
+
+  /* ---- buttons under the pointer ---------------------------------------------------------- */
+  :global(:root[data-theme="pixel"]) .get .btn:hover,
+  :global(:root[data-theme="pixel"]) .sheet .btn:hover {
+    background: var(--hi-bg);
+    color: var(--hi-fg);
+  }
+  :global(:root[data-theme="pixel"]) .get .btn.primary:hover,
+  :global(:root[data-theme="pixel"]) .sheet .btn.primary:hover {
+    outline: var(--border) solid var(--fg);
+    outline-offset: 4px;
+  }
+  :global(:root[data-theme="paper"]) .get .btn:hover,
+  :global(:root[data-theme="paper"]) .sheet .btn:hover {
+    box-shadow: 4px 4px 0 var(--fg);
+    transform: translate(-2px, -2px);
+  }
+  .btn:disabled {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  @media (max-width: 1180px) {
+    .get {
+      padding-inline: 40px;
+    }
+    .up {
+      grid-template-columns: 96px minmax(0, 1fr) auto auto;
+      gap: 0 20px;
+    }
+    .thumb {
+      width: 96px;
+    }
+    .why {
+      grid-template-columns: 24px minmax(0, 1fr);
+    }
+    .whybtns {
+      grid-column: 2;
+    }
   }
 </style>

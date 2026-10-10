@@ -12,7 +12,8 @@ const visible = (el: HTMLElement) => {
 
 /** Navigable elements inside the topmost open layer (menu/search overlay) or the page. */
 function candidates(): HTMLElement[] {
-  const layer = document.querySelector<HTMLElement>("[data-layer]:last-of-type") ?? document.body;
+  const layers = document.querySelectorAll<HTMLElement>("[data-layer]");
+  const layer = layers[layers.length - 1] ?? document.body;
   return [...layer.querySelectorAll<HTMLElement>("[data-nav]:not([disabled])")].filter(visible);
 }
 

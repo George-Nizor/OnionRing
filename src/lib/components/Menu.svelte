@@ -6,13 +6,19 @@
   import Glyph from "./Glyph.svelte";
   import Logo from "./Logo.svelte";
 
-  const items: [ViewName, string, string][] = [
-    ["home", "home", "Home"],
-    ["library", "library", "Library"],
-    ["get", "get", "Get more"],
-    ["systems", "pad", "Systems"],
-    ["tidy", "broom", "Tidy up"],
-    ["settings", "gear", "Settings"],
+  type Item = [ViewName, string, string];
+  const groups: Item[][] = [
+    [
+      ["home", "home", "Home"],
+      ["library", "library", "Library"],
+      ["get", "get", "Get more"],
+      ["systems", "pad", "Systems"],
+    ],
+    [
+      ["stats", "chart", "Play history"],
+      ["tidy", "broom", "Tidy up"],
+      ["settings", "gear", "Settings"],
+    ],
   ];
   let panel = $state<HTMLElement>();
   $effect(() => {
@@ -23,25 +29,33 @@
         else focusFirst(panel);
       });
   });
+  const hover = (e: MouseEvent) => (e.currentTarget as HTMLElement).focus({ preventScroll: true });
 </script>
 
 {#if app.menuOpen}
   <div class="scrim" role="presentation" onclick={() => (app.menuOpen = false)}></div>
-  <nav class="menu" data-layer bind:this={panel}>
+  <nav class="menu" data-layer bind:this={panel} aria-label="Menu">
     <div class="top">
-      <Logo size={56} state="idle" />
+      <Logo size={48} state="idle" />
       <span class="word">OnionRing</span>
     </div>
-    {#each items as [name, icon, label], i (name)}
-      <button class="item" class:on={app.view.name === name} data-nav style:--i={i} onclick={() => app.go({ name })}>
-        <Glyph name={icon} size={36} />
-        <span>{label}</span>
-      </button>
+    {#each groups as group, gi (gi)}
+      <div class="group">
+        {#each group as [name, icon, label], i (name)}
+          <button class="item" class:on={app.view.name === name} data-nav style:--i={gi * 4 + i} onclick={() => app.go({ name })} onmouseenter={hover}>
+            <Glyph name={icon} size={24} />
+            <span>{label}</span>
+          </button>
+        {/each}
+      </div>
     {/each}
-    <button class="item quit" data-nav style:--i={items.length} onclick={() => getCurrentWindow().close()}>
-      <Glyph name="power" size={36} />
-      <span>Quit</span>
-    </button>
+    <div class="foot">
+      <button class="item quit" data-nav style:--i={8} onclick={() => getCurrentWindow().close()} onmouseenter={hover}>
+        <Glyph name="power" size={24} />
+        <span>Quit</span>
+      </button>
+      {#if app.boot?.version}<span class="ver label">v{app.boot.version}</span>{/if}
+    </div>
   </nav>
 {/if}
 
@@ -52,10 +66,17 @@
     z-index: 40;
   }
   :global(:root[data-theme="pixel"]) .scrim {
-    background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.85) 0 2px, rgba(0, 0, 0, 0.6) 2px 4px);
+    background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.88) 0 2px, rgba(0, 0, 0, 0.62) 2px 4px);
+    animation: scrim 0.2s steps(3) both;
   }
   :global(:root[data-theme="paper"]) .scrim {
-    background: rgba(238, 235, 227, 0.75);
+    background: rgba(238, 235, 227, 0.72);
+    animation: scrim 0.3s both;
+  }
+  @keyframes scrim {
+    from {
+      opacity: 0;
+    }
   }
   .menu {
     position: fixed;
@@ -63,12 +84,12 @@
     top: 0;
     bottom: 0;
     z-index: 41;
-    width: 340px;
+    width: 300px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 26px 18px;
+    padding: var(--s4) var(--s3) var(--s4);
     background: var(--bg);
+    overflow-y: auto;
   }
   :global(:root[data-theme="pixel"]) .menu {
     border-right: var(--border) solid var(--line);
@@ -76,7 +97,8 @@
   }
   :global(:root[data-theme="paper"]) .menu {
     background: var(--panel);
-    border-right: 2px solid var(--line);
+    border-right: 1.5px solid var(--line);
+    box-shadow: 8px 0 0 color-mix(in srgb, var(--line) 10%, transparent);
     animation: slide 0.35s var(--ease) both;
   }
   @keyframes slide {
@@ -87,39 +109,90 @@
   .top {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 0 10px 22px;
+    gap: var(--s3);
+    height: 56px;
+    padding: 0 var(--s3);
+    margin-bottom: var(--s3);
   }
   .word {
     font-family: var(--title);
     font-weight: 800;
-    font-size: 26px;
+    font-size: 24px;
+    letter-spacing: -0.01em;
+  }
+  .group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--s2) 0;
+  }
+  .group + .group {
+    border-top: 1.5px solid color-mix(in srgb, var(--line) 25%, transparent);
+  }
+  :global(:root[data-theme="pixel"]) .group + .group {
+    border-top: 3px dotted var(--faint);
   }
   .item {
     display: flex;
     align-items: center;
-    gap: 18px;
-    height: 64px;
-    padding: 0 16px;
+    gap: var(--s4);
+    height: 48px;
+    padding: 0 var(--s3);
     font-family: var(--title);
-    font-size: 22px;
-    font-weight: 700;
+    font-size: 19px;
+    font-weight: 600;
     text-align: left;
     animation: rise 0.3s var(--ease) both;
-    animation-delay: calc(var(--i) * 35ms);
+    animation-delay: calc(var(--i) * 30ms);
   }
   :global(:root[data-theme="pixel"]) .item {
     animation-timing-function: steps(3);
   }
-  :global(:root[data-theme="pixel"]) .item:focus-visible span::before {
+  :global(:root[data-theme="pixel"]) .item:hover {
+    background: var(--hi-bg);
+    color: var(--hi-fg);
+  }
+  :global(:root[data-theme="pixel"]) .item:is(:focus-visible, :hover) span::before {
     content: "▶ ";
     animation: blink 0.8s steps(1) infinite;
   }
-  .quit {
-    margin-top: auto;
-    color: var(--faint);
+  :global(:root[data-theme="pixel"]) .item.on:not(:focus-visible):not(:hover) {
+    background: none;
+    color: var(--fg);
+    box-shadow: inset 6px 0 0 var(--fg);
+  }
+  /* paper: the current page is marked with the red ribbon; hover inks the row */
+  :global(:root[data-theme="paper"]) .item {
+    border-radius: var(--radius);
+    transition: background 0.15s;
+  }
+  :global(:root[data-theme="paper"]) .item:is(:hover, :focus-visible) {
+    background: var(--bg);
+  }
+  :global(:root[data-theme="paper"]) .item:focus-visible::after {
+    left: var(--s3);
+    right: auto;
+    width: 40%;
+    bottom: 6px;
+    height: 2px;
   }
   :global(:root[data-theme="paper"]) .item.on {
     color: var(--accent);
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+  .foot {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: var(--s3);
+  }
+  .quit {
+    color: var(--faint);
+    flex: 1;
+  }
+  .ver {
+    color: var(--faint);
+    padding: 0 var(--s3);
   }
 </style>

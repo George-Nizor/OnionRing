@@ -6,8 +6,21 @@
 :root {
   --gap: 16px;
   --bar: 60px;
-  --hints: 48px;
+  /* The hint footer is gone; kept at 0 so layouts that still subtract it line up. */
+  --hints: 0px;
   --ease: cubic-bezier(0.2, 1, 0.3, 1);
+  /* One spacing scale for the whole app (4px base). */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+  --s8: 64px;
+  /* Page side margin and the width of one game tile; both follow the window size. */
+  --gutter: clamp(24px, 3.2vw, 64px);
+  --tile: clamp(136px, 9.6vw, 200px);
 }
 
 :root[data-theme="pixel"],
@@ -231,9 +244,18 @@ img {
   color: var(--panel);
   border-color: var(--fg);
 }
-:root[data-theme="paper"] .btn:focus-visible {
+:root[data-theme="paper"] .btn:focus-visible,
+:root[data-theme="paper"] .btn:not(:disabled):hover {
   box-shadow: 4px 4px 0 var(--fg);
   transform: translate(-2px, -2px);
+}
+:root[data-theme="pixel"] .btn:not(.primary):not(:disabled):hover {
+  background: var(--hi-bg);
+  color: var(--hi-fg);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 :root[data-theme="paper"] .btn:focus-visible::after {
   display: none;

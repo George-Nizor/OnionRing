@@ -1,5 +1,5 @@
 import { listen } from "@tauri-apps/api/event";
-import { api, type Bootstrap, type CatalogView, type Game, type Platform, type Progress } from "./api";
+import { api, type Bootstrap, type CatalogView, type Game, type Platform, type Progress, type ScanSummary } from "./api";
 import { norm } from "./format";
 
 export type Theme = "pixel" | "paper";
@@ -17,6 +17,8 @@ export interface Toast {
   id: number;
   text: string;
   kind: "info" | "ok" | "error";
+  /** How long it stays up, in ms. */
+  ms: number;
 }
 
 const SORTS: Record<Sort, (a: Game, b: Game) => number> = {
@@ -59,8 +61,11 @@ class AppStore {
   view = $state<View>({ name: "home" });
   history = $state<View[]>([]);
   menuOpen = $state(false);
+  /** The top-bar search is in use (its results show while there is a query). */
   searchOpen = $state(false);
   query = $state("");
+  /** Bumped to ask the search field to take focus (Ctrl+K, "/", controller Y). */
+  searchFocus = $state(0);
 
   theme = $state<Theme>(load("theme", "pixel"));
   platformFilter = $state<string>(load("platformFilter", "all"));
@@ -108,12 +113,6 @@ class AppStore {
     return [...list].sort(SORTS[this.sort]);
   });
 
-  searchResults = $derived.by(() => {
-    const q = norm(this.query);
-    if (!q) return [];
-    return this.visibleGames.filter((g) => norm(g.title).includes(q)).slice(0, 24);
-  });
-
   /** Most recently played first, then newest additions, for the home "jump back in" row. */
   continueList = $derived.by(() => {
     const played = this.visibleGames.filter((g) => g.lastPlayed).sort(SORTS.recent);
@@ -131,6 +130,10 @@ class AppStore {
       this.progress = e.payload.stage === "idle" ? null : e.payload;
     });
     await listen("library-changed", () => this.reload());
+    await listen<ScanSummary>("auto-scan", (e) => {
+      const n = e.payload.newGames;
+      if (n > 0) this.toast(n === 1 ? "Found 1 new game" : `Found ${n} new games`, "ok");
+    });
     await listen<number>("game-started", (e) => (this.running = [...this.running, e.payload]));
     await listen<{ id: number }>("game-ended", (e) => (this.running = this.running.filter((r) => r !== e.payload.id)));
     await listen<{ id: string; message: string; done: boolean; error: string | null }>("install", (e) => {
@@ -170,14 +173,25 @@ class AppStore {
 
   // ---- navigation -------------------------------------------------------------------------
   go(v: View) {
-    if (this.view.name === v.name && this.view.gameId === v.gameId && this.view.tab === v.tab) return;
+    this.menuOpen = false;
+    this.searchOpen = false;
+    const same = this.view.name === v.name && this.view.gameId === v.gameId && this.view.tab === v.tab && this.view.item === v.item;
+    if (same) return;
     this.history = [...this.history, this.view].slice(-30);
     this.view = v;
+  }
+  openSearch() {
     this.menuOpen = false;
+    this.searchOpen = true;
+    this.searchFocus++;
+  }
+  closeSearch() {
+    this.searchOpen = false;
+    this.query = "";
   }
   back(): boolean {
     if (this.searchOpen) {
-      this.searchOpen = false;
+      this.closeSearch();
       return true;
     }
     if (this.menuOpen) {
@@ -219,7 +233,7 @@ class AppStore {
 
   toast(text: string, kind: Toast["kind"] = "info", ms = 4200) {
     const id = Date.now() + Math.random();
-    this.toasts = [...this.toasts, { id, text, kind }];
+    this.toasts = [...this.toasts, { id, text, kind, ms }].slice(-4);
     setTimeout(() => (this.toasts = this.toasts.filter((t) => t.id !== id)), ms);
   }
 

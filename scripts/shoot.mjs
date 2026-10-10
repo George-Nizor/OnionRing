@@ -36,6 +36,7 @@ const VIEWS = {
   "get-port-detail": `app.go({ name: "get", tab: "ports", item: "2-ship-2-harkinian-the-legend-of-zelda-majora-s-mask" })`,
   "get-emulators": `app.go({ name: "get", tab: "emulators" })`,
   "get-browser": `app.go({ name: "get", tab: "browser" })`,
+  "get-updates": `app.go({ name: "get", tab: "updates" })`,
   systems: `app.go({ name: "systems" })`,
   tidy: `app.go({ name: "tidy" })`,
   settings: `app.go({ name: "settings" })`,
