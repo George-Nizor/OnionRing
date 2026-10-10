@@ -1,6 +1,8 @@
 import { listen } from "@tauri-apps/api/event";
 import { api, type Bootstrap, type CatalogView, type Game, type Platform, type Progress, type ScanSummary } from "./api";
 import { norm } from "./format";
+import { check } from "@tauri-apps/plugin-updater";
+import { relaunch } from "@tauri-apps/plugin-process";
 
 export type Theme = "pixel" | "paper";
 export type ViewName = "home" | "library" | "game" | "get" | "systems" | "tidy" | "settings" | "stats";
@@ -151,6 +153,27 @@ class AppStore {
       this.loadCatalog();
     }
     this.loaded = true;
+    this.autoUpdate();
+  }
+
+  /** Installed builds keep themselves current from the latest GitHub release: check shortly
+   *  after start and every six hours, install quietly, then restart. Never while a game runs. */
+  private autoUpdate() {
+    if (import.meta.env.DEV || !("__TAURI_INTERNALS__" in window)) return;
+    const run = async () => {
+      if (this.running.length) return;
+      try {
+        const u = await check();
+        if (!u) return;
+        this.toast(`Updating OnionRing to ${u.version}…`, "info", 8000);
+        await u.downloadAndInstall();
+        await relaunch();
+      } catch {
+        /* offline or GitHub unreachable: try again next time */
+      }
+    };
+    setTimeout(run, 8000);
+    setInterval(run, 6 * 3600 * 1000);
   }
 
   async loadCatalog() {
