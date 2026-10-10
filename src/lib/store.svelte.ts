@@ -138,6 +138,10 @@ class AppStore {
     });
     await listen<number>("game-started", (e) => (this.running = [...this.running, e.payload]));
     await listen<{ id: number }>("game-ended", (e) => (this.running = this.running.filter((r) => r !== e.payload.id)));
+    await listen<{ name: string; version: string }>("app-updated", (e) => {
+      this.toast(`${e.payload.name} updated to ${e.payload.version}`, "ok", 6000);
+      this.loadCatalog();
+    });
     await listen<{ id: string; message: string; done: boolean; error: string | null }>("install", (e) => {
       const { id, message, done, error } = e.payload;
       if (done) {

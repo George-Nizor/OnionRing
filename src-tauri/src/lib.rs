@@ -350,20 +350,58 @@ async fn launch_game(app: AppHandle, id: i64) -> Res<()> {
     .await
 }
 
-/// Keep AnyPS5 on its latest release: shortly after start, then every six hours. Quiet unless
-/// it fails to start up; converted games pick the new version up the next time they are played.
-fn keep_anyps5_current(app: &AppHandle) {
+#[derive(Serialize, Clone)]
+struct AppUpdated {
+    name: String,
+    version: String,
+}
+
+/// Keep everything OnionRing installed on its latest release: emulators, ports and AnyPS5.
+/// Runs 30 s after start, then every six hours, and waits while a game is being played.
+/// Emulators found on the PC (not installed by OnionRing) are left alone; the Updates tab lists
+/// them. Each update emits "app-updated" so the UI can say what changed.
+fn keep_apps_current(app: &AppHandle) {
     let app = app.clone();
     std::thread::spawn(move || {
         std::thread::sleep(std::time::Duration::from_secs(30));
         loop {
             let st = app.state::<AppState>();
+            while st.running.load(Ordering::SeqCst) > 0 {
+                std::thread::sleep(std::time::Duration::from_secs(60));
+            }
             if let (Ok(db), Ok(root)) = (st.db(), st.root()) {
-                let _guard = st.work.lock().unwrap();
-                match onionring_core::anyps5::update_if_newer(&db, &root, &|_| {}) {
-                    Ok(Some(v)) => eprintln!("AnyPS5 updated to {v}"),
+                let mut changed = false;
+                let res = {
+                    let _guard = st.work.lock().unwrap();
+                    onionring_core::anyps5::update_if_newer(&db, &root, &|_| {})
+                };
+                match res {
+                    Ok(Some(v)) => {
+                        let _ = app.emit("app-updated", AppUpdated { name: "AnyPS5".into(), version: v });
+                    }
                     Ok(None) => {}
                     Err(e) => eprintln!("AnyPS5 update check: {e:#}"),
+                }
+                let ups = updates::available_updates(&root, &st.cat(), &db).unwrap_or_default();
+                for u in ups.into_iter().filter(|u| u.managed) {
+                    if st.running.load(Ordering::SeqCst) > 0 {
+                        break;
+                    }
+                    let Ok(t) = Target::from_catalog(&st.cat(), &u.id) else { continue };
+                    let res = {
+                        let _guard = st.work.lock().unwrap();
+                        install::install_latest(&root, &t, &|_| {})
+                    };
+                    match res {
+                        Ok(a) => {
+                            changed = true;
+                            let _ = app.emit("app-updated", AppUpdated { name: u.name.clone(), version: a.version });
+                        }
+                        Err(e) => eprintln!("updating {}: {e:#}", u.id),
+                    }
+                }
+                if changed {
+                    let _ = run_scan(&app);
                 }
             }
             std::thread::sleep(std::time::Duration::from_secs(6 * 3600));
@@ -1044,7 +1082,7 @@ pub fn run() {
                     Ok(root) => {
                         use_root(app.handle(), root)?;
                         start_watching(app.handle());
-                        keep_anyps5_current(app.handle());
+                        keep_apps_current(app.handle());
                     }
                     Err(e) => eprintln!("data root unavailable: {e:#}"),
                 }
