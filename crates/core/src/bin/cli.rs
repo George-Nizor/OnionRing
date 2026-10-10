@@ -71,6 +71,17 @@ fn main() -> Result<()> {
             AppConfig { data_root: Some(root.root.clone()) }.save()?;
             println!("data root set to {}", root.root.display());
         }
+        ["anyps5", "install"] => {
+            let (root, _, db) = open()?;
+            let v = onionring_core::anyps5::install_latest(&db, &root, &|m| println!("  {m}"))?;
+            println!("AnyPS5 {v} installed");
+        }
+        ["anyps5", "convert", id] => {
+            let (root, _, db) = open()?;
+            let game = db.game(id.parse()?)?;
+            let exe = onionring_core::anyps5::convert(&db, &root, &game, &|m| println!("  {m}"))?;
+            println!("{}", exe.display());
+        }
         ["source", "list"] => {
             let (_, _, db) = open()?;
             for s in db.sources()? {

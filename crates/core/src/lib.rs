@@ -1,5 +1,6 @@
 //! OnionRing core: everything that is not UI. Used by the desktop app and by `onionring-cli`.
 
+pub mod anyps5;
 pub mod art;
 pub mod backups;
 pub mod catalog;

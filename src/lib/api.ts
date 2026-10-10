@@ -335,6 +335,10 @@ export const api = {
 
   /** Launch options for one game; null or [] goes back to the emulator's. Emits "library-changed". */
   setGameArgs: (id: number, args: string[] | null) => invoke<void>("set_game_args", { id, args }),
+  /** AnyPS5: convert a PS5 game into a native Windows program (installs AnyPS5 if needed). */
+  anyps5Status: (id: number) => invoke<{ tool: string | null; converted: boolean }>("anyps5_status", { id }),
+  anyps5Convert: (id: number) => invoke<void>("anyps5_convert", { id }),
+  anyps5Forget: (id: number) => invoke<void>("anyps5_forget", { id }),
 
   /** Files each emulator on the PC needs (BIOS, firmware, keys). Emulators that need nothing are left out. */
   setupChecks: () => invoke<EmulatorChecks[]>("setup_checks"),

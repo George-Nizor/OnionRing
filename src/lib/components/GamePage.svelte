@@ -26,6 +26,34 @@
   const mine = $derived(g ? collections.list.filter((c) => c.gameIds.includes(g.id)) : []);
   const hasArt = $derived(!!(g?.hero || g?.cover));
 
+  // PS5 games can be turned into a native Windows program with AnyPS5.
+  let ps5 = $state<{ tool: string | null; converted: boolean } | null>(null);
+  let converting = $state(false);
+  $effect(() => {
+    const id = g?.platform === "ps5" ? g.id : null;
+    ps5 = null;
+    if (id !== null) api.anyps5Status(id).then((s) => (ps5 = s)).catch(() => (ps5 = null));
+  });
+  async function makePc() {
+    if (!g) return;
+    converting = true;
+    try {
+      await api.anyps5Convert(g.id);
+      ps5 = await api.anyps5Status(g.id);
+      app.toast(`${g.title} now runs as a PC program`, "ok");
+    } catch (e) {
+      app.toast(String(e), "error", 12000);
+    }
+    const { anyps5: _, ...rest } = app.installing;
+    app.installing = rest;
+    converting = false;
+  }
+  async function useEmulator() {
+    if (!g) return;
+    await api.anyps5Forget(g.id);
+    ps5 = await api.anyps5Status(g.id);
+  }
+
   let copies = $state<Copy[]>([]);
   let checks = $state<EmulatorChecks[]>([]);
   let more = $state(false);
@@ -103,7 +131,7 @@
           {#if g.kind === "rom"}
             <div class="stat">
               <dt class="label"><Glyph name="pad" size={12} />Emulator</dt>
-              <dd>{emu ? emu.name : "None"}{#if emu?.version}<small>{emu.version}</small>{/if}</dd>
+              <dd>{#if ps5?.converted}PC version<small>AnyPS5</small>{:else}{emu ? emu.name : "None"}{#if emu?.version}<small>{emu.version}</small>{/if}{/if}</dd>
             </div>
           {:else if installed}
             <div class="stat"><dt class="label"><Glyph name="info" size={12} />Version</dt><dd>{installed.version}</dd></div>
@@ -114,6 +142,11 @@
           <button class="btn big primary play" data-nav onclick={() => app.play(g)} disabled={g.missing || running}>
             <Glyph name={running ? "clock" : g.packed ? "zip" : "play"} size={24} />{running ? "Playing" : g.packed ? "Unzip" : "Play"}
           </button>
+          {#if ps5 && !ps5.converted}
+            <button class="btn big" data-nav onclick={makePc} disabled={converting || g.missing} title="Convert this game into a Windows program with AnyPS5. Your files are not changed.">
+              <Glyph name={converting ? "clock" : "spark"} size={24} />{converting ? "Converting…" : "Make PC version"}
+            </button>
+          {/if}
           {#if g.kind === "port"}
             <button class="btn big" data-nav onclick={() => api.configurePort(g.id).catch((e) => app.toast(String(e), "error"))}>
               <Glyph name="sliders" size={24} />Port settings
@@ -139,6 +172,10 @@
             {#each choices.length > 1 ? choices : [] as c (c.id)}
               <button class="btn" class:on={c.id === g.emulator} data-nav onclick={() => setEmu(c.id)}><Glyph name={c.id === g.emulator ? "check" : "pad"} size={24} />{c.name}</button>
             {/each}
+            {#if ps5?.converted}
+              <button class="btn" data-nav onclick={makePc} disabled={converting}><Glyph name="spark" size={24} />Convert again</button>
+              <button class="btn" data-nav onclick={useEmulator}><Glyph name="pad" size={24} />Play with the emulator instead</button>
+            {/if}
             <button class="btn" data-nav onclick={pickCover}><Glyph name="library" size={24} />Change cover</button>
             <button class="btn" data-nav onclick={() => api.reveal(g.launchPath)}><Glyph name="folder" size={24} />Open folder</button>
             <button class="btn" data-nav onclick={hide}><Glyph name="eye" size={24} />{g.hidden ? "Show in library" : "Hide from library"}</button>

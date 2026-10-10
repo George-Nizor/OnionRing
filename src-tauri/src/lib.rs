@@ -581,6 +581,51 @@ fn install_with(
     }
 }
 
+// ---- AnyPS5: PS5 games converted to native Windows programs ----------------------------------
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct Anyps5Status {
+    /// Installed AnyPS5 version, if any.
+    tool: Option<String>,
+    /// This game already has a converted program.
+    converted: bool,
+}
+
+#[tauri::command]
+fn anyps5_status(st: State<AppState>, id: i64) -> Res<Anyps5Status> {
+    let (db, root) = (st.db()?, st.root()?);
+    Ok(Anyps5Status { tool: onionring_core::anyps5::installed(&db, &root), converted: onionring_core::anyps5::converted(&db, id).is_some() })
+}
+
+/// Convert a PS5 game with AnyPS5 (installing AnyPS5 first if needed). Progress arrives as
+/// "install" events with id "anyps5"; the final event has done = false so the UI shows its own
+/// message (this is a conversion, not an install).
+#[tauri::command]
+async fn anyps5_convert(app: AppHandle, id: i64) -> Res<()> {
+    blocking(move || {
+        let st = app.state::<AppState>();
+        let (db, root) = (st.db()?, st.root()?);
+        let game = db.game(id).map_err(err)?;
+        let report = |m: &str| {
+            let _ = app.emit("install", InstallEvent { id: "anyps5".into(), message: m.to_string(), done: false, error: None });
+        };
+        let _guard = st.work.lock().unwrap();
+        onionring_core::anyps5::convert(&db, &root, &game, &report).map_err(err)?;
+        let _ = app.emit("library-changed", ());
+        Ok(())
+    })
+    .await
+}
+
+/// Forget a converted program, so Play goes back to the PS5 emulator.
+#[tauri::command]
+fn anyps5_forget(app: AppHandle, st: State<AppState>, id: i64) -> Res<()> {
+    st.db()?.kv_set(&onionring_core::anyps5::kv_key(id), "").map_err(err)?;
+    let _ = app.emit("library-changed", ());
+    Ok(())
+}
+
 #[tauri::command]
 async fn install_latest(app: AppHandle, id: String) -> Res<InstalledApp> {
     blocking(move || install_with(&app, &id, |r, t, p| install::install_latest(r, t, p))).await
@@ -966,6 +1011,9 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             bootstrap,
+            anyps5_status,
+            anyps5_convert,
+            anyps5_forget,
             set_data_root,
             sources,
             add_source,

@@ -50,6 +50,12 @@ pub fn plan(db: &Db, cat: &Catalog, game: &Game) -> Result<Plan> {
         let args = game.user_args.as_deref().map(|a| fill(a, &game.launch_path, &dir, &dir)).unwrap_or_default();
         return Ok(Plan { program: exe, args, cwd });
     }
+    // A PS5 game converted with AnyPS5 runs as its own Windows program.
+    if let Some(exe) = crate::anyps5::converted(db, game.id) {
+        let cwd = exe.parent().map(Path::to_path_buf).unwrap_or_default();
+        let args = game.user_args.clone().unwrap_or_default();
+        return Ok(Plan { program: exe, args, cwd });
+    }
     if game.packed {
         bail!("This game is still zipped. Use Unpack first.");
     }

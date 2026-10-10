@@ -187,6 +187,11 @@ export async function installMock(dataRoot: string) {
           if (g && (args.flag === "favorite" || args.flag === "hidden")) g[args.flag] = Boolean(args.on);
           return null;
         }
+        case "anyps5_status":
+          return { tool: null, converted: false };
+        case "anyps5_convert":
+        case "anyps5_forget":
+          return null;
         case "set_game_args": {
           const g = game(args.id);
           const list = args.args as string[] | null | undefined;

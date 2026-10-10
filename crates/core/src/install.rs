@@ -161,7 +161,7 @@ pub fn extract(archive: &Path, dest: &Path) -> Result<()> {
     Ok(())
 }
 
-fn safe_version(v: &str) -> String {
+pub(crate) fn safe_version(v: &str) -> String {
     v.chars().map(|c| if c.is_alphanumeric() || "._-".contains(c) { c } else { '_' }).collect()
 }
 
