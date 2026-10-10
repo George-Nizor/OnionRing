@@ -9,6 +9,7 @@ pub mod install;
 pub mod launch;
 pub mod model;
 pub mod paths;
+pub mod pictures;
 pub mod scan;
 pub mod storage;
 pub mod util;

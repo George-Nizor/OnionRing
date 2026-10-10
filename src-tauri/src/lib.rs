@@ -257,6 +257,48 @@ fn catalog(st: State<AppState>) -> Res<CatalogView> {
     Ok(CatalogView { ports: cat.ports.clone(), emulators: cat.emulators.clone(), browser: cat.browser.clone(), installed })
 }
 
+/// A picture for a system, emulator, port or browser game (fetched once, then cached).
+#[tauri::command]
+async fn picture(app: AppHandle, kind: String, id: String) -> Res<Option<String>> {
+    blocking(move || {
+        let st = app.state::<AppState>();
+        let p = onionring_core::pictures::picture(&st.root()?, &st.cat(), &kind, &id).map_err(err)?;
+        Ok(p.map(|p| util::path_str(&p)))
+    })
+    .await
+}
+
+/// Latest release of a port or emulator, and the download OnionRing would use.
+#[tauri::command]
+async fn release_details(app: AppHandle, id: String) -> Res<Option<install::ReleaseDetails>> {
+    blocking(move || {
+        let st = app.state::<AppState>();
+        let t = Target::from_catalog(&st.cat(), &id).map_err(err)?;
+        install::release_details(&st.root()?, &t).map_err(err)
+    })
+    .await
+}
+
+fn reload_catalog(app: &AppHandle) -> Res<()> {
+    let st = app.state::<AppState>();
+    let cat = Catalog::load(Some(&st.root()?.local_catalog())).map_err(err)?;
+    *st.catalog.lock().unwrap() = Arc::new(cat);
+    Ok(())
+}
+
+#[tauri::command]
+fn add_browser_game(app: AppHandle, st: State<AppState>, title: String, url: String) -> Res<BrowserGame> {
+    let g = onionring_core::catalog::add_local_browser_game(&st.root()?.local_catalog(), &title, &url).map_err(err)?;
+    reload_catalog(&app)?;
+    Ok(g)
+}
+
+#[tauri::command]
+fn remove_browser_game(app: AppHandle, st: State<AppState>, id: String) -> Res<()> {
+    onionring_core::catalog::remove_local_browser_game(&st.root()?.local_catalog(), &id).map_err(err)?;
+    reload_catalog(&app)
+}
+
 /// The site a URL belongs to (last two host labels), so a game can move between its own
 /// subdomains but any other link leaves for the user's browser.
 fn site(u: &tauri::Url) -> String {
@@ -475,6 +517,10 @@ pub fn run() {
             restore_reclaimed,
             reveal,
             open_browser_game,
+            add_browser_game,
+            remove_browser_game,
+            picture,
+            release_details,
         ])
         .run(tauri::generate_context!())
         .expect("error while running OnionRing");

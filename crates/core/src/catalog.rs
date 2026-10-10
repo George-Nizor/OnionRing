@@ -129,6 +129,56 @@ pub struct BrowserGame {
     pub verified: Option<String>,
 }
 
+fn read_local(path: &Path) -> Result<serde_json::Value> {
+    Ok(match std::fs::read_to_string(path) {
+        Ok(s) => serde_json::from_str(&s)?,
+        Err(_) => serde_json::json!({}),
+    })
+}
+
+/// Add a browser game of the user's own to `catalog.local.json` (other keys are kept).
+pub fn add_local_browser_game(path: &Path, title: &str, url: &str) -> Result<BrowserGame> {
+    let parsed = url::Url::parse(url.trim()).map_err(|_| anyhow::anyhow!("That doesn't look like a web address."))?;
+    if !matches!(parsed.scheme(), "http" | "https") {
+        anyhow::bail!("Only http and https links can be added.");
+    }
+    let title = title.trim();
+    if title.is_empty() {
+        anyhow::bail!("Give it a name.");
+    }
+    let slug: String = title.to_lowercase().chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '-' }).collect();
+    let game = BrowserGame {
+        id: format!("my-{}-{}", slug.trim_matches('-'), crate::util::now()),
+        title: title.to_string(),
+        project: parsed.host_str().unwrap_or_default().to_string(),
+        url: parsed.to_string(),
+        source: None,
+        status: "custom".into(),
+        original: None,
+        summary: None,
+        needs_files: None,
+        embed: "window".into(),
+        controls: None,
+        multiplayer: false,
+        verified: None,
+    };
+    let mut v = read_local(path)?;
+    let list = v.as_object_mut().ok_or_else(|| anyhow::anyhow!("catalog.local.json is not an object"))?.entry("browser").or_insert(serde_json::json!([]));
+    list.as_array_mut().ok_or_else(|| anyhow::anyhow!("\"browser\" is not a list"))?.push(serde_json::to_value(&game)?);
+    std::fs::write(path, serde_json::to_string_pretty(&v)?)?;
+    Ok(game)
+}
+
+/// Remove one of the user's own browser games.
+pub fn remove_local_browser_game(path: &Path, id: &str) -> Result<()> {
+    let mut v = read_local(path)?;
+    if let Some(list) = v.get_mut("browser").and_then(|l| l.as_array_mut()) {
+        list.retain(|g| g.get("id").and_then(|i| i.as_str()) != Some(id));
+    }
+    std::fs::write(path, serde_json::to_string_pretty(&v)?)?;
+    Ok(())
+}
+
 #[derive(Deserialize, Default)]
 struct LocalCatalog {
     #[serde(default)]

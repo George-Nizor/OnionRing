@@ -43,6 +43,20 @@ fn show(p: Progress) {
     }
 }
 
+fn cached_pictures(root: &DataRoot, cat: &Catalog) -> serde_json::Map<String, serde_json::Value> {
+    let mut m = serde_json::Map::new();
+    let mut add = |kind: &str, id: &str| {
+        if let Some(p) = onionring_core::pictures::cached(root, kind, id) {
+            m.insert(format!("{kind}:{id}"), p.display().to_string().into());
+        }
+    };
+    cat.platforms.iter().for_each(|p| add("system", &p.id));
+    cat.emulators.iter().for_each(|e| add("emulator", &e.id));
+    cat.browser.iter().for_each(|b| add("browser", &b.id));
+    cat.ports.iter().for_each(|p| add("port", &p.id));
+    m
+}
+
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let a: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
@@ -133,6 +147,22 @@ fn main() -> Result<()> {
                 }
             }
         }
+        ["pictures", rest @ ..] => {
+            // Prefetch pictures: systems, emulators, browser games, and the first N ports.
+            let (root, cat, _db) = open()?;
+            let n: usize = rest.first().and_then(|s| s.parse().ok()).unwrap_or(24);
+            let mut jobs: Vec<(&str, String)> = Vec::new();
+            jobs.extend(cat.platforms.iter().filter(|p| !p.extensions.is_empty()).map(|p| ("system", p.id.clone())));
+            jobs.extend(cat.emulators.iter().map(|e| ("emulator", e.id.clone())));
+            jobs.extend(cat.browser.iter().map(|b| ("browser", b.id.clone())));
+            jobs.extend(cat.ports.iter().take(n).map(|p| ("port", p.id.clone())));
+            use rayon::prelude::*;
+            let found = jobs
+                .par_iter()
+                .filter(|(k, id)| onionring_core::pictures::picture(&root, &cat, k, id).ok().flatten().is_some())
+                .count();
+            println!("{found} of {} have pictures", jobs.len());
+        }
         ["snapshot", out] => {
             // Everything the UI loads, as one JSON file, for previewing the UI in a browser.
             let (root, cat, db) = open()?;
@@ -149,6 +179,7 @@ fn main() -> Result<()> {
                 "sources": db.sources()?,
                 "catalog": { "ports": cat.ports, "emulators": cat.emulators, "browser": cat.browser, "installed": install::installed_apps(&root) },
                 "storage": storage::report(&root, &db)?,
+                "pictures": cached_pictures(&root, &cat),
             });
             std::fs::write(out, serde_json::to_string(&snap)?)?;
             println!("wrote {out}");

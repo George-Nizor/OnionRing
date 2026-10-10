@@ -110,6 +110,27 @@ impl<'a> Walk<'a> {
             }
             return true;
         }
+        // PS5 dumps describe themselves in sce_sys/param.json.
+        let ps5_json = dir.join("sce_sys").join("param.json");
+        if ps5_json.is_file() && dir.join("eboot.bin").is_file() {
+            if let Some(v) = std::fs::read_to_string(&ps5_json).ok().and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok()) {
+                let lang = v.pointer("/localizedParameters/defaultLanguage").and_then(|x| x.as_str()).unwrap_or("en-US");
+                let title = v
+                    .pointer(&format!("/localizedParameters/{lang}/titleName"))
+                    .or_else(|| v.pointer("/localizedParameters/en-US/titleName"))
+                    .and_then(|x| x.as_str())
+                    .map(String::from);
+                let mut sfo = disc::Sfo::default();
+                if let Some(t) = title {
+                    sfo.values.insert("TITLE".into(), t);
+                }
+                if let Some(id) = v.get("titleId").and_then(|x| x.as_str()) {
+                    sfo.values.insert("TITLE_ID".into(), id.into());
+                }
+                self.push_folder("ps5", dir, dir.join("eboot.bin"), &sfo, "folder");
+            }
+            return true;
+        }
         let ps4_sfo = dir.join("sce_sys").join("param.sfo");
         if ps4_sfo.is_file() && dir.join("eboot.bin").is_file() {
             if let Some(sfo) = disc::read_sfo(&ps4_sfo) {

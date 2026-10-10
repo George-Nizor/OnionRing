@@ -26,6 +26,11 @@ export async function installMock(dataRoot: string) {
         case "storage_report": return snap.storage;
         case "check_updates": return [];
         case "game_copies": return [];
+        case "picture": {
+          const a = args as { kind: string; id: string };
+          return snap.pictures?.[`${a.kind}:${a.id}`] ?? null;
+        }
+        case "release_details": return null;
         case "open_browser_game": {
           const g = snap.catalog.browser?.find((b: { id: string }) => b.id === (args as { id: string }).id);
           if (g) window.open(g.url, "_blank");

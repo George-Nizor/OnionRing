@@ -2,6 +2,7 @@
   import { api, type Emulator } from "$lib/api";
   import { app } from "$lib/store.svelte";
   import Glyph from "./Glyph.svelte";
+  import Pic from "./Pic.svelte";
 
   let { emulators, onchange }: { emulators: Emulator[]; onchange: () => void } = $props();
 
@@ -31,12 +32,14 @@
   {#each rows as r, i (r.id)}
     <section class="row" style:--i={i}>
       <div class="plat">
+        <span class="sp"><Pic kind="system" id={r.id} icon="pad" fit="contain" /></span>
         <span class="short">{r.p!.short.replace("WII", "Wii")}</span>
         <span class="label"><Glyph name="library" size={12} />{r.n}</span>
       </div>
       <div class="emus">
         {#each r.emus as e (e.id)}
           <div class="emu">
+            <span class="ep"><Pic kind="emulator" id={e.id.replace(/-\d+$/, "")} icon="pad" fit="contain" /></span>
             <Glyph name={e.missing ? "alert" : "check"} size={24} />
             <span class="name">{e.name}</span>
             {#if e.version}<span class="ver label">{e.version}</span>{/if}
@@ -86,8 +89,23 @@
     background: var(--panel);
     box-shadow: 0 0 0 1px var(--line);
   }
+  .sp,
+  .ep {
+    position: relative;
+    display: block;
+    background: #fff;
+  }
+  .sp {
+    width: 160px;
+    height: 100px;
+  }
+  .ep {
+    width: 56px;
+    height: 56px;
+    flex: none;
+  }
   .plat {
-    width: 130px;
+    width: 160px;
     flex: none;
     display: flex;
     flex-direction: column;

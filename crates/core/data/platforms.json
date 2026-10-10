@@ -9,6 +9,8 @@
     "extensions": [".iso", ".cso", ".pbp", ".chd"], "hints": "\\bpsp\\b|ppsspp" },
   { "id": "ps4", "name": "PlayStation 4", "short": "PS4", "color": "#2f6bff", "libretro": "Sony - PlayStation 4",
     "extensions": [], "hints": "\\bps4\\b|playstation ?4|shadps4" },
+  { "id": "ps5", "name": "PlayStation 5", "short": "PS5", "color": "#e8e8e8", "libretro": null,
+    "extensions": [], "hints": "\\bps5\\b|playstation ?5|kyty|sharpemu" },
   { "id": "gc", "name": "GameCube", "short": "GC", "color": "#8b5cf6", "libretro": "Nintendo - GameCube",
     "extensions": [".iso", ".gcm", ".gcz", ".rvz", ".ciso"], "hints": "gamecube|\\bgcn?\\b|\\bngc\\b|dolphin" },
   { "id": "wii", "name": "Wii", "short": "WII", "color": "#38bdf8", "libretro": "Nintendo - Wii",

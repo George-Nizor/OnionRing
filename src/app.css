@@ -54,8 +54,9 @@
   --label: "Atkinson Hyperlegible", "Segoe UI", sans-serif;
   --radius: 2px;
   --border: 2px;
-  --img-filter: grayscale(1) contrast(1.08) brightness(1.04);
-  --img-filter-focus: grayscale(0.35) saturate(0.75) contrast(1.05);
+  /* Colour e-ink: soft colour at rest, full colour on the game you're on. */
+  --img-filter: saturate(0.72) contrast(1.02) sepia(0.06);
+  --img-filter-focus: none;
   --step: cubic-bezier(0.2, 1, 0.3, 1);
 }
 

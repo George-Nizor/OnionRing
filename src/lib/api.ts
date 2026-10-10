@@ -106,13 +106,23 @@ export interface BrowserGame {
   project: string;
   url: string;
   source: string | null;
-  status: "official" | "open-source" | "shareware" | "own-files" | "fan-original";
+  status: "official" | "open-source" | "shareware" | "own-files" | "fan-original" | "custom";
   original: string | null;
   summary: string | null;
   needsFiles: string | null;
   embed: "window" | "link";
   controls: string | null;
   multiplayer: boolean;
+}
+
+export type PicKind = "system" | "emulator" | "port" | "browser";
+
+export interface ReleaseDetails {
+  tag: string;
+  published: string | null;
+  asset: string | null;
+  size: number | null;
+  url: string | null;
 }
 
 export interface CatalogView {
@@ -198,6 +208,10 @@ export const api = {
   restoreReclaimed: () => invoke<number>("restore_reclaimed"),
   reveal: (path: string) => invoke<void>("reveal", { path }),
   openBrowserGame: (id: string) => invoke<void>("open_browser_game", { id }),
+  addBrowserGame: (title: string, url: string) => invoke<BrowserGame>("add_browser_game", { title, url }),
+  removeBrowserGame: (id: string) => invoke<void>("remove_browser_game", { id }),
+  picture: (kind: PicKind, id: string) => invoke<string | null>("picture", { kind, id }),
+  releaseDetails: (id: string) => invoke<ReleaseDetails | null>("release_details", { id }),
 };
 
 export const src = (path: string | null | undefined) => (path ? convertFileSrc(path) : null);

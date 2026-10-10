@@ -22,13 +22,13 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
-const BASE: &str = "https://thumbnails.libretro.com";
+pub(crate) const BASE: &str = "https://thumbnails.libretro.com";
 const THUMB_W: u32 = 360;
 const INDEX_MAX_AGE: i64 = 14 * 24 * 3600;
 
-const PATH_ENC: &AsciiSet = &CONTROLS.add(b' ').add(b'"').add(b'#').add(b'%').add(b'?').add(b'<').add(b'>').add(b'`').add(b'{').add(b'}');
+pub(crate) const PATH_ENC: &AsciiSet = &CONTROLS.add(b' ').add(b'"').add(b'#').add(b'%').add(b'?').add(b'<').add(b'>').add(b'`').add(b'{').add(b'}');
 
-fn agent() -> ureq::Agent {
+pub(crate) fn agent() -> ureq::Agent {
     ureq::AgentBuilder::new()
         .timeout_connect(std::time::Duration::from_secs(10))
         .timeout_read(std::time::Duration::from_secs(30))
@@ -37,7 +37,7 @@ fn agent() -> ureq::Agent {
 }
 
 /// File names (without .png) available for one system + kind, cached on disk.
-fn index(root: &DataRoot, system: &str, kind: &str) -> Vec<String> {
+pub(crate) fn index(root: &DataRoot, system: &str, kind: &str) -> Vec<String> {
     let dir = root.cache().join("libretro");
     let _ = std::fs::create_dir_all(&dir);
     let file = dir.join(format!("{}__{}.txt", system.replace([' ', '-'], "_"), kind));

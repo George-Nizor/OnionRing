@@ -399,6 +399,30 @@ pub struct UpdateInfo {
     pub url: Option<String>,
 }
 
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ReleaseDetails {
+    pub tag: String,
+    pub published: Option<String>,
+    pub asset: Option<String>,
+    pub size: Option<u64>,
+    pub url: Option<String>,
+}
+
+/// The newest release and the download OnionRing would pick, for the details panel.
+pub fn release_details(root: &DataRoot, t: &Target) -> Result<Option<ReleaseDetails>> {
+    let Some(repo) = t.repo.as_deref() else { return Ok(None) };
+    let rel = github::latest(root, repo, t.prerelease)?;
+    let asset = t.asset.as_deref().and_then(|p| github::pick_asset(&rel, p).ok());
+    Ok(Some(ReleaseDetails {
+        tag: rel.tag_name.clone(),
+        published: rel.published_at.clone(),
+        asset: asset.map(|a| a.name.clone()),
+        size: asset.map(|a| a.size),
+        url: rel.html_url.clone(),
+    }))
+}
+
 pub fn check_update(root: &DataRoot, t: &Target) -> Result<Option<UpdateInfo>> {
     let Some(app) = installed(root, &t.id) else { return Ok(None) };
     let Some(repo) = t.repo.as_deref() else { return Ok(None) };

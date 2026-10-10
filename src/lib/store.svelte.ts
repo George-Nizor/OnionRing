@@ -1,5 +1,5 @@
 import { listen } from "@tauri-apps/api/event";
-import { api, type Bootstrap, type Game, type Platform, type Progress } from "./api";
+import { api, type Bootstrap, type CatalogView, type Game, type Platform, type Progress } from "./api";
 import { norm } from "./format";
 
 export type Theme = "pixel" | "paper";
@@ -8,6 +8,8 @@ export interface View {
   name: ViewName;
   gameId?: number;
   tab?: string;
+  /** A catalog entry to open straight away (from search). */
+  item?: string;
 }
 export type Sort = "title" | "recent" | "playtime" | "added" | "size";
 
@@ -71,6 +73,22 @@ class AppStore {
   running = $state<number[]>([]);
   toasts = $state<Toast[]>([]);
   accents = $state<Record<string, string>>({});
+  catalog = $state<CatalogView | null>(null);
+
+  /** Search across everything: your games, and every port, emulator and browser game. */
+  everything = $derived.by(() => {
+    const q = norm(this.query);
+    const empty = { games: [] as Game[], ports: [] as CatalogView["ports"], emulators: [] as CatalogView["emulators"], browser: [] as CatalogView["browser"] };
+    if (!q) return empty;
+    const hit = (...s: (string | null | undefined)[]) => norm(s.filter(Boolean).join(" ")).includes(q);
+    const c = this.catalog;
+    return {
+      games: this.visibleGames.filter((g) => hit(g.title, g.serial)).slice(0, 18),
+      ports: (c?.ports ?? []).filter((p) => hit(p.game, p.name, p.original.join(" "))).slice(0, 12),
+      emulators: (c?.emulators ?? []).filter((e) => hit(e.name, e.platforms.map((p) => this.platforms.get(p)?.name).join(" "))).slice(0, 8),
+      browser: (c?.browser ?? []).filter((b) => hit(b.title, b.project, b.original)).slice(0, 12),
+    };
+  });
 
   platforms = $derived(new Map<string, Platform>((this.boot?.platforms ?? []).map((p) => [p.id, p])));
 
@@ -122,15 +140,24 @@ class AppStore {
         this.installing = rest;
         if (error) this.toast(error, "error", 9000);
         else this.toast("Installed. It's in your library.", "ok");
+        this.loadCatalog();
       } else this.installing = { ...this.installing, [id]: message };
     });
     if (this.boot.dataRoot) {
       await this.reload();
-      api.catalog()
-        .then((c) => (this.accents = Object.fromEntries(c.ports.filter((p) => p.accent).map((p) => [p.id, p.accent!]))))
-        .catch(() => {});
+      this.loadCatalog();
     }
     this.loaded = true;
+  }
+
+  async loadCatalog() {
+    try {
+      const c = await api.catalog();
+      this.catalog = c;
+      this.accents = Object.fromEntries(c.ports.filter((p) => p.accent).map((p) => [p.id, p.accent!]));
+    } catch {
+      /* catalog unavailable: search just covers the library */
+    }
   }
 
   async reload() {

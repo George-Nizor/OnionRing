@@ -4,6 +4,7 @@
   import { bytes, playtime } from "$lib/format";
   import Art from "./Art.svelte";
   import Glyph from "./Glyph.svelte";
+  import Pic from "./Pic.svelte";
   import Tile from "./Tile.svelte";
 
   let { emulators, portCount = 0, browser = [] }: { emulators: Emulator[]; portCount?: number; browser?: BrowserGame[] } = $props();
@@ -82,8 +83,11 @@
               onmouseenter={(e) => (e.currentTarget as HTMLElement).focus({ preventScroll: true })}
               aria-label="{s.p.name}, {s.n} games"
             >
-              <span class="big">{s.p.short.replace("WII", "Wii")}</span>
-              <span class="meta label"><Glyph name="library" size={12} />{s.n}<Glyph name={s.ok ? "check" : "alert"} size={12} /></span>
+              <span class="sp"><Pic kind="system" id={s.p.id} icon="pad" fit="contain" /></span>
+              <span class="sline">
+                <span class="big">{s.p.short.replace("WII", "Wii")}</span>
+                <span class="meta label"><Glyph name="library" size={12} />{s.n}<Glyph name={s.ok ? "check" : "alert"} size={12} /></span>
+              </span>
             </button>
           {/each}
         </div>
@@ -273,6 +277,33 @@
     font-weight: 800;
     font-size: 44px;
     line-height: 1;
+  }
+  .sys:not(.web) {
+    width: 190px;
+    height: 190px;
+    padding: 0;
+  }
+  .sp {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    background: #fff;
+  }
+  :global(:root[data-theme="pixel"]) .sp {
+    border-bottom: var(--border) solid var(--line);
+  }
+  :global(:root[data-theme="paper"]) .sp {
+    border-bottom: 1px solid var(--line);
+  }
+  .sline {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+  }
+  .sline .big {
+    font-size: 30px;
   }
   .sys.web {
     width: 190px;

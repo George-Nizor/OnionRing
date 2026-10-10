@@ -2,18 +2,19 @@
   import { onMount, tick } from "svelte";
   import { open } from "@tauri-apps/plugin-dialog";
   import { openUrl } from "@tauri-apps/plugin-opener";
-  import { api, type BrowserGame, type CatalogView, type Emulator, type EmulatorDef, type PortDef, type UpdateInfo } from "$lib/api";
+  import { api, type BrowserGame, type CatalogView, type Emulator, type EmulatorDef, type PortDef, type ReleaseDetails, type UpdateInfo } from "$lib/api";
   import { app } from "$lib/store.svelte";
   import { focusFirst } from "$lib/nav";
-  import { norm } from "$lib/format";
+  import { bytes, norm } from "$lib/format";
   import Glyph from "./Glyph.svelte";
+  import Pic from "./Pic.svelte";
 
   let { emulators }: { emulators: Emulator[] } = $props();
 
   let cat = $state<CatalogView | null>(null);
   let updates = $state<Record<string, UpdateInfo>>({});
   let consoleFilter = $state<string | null>(null);
-  let sheet = $state<{ kind: "port"; p: PortDef } | { kind: "emu"; e: EmulatorDef } | { kind: "web"; b: BrowserGame } | null>(null);
+  let sheet = $state<{ kind: "port"; p: PortDef } | { kind: "emu"; e: EmulatorDef } | { kind: "web"; b: BrowserGame } | { kind: "add" } | null>(null);
 
   /** What each kind of browser game is, as an icon and two words. */
   const STATUS: Record<BrowserGame["status"], [string, string]> = {
@@ -22,7 +23,26 @@
     shareware: ["info", "Free demo"],
     "own-files": ["folder", "Your files"],
     "fan-original": ["star", "Fan made"],
+    custom: ["plus", "Yours"],
   };
+  let newTitle = $state("");
+  let newUrl = $state("");
+  async function addOwn() {
+    try {
+      const g = await api.addBrowserGame(newTitle, newUrl);
+      newTitle = newUrl = "";
+      await load();
+      app.toast(`Added ${g.title}`, "ok");
+      sheet = { kind: "web", b: g };
+    } catch (e) {
+      app.toast(String(e), "error");
+    }
+  }
+  async function removeOwn(b: BrowserGame) {
+    await api.removeBrowserGame(b.id);
+    sheet = null;
+    await load();
+  }
   function playWeb(b: BrowserGame) {
     api.openBrowserGame(b.id).catch((e) => app.toast(String(e), "error"));
   }
@@ -31,6 +51,16 @@
 
   async function load() {
     cat = await api.catalog();
+    // Arriving from search with something to show.
+    const item = app.view.item;
+    if (item && !sheet) {
+      const p = cat.ports.find((x) => x.id === item);
+      const e = cat.emulators.find((x) => x.id === item);
+      const b = cat.browser.find((x) => x.id === item);
+      if (p) showSheet({ kind: "port", p });
+      else if (e) showSheet({ kind: "emu", e });
+      else if (b) showSheet({ kind: "web", b });
+    }
   }
   onMount(() => {
     load();
@@ -64,8 +94,19 @@
 
   const found = (e: EmulatorDef) => emulators.find((x) => x.id === e.id || x.id.startsWith(`${e.id}-`));
 
+  let rel = $state<ReleaseDetails | null>(null);
+  let relLoading = $state(false);
   async function showSheet(s: NonNullable<typeof sheet>) {
     sheet = s;
+    rel = null;
+    const rid = s.kind === "port" ? s.p.id : s.kind === "emu" && s.e.repo ? s.e.id : null;
+    if (rid) {
+      relLoading = true;
+      api.releaseDetails(rid)
+        .then((r) => sheet && (rel = r))
+        .catch(() => {})
+        .finally(() => (relLoading = false));
+    }
     await tick();
     focusFirst(sheetEl);
   }
@@ -108,6 +149,7 @@
         {@const busy = app.installing[p.id]}
         <button class="cart" data-nav style:--i={Math.min(i, 20)} onclick={() => showSheet({ kind: "port", p })}
           onmouseenter={(e) => (e.currentTarget as HTMLElement).focus({ preventScroll: true })}>
+          <span class="cp"><Pic kind="port" id={p.id} icon="cart" /></span>
           <span class="top label">{p.original.map(short).join(" ")}</span>
           <span class="name">{p.game}</span>
           <span class="by">{p.name}</span>
@@ -130,6 +172,7 @@
         {@const busy = app.installing[e.id]}
         <button class="cart" data-nav style:--i={i} onclick={() => showSheet({ kind: "emu", e })}
           onmouseenter={(ev) => (ev.currentTarget as HTMLElement).focus({ preventScroll: true })}>
+          <span class="cp light"><Pic kind="emulator" id={e.id} icon="pad" fit="contain" /></span>
           <span class="top label">{e.platforms.map((p) => app.platforms.get(p)?.short ?? p).join(" ")}</span>
           <span class="name">{e.name}</span>
           <span class="by">{f ? (f.managed ? "Installed by OnionRing" : "Found on this PC") : e.repo ? "Ready to install" : "From its website"}</span>
@@ -143,9 +186,15 @@
     </div>
   {:else}
     <div class="grid">
+      <button class="cart add" data-nav onclick={() => showSheet({ kind: "add" })}
+        onmouseenter={(e) => (e.currentTarget as HTMLElement).focus({ preventScroll: true })}>
+        <Glyph name="plus" size={48} />
+        <span class="name">Add your own</span>
+      </button>
       {#each cat?.browser ?? [] as b, i (b.id)}
         <button class="cart" data-nav style:--i={Math.min(i, 20)} onclick={() => showSheet({ kind: "web", b })}
           onmouseenter={(e) => (e.currentTarget as HTMLElement).focus({ preventScroll: true })}>
+          <span class="cp"><Pic kind="browser" id={b.id} icon="globe" /></span>
           <span class="top label">{b.original ?? ""}</span>
           <span class="name">{b.title}</span>
           <span class="by">{b.project}</span>
@@ -166,14 +215,23 @@
       {@const p = sheet.p}
       {@const inst = installed.get(p.id)}
       {@const up = updates[p.id]}
+      <div class="hero"><Pic kind="port" id={p.id} icon="cart" /></div>
       <span class="label">{p.kind} · {p.original.join(", ")}</span>
       <h2>{p.game}</h2>
       <div class="by">{p.name}</div>
-      <div class="facts">
-        {#if inst}<span><Glyph name="check" size={24} />{inst.version}{inst.source.verified ? ", checked" : ""}</span>{/if}
-        {#if p.licence}<span><Glyph name="info" size={24} />{p.licence}</span>{/if}
-      </div>
+      {#if p.blurb}<p class="blurb">{p.blurb}</p>{/if}
       {#if p.requires}<p class="needs"><Glyph name="alert" size={24} /><span>{p.requires}</span></p>{/if}
+      <dl class="details">
+        <dt><Glyph name="globe" size={24} /></dt><dd><button class="link" data-nav onclick={() => openUrl(`https://github.com/${p.repo}`)}>github.com/{p.repo}</button></dd>
+        {#if p.licence}<dt><Glyph name="info" size={24} /></dt><dd>{p.licence}</dd>{/if}
+        {#if rel}
+          <dt><Glyph name="refresh" size={24} /></dt><dd>{rel.tag}{rel.published ? `, ${new Date(rel.published).toLocaleDateString()}` : ""}</dd>
+          {#if rel.size}<dt><Glyph name="disk" size={24} /></dt><dd>{bytes(rel.size)} download{rel.asset ? ` (${rel.asset})` : ""}</dd>{/if}
+        {:else if relLoading}
+          <dt><Glyph name="refresh" size={24} /></dt><dd class="faint">Checking the latest release…</dd>
+        {/if}
+        {#if inst}<dt><Glyph name="check" size={24} /></dt><dd>{inst.version} installed{inst.source.verified ? ", hash checked" : ""}</dd>{/if}
+      </dl>
       <div class="btns">
         {#if app.installing[p.id]}
           <div class="prog wide" style:--p={pct(app.installing[p.id])}></div>
@@ -188,6 +246,7 @@
       </div>
     {:else if sheet.kind === "web"}
       {@const b = sheet.b}
+      <div class="hero"><Pic kind="browser" id={b.id} icon="globe" /></div>
       <span class="label">{b.original ?? ""}</span>
       <h2>{b.title}</h2>
       <div class="by">{b.project}</div>
@@ -198,6 +257,11 @@
       </div>
       {#if b.summary}<p class="needs"><Glyph name="info" size={24} /><span>{b.summary}</span></p>{/if}
       {#if b.needsFiles}<p class="needs"><Glyph name="folder" size={24} /><span>{b.needsFiles}</span></p>{/if}
+      <dl class="details">
+        <dt><Glyph name="globe" size={24} /></dt><dd><button class="link" data-nav onclick={() => openUrl(b.url)}>{new URL(b.url).host}</button></dd>
+        {#if b.source}<dt><Glyph name="info" size={24} /></dt><dd><button class="link" data-nav onclick={() => openUrl(b.source!)}>{b.source.replace(/^https?:\/\//, "")}</button></dd>{/if}
+        {#if b.controls}<dt><Glyph name="pad" size={24} /></dt><dd>{b.controls.replace("+", " and ").replace("both", "keyboard, mouse or controller")}</dd>{/if}
+      </dl>
       <div class="btns">
         <button class="btn big primary" data-nav onclick={() => playWeb(b)}>
           <Glyph name={b.embed === "window" ? "play" : "globe"} size={24} />{b.embed === "window" ? "Play" : "Open"}
@@ -205,15 +269,40 @@
         {#if b.source}
           <button class="btn big icon" data-nav onclick={() => openUrl(b.source!)} aria-label="Source code"><Glyph name="info" size={24} /></button>
         {/if}
+        {#if b.status === "custom"}
+          <button class="btn big" data-nav onclick={() => removeOwn(b)}><Glyph name="close" size={24} />Remove</button>
+        {/if}
+      </div>
+    {:else if sheet.kind === "add"}
+      <span class="label">Browser game</span>
+      <h2>Add your own</h2>
+      <label class="in"><span class="label">Name</span><input class="field" data-nav bind:value={newTitle} spellcheck="false" /></label>
+      <label class="in"><span class="label">Link</span><input class="field" data-nav bind:value={newUrl} placeholder="https://" spellcheck="false"
+        onkeydown={(e) => e.key === "Enter" && addOwn()} /></label>
+      <p class="needs"><Glyph name="info" size={24} /><span>Saved only on this PC. It plays in its own window, kept apart from OnionRing.</span></p>
+      <div class="btns">
+        <button class="btn big primary" data-nav onclick={addOwn} disabled={!newTitle.trim() || !newUrl.trim()}><Glyph name="plus" size={24} />Add</button>
       </div>
     {:else}
       {@const e = sheet.e}
       {@const f = found(e)}
+      <div class="hero light"><Pic kind="emulator" id={e.id} icon="pad" fit="contain" /></div>
       <span class="label">{e.platforms.map((p) => app.platforms.get(p)?.name ?? p).join(", ")}</span>
       <h2>{e.name}</h2>
       {#if f}<div class="by">{f.managed ? "Installed by OnionRing" : "Found on this PC"}{f.version ? `, version ${f.version}` : ""}</div>{/if}
       {#if e.notes}<p class="needs"><Glyph name="info" size={24} /><span>{e.notes}</span></p>{/if}
       {#if e.requires}<p class="needs"><Glyph name="alert" size={24} /><span>{e.requires}</span></p>{/if}
+      <dl class="details">
+        {#if e.repo}<dt><Glyph name="globe" size={24} /></dt><dd><button class="link" data-nav onclick={() => openUrl(`https://github.com/${e.repo}`)}>github.com/{e.repo}</button></dd>{/if}
+        {#if e.homepage}<dt><Glyph name="home" size={24} /></dt><dd><button class="link" data-nav onclick={() => openUrl(e.homepage!)}>{new URL(e.homepage).host}</button></dd>{/if}
+        {#if rel}
+          <dt><Glyph name="refresh" size={24} /></dt><dd>{rel.tag}{rel.published ? `, ${new Date(rel.published).toLocaleDateString()}` : ""}</dd>
+          {#if rel.size}<dt><Glyph name="disk" size={24} /></dt><dd>{bytes(rel.size)} download</dd>{/if}
+        {:else if relLoading}
+          <dt><Glyph name="refresh" size={24} /></dt><dd class="faint">Checking the latest release…</dd>
+        {/if}
+        {#if f}<dt><Glyph name="folder" size={24} /></dt><dd><button class="link" data-nav onclick={() => api.reveal(f.exe)}>Show on this PC</button></dd>{/if}
+      </dl>
       <div class="btns">
         {#if app.installing[e.id]}
           <div class="prog wide" style:--p={pct(app.installing[e.id])}></div>
@@ -382,6 +471,85 @@
     height: 4px;
     top: auto;
     bottom: -2px;
+  }
+  .cart.add {
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+  }
+  :global(:root[data-theme="pixel"]) .cart.add {
+    border-style: dashed;
+  }
+  :global(:root[data-theme="paper"]) .cart.add {
+    background: transparent;
+    box-shadow: inset 0 0 0 1.5px var(--line);
+  }
+  .in {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .field {
+    height: 52px;
+    padding: 0 14px;
+    font-size: 17px;
+    background: var(--bg);
+    border: var(--border) solid var(--line);
+  }
+  .cp {
+    position: relative;
+    display: block;
+    width: calc(100% + 32px);
+    height: 120px;
+    margin: -14px -16px 6px;
+    background: var(--panel);
+  }
+  .cp.light,
+  .hero.light {
+    background: #fff;
+  }
+  :global(:root[data-theme="pixel"]) .cp {
+    border-bottom: var(--border) solid var(--line);
+  }
+  :global(:root[data-theme="paper"]) .cp {
+    border-bottom: 1px solid var(--line);
+  }
+  .hero {
+    position: relative;
+    flex: none;
+    height: 240px;
+    margin: -36px -34px 14px;
+    background: var(--panel);
+  }
+  :global(:root[data-theme="pixel"]) .hero {
+    border-bottom: var(--border) solid var(--line);
+  }
+  .blurb {
+    margin: 6px 0 0;
+    font-size: 16px;
+    color: var(--muted);
+  }
+  .details {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    gap: 12px 14px;
+    align-items: center;
+    margin: 18px 0 0;
+    font-family: var(--label);
+    font-size: 15px;
+  }
+  .details dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+  .link {
+    text-align: left;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+  .faint {
+    color: var(--faint);
   }
   .state.web {
     align-self: stretch;
