@@ -26,3 +26,9 @@ tauri-plugin-single-instance = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 anyhow = "1"
+# Auto-pickup: watch the library's folders for new games.
+notify = "8.2"
+
+[target.'cfg(windows)'.dependencies]
+# The version Tauri itself uses; lets a browser game's own fullscreen button fill the screen.
+webview2-com = "0.39.1"

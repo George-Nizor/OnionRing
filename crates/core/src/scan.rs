@@ -20,7 +20,7 @@ use std::sync::LazyLock;
 use walkdir::{DirEntry, WalkDir};
 
 /// Emulator internals and other folders that never hold games.
-const SKIP_DIRS: &[&str] = &[
+pub(crate) const SKIP_DIRS: &[&str] = &[
     "dev_flash", "dev_flash2", "dev_flash3", "dev_hdd1", "dev_bdvd", "dev_usb000", "cache", "shaderlog",
     "shadercache", "shaders", "qtplugins", "languages", "translations", "resources", "sys", "bios", "memcards",
     "sstates", "savestates", "textures", "cheats", "logs", "captures", "recordings", "snaps", "screenshots",
@@ -30,9 +30,11 @@ const SKIP_DIRS: &[&str] = &[
     "node_modules", "reclaim", "rpcs3_old", "old", "backup", "backups", "_internal", "qt6", "sounds", "test",
 ];
 
-const ARCHIVE_EXTS: &[&str] = &[".zip", ".7z", ".rar"];
+pub(crate) const ARCHIVE_EXTS: &[&str] = &[".zip", ".7z", ".rar"];
 
-static VERSION_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?i)v?(\d+\.\d+(?:\.\d+)*)").unwrap());
+/// A version in an emulator's folder name, with RPCS3/DuckStation-style build numbers kept:
+/// `rpcs3-v0.0.34-17210-0fd6956b_win64` -> `0.0.34-17210` (see `updates::Version`).
+static VERSION_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?i)v?(\d+\.\d+(?:\.\d+)*(?:-\d{3,})?)").unwrap());
 
 #[derive(Debug, Clone)]
 pub struct FoundEmu {
@@ -510,4 +512,18 @@ pub fn scan(root: &DataRoot, cat: &Catalog, db: &Db, progress: &dyn Fn(Progress)
         eprintln!("scan: {} files skipped because their platform was ambiguous", w.unclassified);
     }
     Ok(summary)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn versions_from_folder_names() {
+        let v = |p: &str| version_from_dirs(Path::new(p));
+        assert_eq!(v(r"G:\Emulation\PS3\rpcs3-v0.0.34-17210-0fd6956b_win64\rpcs3.exe").as_deref(), Some("0.0.34-17210"));
+        assert_eq!(v(r"G:\Emulation\PS2\pcsx2-v2.3.70-windows-x64-Qt\pcsx2-qt.exe").as_deref(), Some("2.3.70"));
+        assert_eq!(v(r"G:\Emulation\DS\desmume-0.9.13-win64\DeSmuME_0.9.13_x64.exe").as_deref(), Some("0.9.13"));
+        assert_eq!(v(r"G:\Emulation\GC\Dolphin-x64\Dolphin.exe"), None);
+    }
 }

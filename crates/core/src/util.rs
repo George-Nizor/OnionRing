@@ -12,6 +12,75 @@ pub fn now() -> i64 {
         .unwrap_or(0)
 }
 
+/// Seconds east of UTC for this PC's time zone right now (0 when unknown). Daylight saving is
+/// taken into account for the current moment only.
+pub fn local_offset() -> i64 {
+    #[cfg(windows)]
+    {
+        #[repr(C)]
+        struct SystemTimeW([u16; 8]);
+        /// TIME_ZONE_INFORMATION
+        #[repr(C)]
+        struct TimeZoneInformation {
+            bias: i32,
+            standard_name: [u16; 32],
+            standard_date: SystemTimeW,
+            standard_bias: i32,
+            daylight_name: [u16; 32],
+            daylight_date: SystemTimeW,
+            daylight_bias: i32,
+        }
+        #[link(name = "kernel32")]
+        unsafe extern "system" {
+            fn GetTimeZoneInformation(info: *mut TimeZoneInformation) -> u32;
+        }
+        let mut info = std::mem::MaybeUninit::<TimeZoneInformation>::zeroed();
+        // SAFETY: the struct has TIME_ZONE_INFORMATION's layout; the call only fills it in.
+        let (mode, info) = unsafe {
+            let mode = GetTimeZoneInformation(info.as_mut_ptr());
+            (mode, info.assume_init())
+        };
+        let extra = match mode {
+            0 => 0,                   // no daylight saving
+            1 => info.standard_bias,  // standard time
+            2 => info.daylight_bias,  // daylight saving time
+            _ => return 0,            // failed
+        };
+        -((info.bias + extra) as i64) * 60
+    }
+    #[cfg(not(windows))]
+    {
+        0
+    }
+}
+
+/// Calendar date and time of a Unix time in a zone `offset` seconds east of UTC:
+/// (year, month, day, hour, minute).
+pub fn civil(t: i64, offset: i64) -> (i64, u32, u32, u32, u32) {
+    let t = t + offset;
+    let (days, secs) = (t.div_euclid(86_400), t.rem_euclid(86_400));
+    // Howard Hinnant's days -> civil date.
+    let z = days + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z.rem_euclid(146_097);
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let day = doy - (153 * mp + 2) / 5 + 1;
+    let month = if mp < 10 { mp + 3 } else { mp - 9 };
+    let year = yoe + era * 400 + i64::from(month <= 2);
+    (year, month as u32, day as u32, (secs / 3600) as u32, (secs % 3600 / 60) as u32)
+}
+
+/// Start of the week holding `t` (Monday 00:00 in a zone `offset` seconds east of UTC), as a
+/// Unix time.
+pub fn week_start(t: i64, offset: i64) -> i64 {
+    const WEEK: i64 = 7 * 86_400;
+    // The epoch was a Thursday; 1970-01-05 was the first Monday.
+    const MONDAY: i64 = 4 * 86_400;
+    (t + offset - MONDAY).div_euclid(WEEK) * WEEK + MONDAY - offset
+}
+
 static TAGS: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s*[\(\[][^\)\]]*[\)\]]").unwrap());
 static LEAD_NUM: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\d{3,5}\s*-\s*").unwrap());
 static NOISE: LazyLock<Regex> =
@@ -150,6 +219,46 @@ pub fn path_str(p: &Path) -> String {
     p.to_string_lossy().to_string()
 }
 
+/// A scratch folder under the system temp folder, removed when dropped (tests only).
+#[cfg(test)]
+pub(crate) struct TempDir(pub std::path::PathBuf);
+
+#[cfg(test)]
+impl TempDir {
+    pub fn new(tag: &str) -> Self {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        static N: AtomicUsize = AtomicUsize::new(0);
+        let n = N.fetch_add(1, Ordering::SeqCst);
+        let p = std::env::temp_dir().join(format!("onionring-test-{tag}-{}-{n}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&p);
+        std::fs::create_dir_all(&p).unwrap();
+        TempDir(p)
+    }
+
+    pub fn path(&self) -> &Path {
+        &self.0
+    }
+
+    /// Write `bytes` zero bytes to `rel`, creating folders on the way.
+    pub fn file(&self, rel: &str, bytes: usize) -> std::path::PathBuf {
+        self.write(rel, &vec![0u8; bytes])
+    }
+
+    pub fn write(&self, rel: &str, content: &[u8]) -> std::path::PathBuf {
+        let p = self.0.join(rel);
+        std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+        std::fs::write(&p, content).unwrap();
+        p
+    }
+}
+
+#[cfg(test)]
+impl Drop for TempDir {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.0);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -171,6 +280,26 @@ mod tests {
         assert_eq!(norm_key("Matrix The - Path of Neo (Europe Australia) (EnFrDeEs)"), norm_key("Matrix, The - Path of Neo (Europe, Australia)"));
         assert_eq!(norm_key("God of War III (USA) (v02.00)"), norm_key("GOD OF WAR® III"));
         assert_eq!(norm_key("Skate 3 (USA, Asia) (En,Fr,Es)"), "skate 3");
+    }
+
+    #[test]
+    fn dates() {
+        assert_eq!(civil(0, 0), (1970, 1, 1, 0, 0));
+        assert_eq!(civil(951_782_400, 0), (2000, 2, 29, 0, 0));
+        // 2024-01-01 00:00 UTC is 2023-12-31 19:00 five hours west.
+        assert_eq!(civil(1_704_067_200, -5 * 3600), (2023, 12, 31, 19, 0));
+        assert_eq!(civil(1_704_067_200 + 15 * 3600 + 32 * 60, 0), (2024, 1, 1, 15, 32));
+    }
+
+    #[test]
+    fn weeks_start_on_monday() {
+        let monday = 1_704_067_200; // 2024-01-01 00:00 UTC, a Monday
+        assert_eq!(week_start(monday, 0), monday);
+        assert_eq!(week_start(monday + 6 * 86_400 + 86_399, 0), monday);
+        assert_eq!(week_start(monday - 1, 0), monday - 7 * 86_400);
+        // One hour east of UTC, local Monday midnight is 23:00 UTC on Sunday.
+        assert_eq!(week_start(monday, 3600), monday - 3600);
+        assert!(local_offset().abs() <= 14 * 3600);
     }
 
     #[test]

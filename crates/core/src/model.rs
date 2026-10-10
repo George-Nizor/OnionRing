@@ -30,6 +30,63 @@ pub struct Game {
     pub hero: Option<String>,
     pub logo: Option<String>,
     pub copies: i64,
+    /// Launch options for this game only, one argv token per entry (same placeholders as the
+    /// emulator's: `{rom}`, `{rom_dir}`, `{emu_dir}`). `None` uses the emulator's.
+    pub user_args: Option<Vec<String>>,
+}
+
+/// A list of games the player put together. Games are remembered by key, so a game that
+/// disappears and comes back (an unplugged drive) is still in its collections.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct Collection {
+    pub id: i64,
+    pub name: String,
+    pub created: i64,
+    /// Games currently in the library, in the order they were added.
+    pub game_ids: Vec<i64>,
+}
+
+/// One time a game was played.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct Session {
+    pub id: i64,
+    pub game_id: i64,
+    pub started: i64,
+    pub ended: i64,
+    pub seconds: i64,
+}
+
+/// Time played in one week, Monday 00:00 to the next Monday.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct WeekTotal {
+    /// Monday 00:00 local time, as a Unix time.
+    pub start: i64,
+    pub seconds: i64,
+    pub sessions: i64,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct PlayTotals {
+    pub seconds: i64,
+    pub sessions: i64,
+    /// Different games played at least once.
+    pub games: i64,
+}
+
+/// A game ranked by time played.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct TopGame {
+    pub game_id: i64,
+    pub title: String,
+    pub platform: String,
+    pub seconds: i64,
+    pub sessions: i64,
+    pub last_played: i64,
 }
 
 /// One file or folder on disk that holds a game. A game can have several (an ISO, a folder,

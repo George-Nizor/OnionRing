@@ -3,21 +3,49 @@
     "args": ["--no-gui", "{rom}"], "repo": "RPCS3/rpcs3-binaries-win", "asset": "_win64_msvc\\.7z$",
     "homepage": "https://rpcs3.net", "requires": "Your own PS3 firmware (PS3UPDAT.PUP from Sony)",
     "persist": ["dev_hdd0", "dev_flash", "dev_flash2", "dev_flash3", "config", "savestates", "GuiConfigs", "patches"],
-    "carry": ["games.yml", "config.yml"] },
+    "carry": ["games.yml", "config.yml"],
+    "checks": [
+      { "what": "PS3 system software", "paths": ["{emu}/dev_flash/vsh/module/vsh.self"],
+        "help": "Download the PS3 system software (PS3UPDAT.PUP) from PlayStation's website, then install it in RPCS3 with File > Install Firmware." }
+    ],
+    "saves": ["{emu}/dev_hdd0/home"] },
   { "id": "pcsx2", "name": "PCSX2", "platforms": ["ps2"], "exe": "^pcsx2(-qt)?(x64)?(-avx2)?\\.exe$",
     "args": ["-batch", "-fullscreen", "--", "{rom}"], "repo": "PCSX2/pcsx2", "asset": "windows-x64-Qt\\.7z$",
     "homepage": "https://pcsx2.net", "portable": "portable.ini", "requires": "Your own PS2 BIOS dump",
-    "persist": ["bios", "memcards", "inis", "sstates", "covers", "cheats", "gamesettings", "inputprofiles", "snaps"] },
+    "persist": ["bios", "memcards", "inis", "sstates", "covers", "cheats", "gamesettings", "inputprofiles", "snaps"],
+    "checks": [
+      { "what": "PS2 BIOS", "minSize": 4194304,
+        "paths": ["{emu}/bios/*.bin", "%DOCUMENTS%/PCSX2/bios/*.bin"],
+        "settings": [
+          { "file": "{emu}/inis/PCSX2.ini", "section": "Folders", "key": "Bios", "base": "..", "glob": "*.bin" },
+          { "file": "%DOCUMENTS%/PCSX2/inis/PCSX2.ini", "section": "Folders", "key": "Bios", "base": "..", "glob": "*.bin" }
+        ],
+        "help": "Dump the BIOS from your own PS2, then put the .bin file in PCSX2's bios folder." }
+    ],
+    "saves": ["{emu}/memcards", "%DOCUMENTS%/PCSX2/memcards"] },
   { "id": "duckstation", "name": "DuckStation", "platforms": ["ps1"], "exe": "^duckstation-qt.*\\.exe$",
     "args": ["-batch", "-fullscreen", "--", "{rom}"], "repo": "stenzek/duckstation", "asset": "duckstation-windows-x64-release\\.zip$",
     "homepage": "https://www.duckstation.org", "portable": "portable.txt", "requires": "Your own PS1 BIOS dump",
-    "persist": ["bios", "memcards", "savestates", "gamesettings", "covers", "inputprofiles"], "carry": ["settings.ini"] },
+    "persist": ["bios", "memcards", "savestates", "gamesettings", "covers", "inputprofiles"], "carry": ["settings.ini"],
+    "checks": [
+      { "what": "PS1 BIOS", "minSize": 524288,
+        "paths": ["{emu}/bios/*.bin", "%DOCUMENTS%/DuckStation/bios/*.bin", "%LOCALAPPDATA%/DuckStation/bios/*.bin"],
+        "settings": [
+          { "file": "{emu}/settings.ini", "section": "BIOS", "key": "SearchDirectory", "glob": "*.bin" },
+          { "file": "%DOCUMENTS%/DuckStation/settings.ini", "section": "BIOS", "key": "SearchDirectory", "glob": "*.bin" },
+          { "file": "%LOCALAPPDATA%/DuckStation/settings.ini", "section": "BIOS", "key": "SearchDirectory", "glob": "*.bin" }
+        ],
+        "help": "Dump the BIOS from your own PlayStation, then put the .bin file in DuckStation's bios folder." }
+    ],
+    "saves": ["{emu}/memcards", "%DOCUMENTS%/DuckStation/memcards", "%LOCALAPPDATA%/DuckStation/memcards"] },
   { "id": "ppsspp", "name": "PPSSPP", "platforms": ["psp"], "exe": "^PPSSPPWindows64\\.exe$",
     "args": ["{rom}", "--fullscreen"], "repo": "hrydgard/ppsspp", "asset": "Windows-x64\\.zip$",
-    "homepage": "https://www.ppsspp.org" },
+    "homepage": "https://www.ppsspp.org",
+    "saves": ["{emu}/memstick/PSP/SAVEDATA", "%DOCUMENTS%/PPSSPP/PSP/SAVEDATA"] },
   { "id": "shadps4", "name": "shadPS4", "platforms": ["ps4"], "exe": "^shadps4\\.exe$",
     "args": ["-g", "{rom}"], "repo": "shadps4-emu/shadPS4", "asset": "win64-sdl.*\\.zip$",
-    "homepage": "https://shadps4.net", "requires": "Your own decrypted PS4 game dumps" },
+    "homepage": "https://shadps4.net", "requires": "Your own decrypted PS4 game dumps",
+    "saves": ["{emu}/user/home", "{emu}/user/savedata", "%APPDATA%/shadPS4/home", "%APPDATA%/shadPS4/savedata"] },
   { "id": "sharpemu", "name": "SharpEmu", "platforms": ["ps5"], "exe": "^sharpemu\\.exe$",
     "args": ["{rom}"], "repo": "sharpemu/sharpemu", "asset": "win-x64\\.zip$",
     "requires": "Your own decrypted PS5 game dumps",
@@ -27,31 +55,107 @@
     "requires": "Your own decrypted PS5 game dumps",
     "notes": "Experimental. Starts from its own launcher; launching games directly may not work yet." },
   { "id": "dolphin", "name": "Dolphin", "platforms": ["gc", "wii"], "exe": "^dolphin\\.exe$",
-    "args": ["-b", "-e", "{rom}"], "homepage": "https://dolphin-emu.org/download/", "portable": "portable.txt" },
+    "args": ["-b", "-e", "{rom}"], "homepage": "https://dolphin-emu.org/download/", "portable": "portable.txt",
+    "saves": ["{emu}/User/GC", "{emu}/User/Wii", "%DOCUMENTS%/Dolphin Emulator/GC", "%DOCUMENTS%/Dolphin Emulator/Wii",
+              "%APPDATA%/Dolphin Emulator/GC", "%APPDATA%/Dolphin Emulator/Wii"],
+    "savesSkip": ["content", "sd.raw"] },
   { "id": "cemu", "name": "Cemu", "platforms": ["wiiu"], "exe": "^cemu\\.exe$",
     "args": ["-f", "-g", "{rom}"], "repo": "cemu-project/Cemu", "asset": "windows-x64\\.zip$",
-    "homepage": "https://cemu.info", "requires": "Your own Wii U keys and game dumps" },
+    "homepage": "https://cemu.info", "requires": "Your own Wii U keys and game dumps",
+    "checks": [
+      { "what": "Wii U disc keys", "optional": true,
+        "paths": ["{emu}/portable/keys.txt", "{emu}/keys.txt", "%APPDATA%/Cemu/keys.txt"],
+        "contains": "^\\s*[0-9a-f]{32}\\s*([#;].*)?$", "ignore": "^\\s*541b9889519b27d363cd21604b97c67a",
+        "help": "Only needed for .wud and .wux disc images: add the disc keys from your own Wii U to Cemu's keys.txt, one per line." }
+    ],
+    "saves": ["{emu}/portable/mlc01/usr/save", "{emu}/mlc01/usr/save", "%APPDATA%/Cemu/mlc01/usr/save"] },
   { "id": "azahar", "name": "Azahar", "platforms": ["3ds"], "exe": "^azahar(-qt)?\\.exe$",
     "args": ["{rom}"], "repo": "azahar-emu/azahar", "asset": "^azahar-windows-msvc-[^-]+\\.zip$",
-    "homepage": "https://azahar-emu.org" },
+    "homepage": "https://azahar-emu.org",
+    "saves": ["{emu}/user/sdmc", "%APPDATA%/Azahar/sdmc"], "savesSkip": ["content"] },
   { "id": "citra", "name": "Citra", "platforms": ["3ds"], "exe": "^citra-qt\\.exe$",
     "args": ["{rom}"], "homepage": "https://github.com/azahar-emu/azahar",
-    "notes": "Citra was discontinued in 2024. Azahar is its maintained successor and reads the same games." },
+    "notes": "Citra was discontinued in 2024. Azahar is its maintained successor and reads the same games.",
+    "saves": ["{emu}/user/sdmc", "%APPDATA%/Citra/sdmc"], "savesSkip": ["content"] },
   { "id": "melonds", "name": "melonDS", "platforms": ["nds"], "exe": "^melonds\\.exe$",
     "args": ["-f", "{rom}"], "repo": "melonDS-emu/melonDS", "asset": "windows-x86_64\\.zip$",
-    "homepage": "https://melonds.kuribo64.net" },
+    "homepage": "https://melonds.kuribo64.net",
+    "checks": [
+      { "what": "DS ARM7 BIOS", "optional": true, "minSize": 16384,
+        "paths": ["{emu}/bios7.bin", "{emu}/portable/bios7.bin"],
+        "settings": [
+          { "file": "{emu}/melonDS.toml", "section": "DS", "key": "BIOS7Path" },
+          { "file": "{emu}/portable/melonDS.toml", "section": "DS", "key": "BIOS7Path" },
+          { "file": "{emu}/melonDS.ini", "key": "BIOS7Path" }
+        ],
+        "help": "Optional: melonDS has its own. For the best accuracy, dump bios7.bin from your own DS and choose it in melonDS's emulator settings." },
+      { "what": "DS ARM9 BIOS", "optional": true, "minSize": 4096,
+        "paths": ["{emu}/bios9.bin", "{emu}/portable/bios9.bin"],
+        "settings": [
+          { "file": "{emu}/melonDS.toml", "section": "DS", "key": "BIOS9Path" },
+          { "file": "{emu}/portable/melonDS.toml", "section": "DS", "key": "BIOS9Path" },
+          { "file": "{emu}/melonDS.ini", "key": "BIOS9Path" }
+        ],
+        "help": "Optional: melonDS has its own. For the best accuracy, dump bios9.bin from your own DS and choose it in melonDS's emulator settings." },
+      { "what": "DS firmware", "optional": true, "minSize": 131072,
+        "paths": ["{emu}/firmware.bin", "{emu}/portable/firmware.bin"],
+        "settings": [
+          { "file": "{emu}/melonDS.toml", "section": "DS", "key": "FirmwarePath" },
+          { "file": "{emu}/portable/melonDS.toml", "section": "DS", "key": "FirmwarePath" },
+          { "file": "{emu}/melonDS.ini", "key": "FirmwarePath" }
+        ],
+        "help": "Optional: needed only to start at the DS menu. Dump firmware.bin from your own DS or DS Lite and choose it in melonDS's emulator settings." }
+    ] },
   { "id": "desmume", "name": "DeSmuME", "platforms": ["nds"], "exe": "^desmume.*\\.exe$",
     "args": ["{rom}"], "homepage": "https://desmume.org",
-    "notes": "DeSmuME is largely unmaintained. melonDS is more accurate and actively developed." },
+    "notes": "DeSmuME is largely unmaintained. melonDS is more accurate and actively developed.",
+    "saves": ["{emu}/Battery"] },
   { "id": "mgba", "name": "mGBA", "platforms": ["gba", "gbc", "gb"], "exe": "^mgba\\.exe$",
-    "args": ["-f", "{rom}"], "repo": "mgba-emu/mgba", "asset": "win64\\.7z$", "homepage": "https://mgba.io" },
+    "args": ["-f", "{rom}"], "repo": "mgba-emu/mgba", "asset": "win64\\.7z$", "homepage": "https://mgba.io",
+    "checks": [
+      { "what": "GBA BIOS", "optional": true, "minSize": 16384,
+        "paths": ["{emu}/gba_bios.bin", "{emu}/bios/gba_bios.bin"],
+        "settings": [
+          { "file": "{emu}/config.ini", "key": "gba.bios" },
+          { "file": "%APPDATA%/mGBA/config.ini", "key": "gba.bios" }
+        ],
+        "help": "Optional: mGBA has its own. If you want the original, dump gba_bios.bin from your own Game Boy Advance and choose it in mGBA's settings." }
+    ] },
   { "id": "rmg", "name": "Rosalie's Mupen GUI", "platforms": ["n64"], "exe": "^rmg\\.exe$",
-    "args": ["--fullscreen", "{rom}"], "repo": "Rosalie241/RMG", "asset": "Portable-Windows64.*\\.zip$" },
+    "args": ["--fullscreen", "{rom}"], "repo": "Rosalie241/RMG", "asset": "Portable-Windows64.*\\.zip$",
+    "saves": ["{emu}/Save/Game", "%APPDATA%/RMG/Save/Game"] },
   { "id": "mesen", "name": "Mesen", "platforms": ["nes", "snes", "gb", "gbc"], "exe": "^mesen\\.exe$",
-    "args": ["--fullscreen", "{rom}"], "repo": "SourMesen/Mesen2", "asset": "_Windows\\.zip$" },
+    "args": ["--fullscreen", "{rom}"], "repo": "SourMesen/Mesen2", "asset": "_Windows\\.zip$",
+    "saves": ["{emu}/Saves", "%DOCUMENTS%/Mesen2/Saves"] },
   { "id": "flycast", "name": "Flycast", "platforms": ["dreamcast"], "exe": "^flycast\\.exe$",
-    "args": ["{rom}"], "repo": "flyinghead/flycast", "asset": "win64.*\\.zip$" },
+    "args": ["{rom}"], "repo": "flyinghead/flycast", "asset": "win64.*\\.zip$",
+    "checks": [
+      { "what": "Dreamcast BIOS", "optional": true, "minSize": 2097152,
+        "paths": ["{emu}/data/dc_boot.bin"],
+        "help": "Optional: Flycast has its own. For the original start-up screen, dump dc_boot.bin from your own Dreamcast into Flycast's data folder." }
+    ],
+    "saves": ["{emu}/data"], "savesSkip": ["textures", "dc_boot.bin"] },
   { "id": "xemu", "name": "xemu", "platforms": ["xbox"], "exe": "^xemu\\.exe$",
     "args": ["-full-screen", "-dvd_path", "{rom}"], "repo": "xemu-project/xemu", "asset": "^xemu-win-x86_64-release\\.zip$",
-    "homepage": "https://xemu.app", "requires": "Your own Xbox BIOS, MCPX boot ROM and HDD image" }
+    "homepage": "https://xemu.app", "requires": "Your own Xbox BIOS, MCPX boot ROM and HDD image",
+    "checks": [
+      { "what": "Xbox boot ROM", "minSize": 512,
+        "settings": [
+          { "file": "{emu}/xemu.toml", "section": "sys.files", "key": "bootrom_path" },
+          { "file": "%APPDATA%/xemu/xemu/xemu.toml", "section": "sys.files", "key": "bootrom_path" }
+        ],
+        "help": "Dump the MCPX boot ROM from your own Xbox, then choose it in xemu's settings under System." },
+      { "what": "Xbox BIOS", "minSize": 262144,
+        "settings": [
+          { "file": "{emu}/xemu.toml", "section": "sys.files", "key": "flashrom_path" },
+          { "file": "%APPDATA%/xemu/xemu/xemu.toml", "section": "sys.files", "key": "flashrom_path" }
+        ],
+        "help": "Dump the BIOS from your own Xbox, then choose it in xemu's settings under System." },
+      { "what": "Xbox hard drive image", "minSize": 65536,
+        "settings": [
+          { "file": "{emu}/xemu.toml", "section": "sys.files", "key": "hdd_path" },
+          { "file": "%APPDATA%/xemu/xemu/xemu.toml", "section": "sys.files", "key": "hdd_path" }
+        ],
+        "help": "Download the ready-made hard drive image linked from xemu's setup guide, then choose it in xemu's settings under System." }
+    ] }
 ]

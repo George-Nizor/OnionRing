@@ -54,6 +54,66 @@ pub struct EmulatorDef {
     pub requires: Option<String>,
     #[serde(default)]
     pub notes: Option<String>,
+    /// Files only the player can supply (BIOS, firmware, keys). See `checks::run_checks`.
+    #[serde(default)]
+    pub checks: Vec<CheckDef>,
+    /// Folders that hold saves, as path templates (see `paths::expand`). Used by backups.
+    #[serde(default)]
+    pub saves: Vec<String>,
+    /// Folder names left out of save backups, e.g. installed game data that sits inside a
+    /// save tree ("content" in a 3DS or Wii NAND).
+    #[serde(default)]
+    pub saves_skip: Vec<String>,
+}
+
+/// One file an emulator needs that only the player can supply.
+///
+/// The check passes when any of `paths` (path templates, `*` allowed in the last segment) is a
+/// file of at least `min_size` bytes, or when one of `settings` points at such a file.
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct CheckDef {
+    /// What the file is, in plain words ("PS2 BIOS").
+    pub what: String,
+    #[serde(default)]
+    pub paths: Vec<String>,
+    /// Emulator settings that name where the file (or its folder) is.
+    #[serde(default)]
+    pub settings: Vec<SettingRef>,
+    /// Smallest size a real copy can have, so empty or placeholder files do not count.
+    #[serde(default)]
+    pub min_size: u64,
+    /// For text files: a regex at least one line must match (e.g. a key).
+    #[serde(default)]
+    pub contains: Option<String>,
+    /// Lines matching this regex never count towards `contains` (e.g. an example key).
+    #[serde(default)]
+    pub ignore: Option<String>,
+    /// The emulator works without it (it only improves accuracy or unlocks extras).
+    #[serde(default)]
+    pub optional: bool,
+    /// One plain sentence on how to get it from your own console.
+    #[serde(default)]
+    pub help: String,
+}
+
+/// A setting in an emulator's INI/TOML config that names a file or a folder.
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct SettingRef {
+    /// The config file (path template).
+    pub file: String,
+    /// Only look inside this `[section]` (INI section or TOML table). Any section when absent.
+    #[serde(default)]
+    pub section: Option<String>,
+    pub key: String,
+    /// Folder that relative values are resolved against, relative to the config file's folder
+    /// ("." when absent; ".." when the config lives in a subfolder of the data folder).
+    #[serde(default)]
+    pub base: Option<String>,
+    /// The setting names a folder; look for files matching this pattern inside it.
+    #[serde(default)]
+    pub glob: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -244,6 +304,15 @@ impl Catalog {
     }
     pub fn emulator(&self, id: &str) -> Option<&EmulatorDef> {
         self.emulators.iter().find(|e| e.id == id)
+    }
+    /// The definition behind an emulator found on the PC. A second copy of PCSX2 is stored as
+    /// `pcsx2-2`, a third as `pcsx2-3`, and so on.
+    pub fn emulator_for_instance(&self, instance_id: &str) -> Option<&EmulatorDef> {
+        self.emulator(instance_id).or_else(|| {
+            let (base, n) = instance_id.rsplit_once('-')?;
+            n.parse::<u32>().ok()?;
+            self.emulator(base)
+        })
     }
     pub fn port(&self, id: &str) -> Option<&PortDef> {
         self.ports.iter().find(|p| p.id == id)

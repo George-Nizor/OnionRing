@@ -75,6 +75,8 @@ impl DataRoot {
     pub fn downloads(&self) -> PathBuf { self.root.join("Downloads") }
     pub fn cache(&self) -> PathBuf { self.root.join("Cache") }
     pub fn reclaim(&self) -> PathBuf { self.root.join("Reclaim") }
+    /// Save backups, one folder per run (created on the first backup).
+    pub fn backups(&self) -> PathBuf { self.root.join("Backups") }
     pub fn local_catalog(&self) -> PathBuf { self.root.join("catalog.local.json") }
     pub fn media_dir(&self, game_key: &str) -> PathBuf { self.media().join(crate::util::short_hash(game_key)) }
 }
@@ -126,4 +128,124 @@ pub fn suggest_emulation_dirs() -> Vec<PathBuf> {
 pub fn same_volume(a: &Path, b: &Path) -> bool {
     let root = |p: &Path| p.components().next().map(|c| c.as_os_str().to_string_lossy().to_uppercase());
     root(a).is_some() && root(a) == root(b)
+}
+
+/// Expand a path template (used by emulator checks and save backups) into every path it can
+/// mean on this PC. Nothing is checked on disk.
+///
+/// - `{emu}`: the emulator's folder. Without one, the template expands to nothing.
+/// - `%APPDATA%`, `%LOCALAPPDATA%`, `%USERPROFILE%`: the usual Windows folders.
+/// - `%DOCUMENTS%`: the Documents folder. Windows can move it into OneDrive, so both the local
+///   and the OneDrive one are returned.
+///
+/// `/` and `\` both work as separators. Any other `%VAR%` expands to nothing.
+pub fn expand(template: &str, emu_dir: Option<&Path>) -> Vec<PathBuf> {
+    expand_with(template, emu_dir, &|k| std::env::var(k).ok())
+}
+
+/// [`expand`] with environment lookups supplied by the caller (for tests).
+pub fn expand_with(template: &str, emu_dir: Option<&Path>, env: &dyn Fn(&str) -> Option<String>) -> Vec<PathBuf> {
+    static VAR: std::sync::LazyLock<regex::Regex> =
+        std::sync::LazyLock::new(|| regex::Regex::new(r"\{emu\}|%([A-Za-z_]+)%").unwrap());
+    let get = |k: &str| env(k).filter(|v| !v.trim().is_empty());
+    let mut outs = vec![String::new()];
+    let mut last = 0;
+    for m in VAR.captures_iter(template) {
+        let whole = m.get(0).unwrap();
+        let values: Vec<String> = match m.get(1).map(|n| n.as_str().to_ascii_uppercase()) {
+            None => emu_dir.map(|d| d.to_string_lossy().to_string()).into_iter().collect(),
+            Some(n) if n == "DOCUMENTS" => ["USERPROFILE", "OneDrive", "OneDriveConsumer", "OneDriveCommercial"]
+                .iter()
+                .filter_map(|k| get(k))
+                .map(|base| format!("{base}\\Documents"))
+                .collect(),
+            Some(n) if ["APPDATA", "LOCALAPPDATA", "USERPROFILE"].contains(&n.as_str()) => get(&n).into_iter().collect(),
+            Some(_) => vec![],
+        };
+        if values.is_empty() {
+            return vec![];
+        }
+        let lit = &template[last..whole.start()];
+        outs = outs.iter().flat_map(|o| values.iter().map(move |v| format!("{o}{lit}{v}"))).collect();
+        last = whole.end();
+    }
+    let mut seen = std::collections::HashSet::new();
+    outs.into_iter()
+        .map(|o| tidy_separators(&format!("{o}{}", &template[last..])))
+        .filter(|p| seen.insert(p.to_lowercase()))
+        .map(PathBuf::from)
+        .collect()
+}
+
+/// Backslashes only, no doubled separators (a leading `\\` for network paths is kept).
+fn tidy_separators(p: &str) -> String {
+    let p = p.replace('/', "\\");
+    let (head, rest) = match p.strip_prefix("\\\\") {
+        Some(rest) => ("\\\\", rest),
+        None => ("", p.as_str()),
+    };
+    let mut out = String::from(head);
+    for c in rest.chars() {
+        if !(c == '\\' && out.ends_with('\\') && out.len() > head.len()) {
+            out.push(c);
+        }
+    }
+    out
+}
+
+/// Resolve `.` and `..` without touching the disk (`C:\a\inis\..\bios` -> `C:\a\bios`).
+pub fn clean(path: &Path) -> PathBuf {
+    use std::path::Component;
+    let mut out = PathBuf::new();
+    for c in path.components() {
+        match c {
+            Component::CurDir => {}
+            Component::ParentDir => {
+                if matches!(out.components().next_back(), Some(Component::Normal(_))) {
+                    out.pop();
+                } else if !out.has_root() {
+                    out.push("..");
+                }
+            }
+            other => out.push(other.as_os_str()),
+        }
+    }
+    out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn env(k: &str) -> Option<String> {
+        match k {
+            "APPDATA" => Some(r"C:\Users\me\AppData\Roaming".into()),
+            "USERPROFILE" => Some(r"C:\Users\me".into()),
+            "OneDrive" => Some(r"C:\Users\me\OneDrive".into()),
+            _ => None,
+        }
+    }
+
+    #[test]
+    fn expands_templates() {
+        let emu = Path::new(r"G:\Emu\PCSX2");
+        assert_eq!(expand_with("{emu}/bios/*.bin", Some(emu), &env), vec![PathBuf::from(r"G:\Emu\PCSX2\bios\*.bin")]);
+        assert_eq!(expand_with("%APPDATA%/Cemu/keys.txt", None, &env), vec![PathBuf::from(r"C:\Users\me\AppData\Roaming\Cemu\keys.txt")]);
+        assert_eq!(
+            expand_with("%DOCUMENTS%/PCSX2/memcards", None, &env),
+            vec![PathBuf::from(r"C:\Users\me\Documents\PCSX2\memcards"), PathBuf::from(r"C:\Users\me\OneDrive\Documents\PCSX2\memcards")]
+        );
+        // No emulator folder, an unset variable or an unknown one: nothing.
+        assert!(expand_with("{emu}/bios", None, &env).is_empty());
+        assert!(expand_with("%LOCALAPPDATA%/DuckStation", None, &env).is_empty());
+        assert!(expand_with("%WINDIR%/System32", None, &env).is_empty());
+        // A drive root does not leave a doubled separator.
+        assert_eq!(expand_with("{emu}/keys.txt", Some(Path::new("D:\\")), &env), vec![PathBuf::from(r"D:\keys.txt")]);
+    }
+
+    #[test]
+    fn cleans_dots() {
+        assert_eq!(clean(Path::new(r"G:\PCSX2\inis\..\bios\.\PS2")), PathBuf::from(r"G:\PCSX2\bios\PS2"));
+        assert_eq!(clean(Path::new(r"C:\..\x")), PathBuf::from(r"C:\x"));
+    }
 }

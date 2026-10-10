@@ -148,24 +148,84 @@ fn main() -> Result<()> {
             }
         }
         ["pictures", rest @ ..] => {
-            // Prefetch pictures: systems, emulators, browser games, and the first N ports.
+            // Prefetch pictures: systems, emulators, browser games, and the first N ports
+            // ("all" for every port). --refresh forgets port and browser pictures (and misses)
+            // first, so they are looked up again; system and emulator pictures are kept.
+            use onionring_core::pictures;
+            use rayon::prelude::*;
             let (root, cat, _db) = open()?;
-            let n: usize = rest.first().and_then(|s| s.parse().ok()).unwrap_or(24);
+            if let ["--explain", kind, id] = rest {
+                pictures::explain(&root, &cat, kind, id).iter().for_each(|l| println!("{l}"));
+                return Ok(());
+            }
+            if rest.contains(&"--refresh") {
+                let n = pictures::forget(&root, &["port", "browser"])?;
+                println!("forgot {n} port and browser pictures");
+            }
+            let n: usize = rest.iter().find_map(|s| if *s == "all" { Some(usize::MAX) } else { s.parse().ok() }).unwrap_or(24);
             let mut jobs: Vec<(&str, String)> = Vec::new();
             jobs.extend(cat.platforms.iter().filter(|p| !p.extensions.is_empty()).map(|p| ("system", p.id.clone())));
             jobs.extend(cat.emulators.iter().map(|e| ("emulator", e.id.clone())));
             jobs.extend(cat.browser.iter().map(|b| ("browser", b.id.clone())));
             jobs.extend(cat.ports.iter().take(n).map(|p| ("port", p.id.clone())));
-            use rayon::prelude::*;
-            let found = jobs
-                .par_iter()
-                .filter(|(k, id)| onionring_core::pictures::picture(&root, &cat, k, id).ok().flatten().is_some())
-                .count();
-            println!("{found} of {} have pictures", jobs.len());
+            // A picture found to be generic is taken off the games that already had it, so go
+            // round again until nothing changes.
+            let have = |jobs: &[(&str, String)]| jobs.iter().filter(|(k, id)| pictures::cached(&root, k, id).is_some()).count();
+            let mut before = usize::MAX;
+            for _ in 0..4 {
+                jobs.par_iter().for_each(|(k, id)| {
+                    if let Err(e) = pictures::picture(&root, &cat, k, id) {
+                        eprintln!("  {k} {id}: {e:#}");
+                    }
+                });
+                let now = have(&jobs);
+                if now == before {
+                    break;
+                }
+                before = now;
+            }
+            for kind in ["system", "emulator", "browser", "port"] {
+                let of: Vec<_> = jobs.iter().filter(|(k, _)| *k == kind).cloned().collect();
+                println!("{kind:<9} {} of {} have pictures", have(&of), of.len());
+            }
+            println!("generic images banned: {}", pictures::generic_images(&root));
+            // Ports and browser games must not share a picture.
+            let mut by_hash: std::collections::BTreeMap<String, Vec<String>> = Default::default();
+            for (k, id) in jobs.iter().filter(|(k, _)| *k == "port" || *k == "browser") {
+                if let Some(p) = pictures::cached(&root, k, id) {
+                    by_hash.entry(onionring_core::util::sha256_file(&p)?).or_default().push(format!("{k}:{id}"));
+                }
+            }
+            let shared: Vec<_> = by_hash.values().filter(|v| v.len() > 1).collect();
+            if shared.is_empty() {
+                println!("no two ports or browser games share a picture");
+            }
+            for v in shared {
+                println!("shared picture: {}", v.join(", "));
+            }
         }
         ["snapshot", out] => {
             // Everything the UI loads, as one JSON file, for previewing the UI in a browser.
+            use onionring_core::{backups, checks, updates, util};
             let (root, cat, db) = open()?;
+            let games = db.games()?;
+            let emulators = launch::emulators(&db, &cat, 0)?;
+            // Every game's sessions (newest first), so the preview can answer any history query.
+            let mut sessions = serde_json::Map::new();
+            for g in &games {
+                let s = db.game_sessions(g.id, 10_000)?;
+                if !s.is_empty() {
+                    sessions.insert(g.id.to_string(), serde_json::to_value(s)?);
+                }
+            }
+            let updates = updates::available_updates(&root, &cat, &db).unwrap_or_else(|e| {
+                eprintln!("  updates left out: {e:#}");
+                vec![]
+            });
+            let save_sources = backups::save_sources(&root, &db, &cat)?;
+            // Folder sizes stand in for archive sizes when the preview pretends to back up.
+            let save_sizes: serde_json::Map<String, serde_json::Value> =
+                save_sources.iter().map(|s| (s.path.clone(), util::dir_size(std::path::Path::new(&s.path)).into())).collect();
             let snap = serde_json::json!({
                 "bootstrap": {
                     "version": env!("CARGO_PKG_VERSION"),
@@ -174,12 +234,27 @@ fn main() -> Result<()> {
                     "suggestedSources": onionring_core::paths::suggest_emulation_dirs(),
                     "platforms": cat.platforms,
                 },
-                "games": db.games()?,
-                "emulators": launch::emulators(&db, &cat, 0)?,
+                "checks": checks::emulator_checks(&cat, &emulators),
+                "games": games,
+                "emulators": emulators,
                 "sources": db.sources()?,
                 "catalog": { "ports": cat.ports, "emulators": cat.emulators, "browser": cat.browser, "installed": install::installed_apps(&root) },
                 "storage": storage::report(&root, &db)?,
                 "pictures": cached_pictures(&root, &cat),
+                "updates": updates,
+                "collections": db.collections()?,
+                // Weekly totals are worked out by the preview from the sessions, so they follow
+                // today's date rather than the day the snapshot was taken.
+                "history": {
+                    "totals": db.play_totals()?,
+                    "top": db.top_games(10_000, None)?,
+                    "sessions": sessions,
+                },
+                "saveSources": save_sources,
+                "saveSizes": save_sizes,
+                "backups": backups::list_backups(&root),
+                // Same kv key and default (on) as the app's auto-pickup setting.
+                "autoScan": db.kv_get("auto_scan")?.as_deref() != Some("0"),
             });
             std::fs::write(out, serde_json::to_string(&snap)?)?;
             println!("wrote {out}");

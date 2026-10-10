@@ -62,7 +62,9 @@ Tokens: --bg --fg --muted --faint --line --panel --hi-bg --hi-fg --accent(-2,-3)
 - `npm run check` (Svelte/TS, must be 0 errors 0 warnings).
 - `cargo clippy --workspace -q -- -D warnings` and `cargo test -q -p onionring-core`.
 - The dev server is ALREADY running at http://127.0.0.1:1420 with a mock backend fed by
-  `G:\OnionRing\Cache\ui-snapshot.json`. Do not start or stop it. After changing what the backend
+  `G:\OnionRing\Cache\ui-snapshot.json`. Do not stop it. If it is down (connection refused on
+  127.0.0.1:1420), start it in the background from the repo root with `npm run dev` (if another
+  agent already restarted it, yours exits because the port is taken, which is fine). After changing what the backend
   returns, regenerate the snapshot: `npm run cli -- snapshot G:\OnionRing\Cache\ui-snapshot.json`.
 - Screenshots exactly as shipped (headless Edge = the app's engine):
   `node scripts/shoot.mjs --views home,library --sizes 1440x900,2048x1152 --themes pixel,paper --out .shots/<yourname>`
