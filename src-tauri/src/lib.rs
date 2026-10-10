@@ -456,7 +456,9 @@ fn site(u: &tauri::Url) -> String {
 /// the user's browser, and notification/location requests are refused. The game's own
 /// fullscreen button fills the screen. "link" games open in the user's browser directly.
 #[tauri::command]
-fn open_browser_game(app: AppHandle, st: State<AppState>, id: String) -> Res<()> {
+// Async on purpose: creating a window from a sync command deadlocks WebView2 on Windows
+// (blank white window, both windows frozen).
+async fn open_browser_game(app: AppHandle, st: State<'_, AppState>, id: String) -> Res<()> {
     use tauri::webview::{NewWindowResponse, PermissionKind, PermissionResponse};
     use tauri_plugin_opener::OpenerExt;
     let cat = st.cat();
