@@ -3,204 +3,314 @@
   import { ask, open } from "@tauri-apps/plugin-dialog";
   import { check, type Update } from "@tauri-apps/plugin-updater";
   import { relaunch } from "@tauri-apps/plugin-process";
-  import { openUrl } from "@tauri-apps/plugin-opener";
   import { api, type Source } from "$lib/api";
-  import { app } from "$lib/store.svelte";
-  import Icon from "./Icon.svelte";
+  import { app, type Theme } from "$lib/store.svelte";
+  import Glyph from "./Glyph.svelte";
+  import Logo from "./Logo.svelte";
 
   let sources = $state<Source[]>([]);
   let update = $state<Update | null>(null);
   let updateState = $state<"idle" | "checking" | "none" | "error" | "installing">("idle");
-  let updateError = $state("");
 
-  async function load() {
-    sources = await api.sources();
-  }
-  onMount(load);
+  onMount(async () => {
+    sources = await api.sources().catch(() => []);
+  });
+
+  const folderName = (p: string) => {
+    const parts = p.split(/[\\/]/).filter(Boolean);
+    return { drive: parts[0] ?? "", name: parts.at(-1) ?? p };
+  };
 
   async function addFolder() {
-    const dir = await open({ directory: true, multiple: false, title: "Choose a folder with emulators or games" });
+    const dir = await open({ directory: true, multiple: false, title: "A folder with emulators or games" });
     if (typeof dir !== "string") return;
     await api.addSource(dir);
-    await load();
+    sources = await api.sources();
     app.scan();
   }
-
   async function remove(s: Source) {
-    const ok = await ask(`Stop scanning ${s.path}?\n\nThe folder itself is not touched.`, { title: "Remove folder", kind: "info" });
-    if (!ok) return;
+    if (!(await ask(`Stop reading ${s.path}?\n\nThe folder itself is not touched.`, { title: "Remove folder" }))) return;
     await api.removeSource(s.id);
-    await load();
+    sources = await api.sources();
     app.scan();
   }
-
-  async function changeRoot() {
-    const dir = await open({ directory: true, multiple: false, title: "Choose where OnionRing keeps its library" });
-    if (typeof dir !== "string") return;
-    const ok = await ask(
-      `Use ${dir} as the data folder?\n\nIf it already holds an OnionRing library it is opened as is; otherwise a fresh library is started there. Your current folder is left untouched.`,
-      { title: "Change data folder", kind: "info" },
-    );
-    if (!ok) return;
-    await api.setDataRoot(dir);
-    app.boot = await api.bootstrap();
-    await load();
-    await app.reload();
-  }
-
   async function checkUpdate() {
     updateState = "checking";
     try {
       update = await check();
       updateState = update ? "idle" : "none";
-    } catch (e) {
-      updateError = String(e);
+    } catch {
       updateState = "error";
     }
   }
-  async function installUpdate() {
-    if (!update) return;
-    updateState = "installing";
-    await update.downloadAndInstall();
-    await relaunch();
+
+  // Logo states, cycled so you can see each animation.
+  type LS = "idle" | "busy" | "launch" | "done";
+  let logoState = $state<LS>("idle");
+  let progress = $state(0);
+  let timer: ReturnType<typeof setInterval> | undefined;
+  function showState(s: LS) {
+    clearInterval(timer);
+    logoState = "idle";
+    requestAnimationFrame(() => {
+      logoState = s;
+      if (s === "busy") {
+        progress = 0;
+        timer = setInterval(() => {
+          progress += 0.11;
+          if (progress > 1.05) progress = 0;
+        }, 450);
+      }
+    });
   }
+  $effect(() => () => clearInterval(timer));
+
+  const themes: [Theme, string][] = [
+    ["pixel", "Pixel"],
+    ["paper", "Paper"],
+  ];
 </script>
 
-<div class="page">
-  <div class="eyebrow">Settings</div>
-  <h1>Settings</h1>
-  <p class="lede">OnionRing itself stays small. Everything it gathers lives in your data folder, so you decide which drive it uses.</p>
-
-  <section class="card block">
-    <div class="title"><Icon name="disk" size={18} /> Data folder</div>
-    <p class="desc">Library database, artwork, installed ports and emulators, and downloads.</p>
-    <div class="line">
-      <span class="mono path">{app.boot?.dataRoot}</span>
-      <button class="btn sm" onclick={() => app.boot?.dataRoot && api.reveal(app.boot.dataRoot + "\\library.db")}><Icon name="folder" size={14} /> Open</button>
-      <button class="btn sm" onclick={changeRoot}>Change…</button>
+<div class="settings">
+  <section>
+    <div class="row-head"><Glyph name="eye" size={24} /><span class="label">Look</span></div>
+    <div class="themes">
+      {#each themes as [t, name] (t)}
+        <button class="theme" class:on={app.theme === t} data-nav onclick={() => app.setTheme(t)} aria-label="{name} theme">
+          <div class="preview" data-theme={t}>
+            <Logo size={64} variant={t === "pixel" ? "pixel" : "ink"} state="still" />
+            <div class="sample">
+              <span class="aa" style:font-family="var(--title)">Aa</span>
+              <span class="mini" style:font-family="var(--label)">{name}</span>
+            </div>
+            <div class="mini-tiles"><span></span><span></span><span></span></div>
+          </div>
+          {#if app.theme === t}<span class="tick"><Glyph name="check" size={24} /></span>{/if}
+        </button>
+      {/each}
     </div>
   </section>
 
-  <section class="card block">
-    <div class="title"><Icon name="library" size={18} /> Game folders</div>
-    <p class="desc">Folders OnionRing reads emulators and games from. They are scanned in place and never modified.</p>
-    {#each sources as s (s.id)}
-      <div class="line">
-        <span class="mono path" class:gone={!s.exists}>{s.path}</span>
-        {#if !s.exists}<span class="chip warn">Offline</span>{/if}
-        <button class="btn sm ghost" onclick={() => api.reveal(s.path)}><Icon name="folder" size={14} /></button>
-        <button class="btn sm ghost" onclick={() => remove(s)}><Icon name="close" size={14} /></button>
+  <section>
+    <div class="row-head"><Glyph name="folder" size={24} /><span class="label">Game folders</span></div>
+    <div class="folders">
+      {#each sources as s (s.id)}
+        {@const f = folderName(s.path)}
+        <div class="folder" class:gone={!s.exists}>
+          <Glyph name={s.exists ? "folder" : "alert"} size={36} />
+          <div class="fname"><b>{f.name}</b><span class="label">{f.drive}</span></div>
+          <button class="btn icon" data-nav onclick={() => api.reveal(s.path)} aria-label="Open {f.name}"><Glyph name="eye" size={24} /></button>
+          <button class="btn icon" data-nav onclick={() => remove(s)} aria-label="Remove {f.name}"><Glyph name="close" size={24} /></button>
+        </div>
+      {/each}
+      <div class="acts">
+        <button class="btn" data-nav onclick={addFolder}><Glyph name="plus" size={24} />Add folder</button>
+        <button class="btn" data-nav onclick={() => app.scan()} disabled={app.progress !== null}><Glyph name="refresh" size={24} />Rescan</button>
+        <button class="btn" data-nav onclick={() => api.refreshArt(true).then((n) => app.toast(`New art for ${n} games`, "ok"))}><Glyph name="library" size={24} />Refresh art</button>
       </div>
-    {/each}
-    <div class="row">
-      <button class="btn sm" onclick={addFolder}><Icon name="plus" size={14} /> Add folder</button>
-      <button class="btn sm ghost" onclick={() => app.scan()} disabled={app.progress !== null}><Icon name="refresh" size={14} /> Rescan now</button>
     </div>
   </section>
 
-  <section class="card block">
-    <div class="title"><Icon name="image" size={18} /> Artwork</div>
-    <p class="desc">Box art comes from the libretro thumbnail project, matched by file name. No account or API key needed. Custom covers you pick are kept.</p>
-    <div class="row">
-      <button class="btn sm" onclick={() => api.refreshArt(false).then((n) => app.toast(`Found art for ${n} games`, "ok"))}>Fetch missing art</button>
-      <button class="btn sm ghost" onclick={() => api.refreshArt(true).then((n) => app.toast(`Refreshed art for ${n} games`, "ok"))}>Refresh all</button>
-    </div>
-  </section>
-
-  <section class="card block">
-    <div class="title"><span class="logo-dot"></span> OnionRing {app.boot?.version}</div>
-    <p class="desc">Updates are signed, downloaded from GitHub Releases and installed in the background.</p>
-    <div class="row">
+  <section>
+    <div class="row-head"><Glyph name="refresh" size={24} /><span class="label">OnionRing {app.boot?.version}</span></div>
+    <div class="acts">
       {#if update}
-        <button class="btn sm primary" onclick={installUpdate} disabled={updateState === "installing"}>
-          <Icon name="download" size={14} /> {updateState === "installing" ? "Installing…" : `Install ${update.version} and restart`}
+        <button class="btn primary" data-nav onclick={async () => { updateState = "installing"; await update?.downloadAndInstall(); await relaunch(); }}>
+          <Glyph name="get" size={24} />Install {update.version}
         </button>
       {:else}
-        <button class="btn sm" onclick={checkUpdate} disabled={updateState === "checking"}>
-          {updateState === "checking" ? "Checking…" : "Check for updates"}
-        </button>
+        <button class="btn" data-nav onclick={checkUpdate} disabled={updateState === "checking"}><Glyph name="refresh" size={24} />Check for updates</button>
       {/if}
-      {#if updateState === "none"}<span class="ok"><Icon name="check" size={14} /> You're on the latest version</span>{/if}
-      {#if updateState === "error"}<span class="err" title={updateError}>Couldn't reach the update server</span>{/if}
-      <button class="btn sm ghost" onclick={() => openUrl("https://github.com/George-Nizor/OnionRing")}><Icon name="external" size={14} /> GitHub</button>
+      {#if updateState === "none"}<span class="label ok"><Glyph name="check" size={24} />Up to date</span>{/if}
+      {#if updateState === "error"}<span class="label"><Glyph name="alert" size={24} />Update server not reachable</span>{/if}
     </div>
   </section>
 
-  <p class="keys">
-    <b>Keyboard:</b> arrows to move, Enter to play, type or Ctrl K to search. <b>Controller:</b> D-pad or stick to move,
-    A to play, Y to favourite, LB/RB to switch platform.
-  </p>
+  <section class="brand">
+    <div class="row-head"><Glyph name="star" size={24} /><span class="label">The ring</span></div>
+    <div class="stage">
+      <div class="hero"><Logo size={220} variant="color" state={logoState} {progress} /></div>
+      <div class="states">
+        {#each [["idle", "Idle"], ["busy", "Working"], ["launch", "Launch"], ["done", "Done"]] as [s, label] (s)}
+          <button class="btn" class:on={logoState === s} data-nav onclick={() => showState(s as LS)}>{label}</button>
+        {/each}
+      </div>
+      <div class="variants">
+        <div class="v" data-theme="pixel"><Logo size={96} variant="pixel" state={logoState} {progress} /><span class="label">Pixel</span></div>
+        <div class="v" data-theme="paper"><Logo size={96} variant="ink" state={logoState} {progress} /><span class="label">Paper</span></div>
+        <div class="v sizes">
+          {#each [16, 24, 32, 48] as s (s)}<Logo size={s} variant="color" state="still" />{/each}
+          <span class="label">Small sizes</span>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
 
 <style>
-  .block {
-    padding: 18px 20px;
-    border-radius: 16px;
-    margin-bottom: 14px;
-    max-width: 900px;
-  }
-  .title {
+  .settings {
+    height: 100%;
+    overflow-y: auto;
+    padding: 28px 56px 60px;
     display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+  .themes {
+    display: flex;
+    gap: 22px;
+  }
+  .theme {
+    position: relative;
+    width: 300px;
+    padding: 0;
+  }
+  .preview {
+    height: 190px;
+    padding: 22px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: 1fr auto;
+    gap: 14px;
+    align-items: center;
+    background: var(--bg);
+    color: var(--fg);
+    border: 2px solid var(--line);
+  }
+  .aa {
+    font-size: 54px;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .sample {
+    display: flex;
+    flex-direction: column;
+  }
+  .mini {
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .mini-tiles {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 8px;
+  }
+  .mini-tiles span {
+    flex: 1;
+    height: 34px;
+    border: 2px solid var(--line);
+  }
+  .mini-tiles span:first-child {
+    background: var(--fg);
+  }
+  [data-theme="paper"] .mini-tiles span:nth-child(2) {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .tick {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--fg);
+    color: var(--bg);
+    padding: 4px;
+  }
+  :global(:root[data-theme="pixel"]) .theme:focus-visible,
+  :global(:root[data-theme="pixel"]) .theme.on {
+    background: none;
+    outline: 4px solid var(--fg);
+    outline-offset: 6px;
+  }
+  :global(:root[data-theme="paper"]) .theme.on .preview {
+    box-shadow: 6px 6px 0 var(--fg);
+  }
+  .folders {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 760px;
+  }
+  .folder {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .folder.gone {
+    opacity: 0.5;
+  }
+  .fname {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .fname b {
+    font-family: var(--title);
+    font-size: 22px;
+  }
+  .acts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 6px;
+  }
+  .acts .label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  :global(:root[data-theme="pixel"]) .btn.on {
+    background: var(--fg);
+    color: var(--bg);
+  }
+  :global(:root[data-theme="paper"]) .btn.on {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .stage {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 20px 40px;
+    align-items: center;
+  }
+  .hero {
+    grid-row: span 2;
+    display: grid;
+    place-items: center;
+    height: 300px;
+    background: #17110c;
+  }
+  :global(:root[data-theme="pixel"]) .hero {
+    border: var(--border) solid var(--line);
+  }
+  .states {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .variants {
+    display: flex;
+    gap: 20px;
+  }
+  .v {
+    display: flex;
+    flex-direction: column;
     align-items: center;
     gap: 10px;
-    font-weight: 650;
-    font-size: 15px;
+    padding: 18px;
+    background: var(--bg);
+    color: var(--fg);
+    border: 2px solid var(--line);
   }
-  .desc {
-    margin: 4px 0 12px;
-    color: var(--muted);
-    font-size: 13px;
+  .v.sizes {
+    flex-direction: row;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    max-width: 240px;
+    background: #17110c;
+    color: #f6ecd9;
   }
-  .line {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 0;
-  }
-  .path {
-    flex: 1;
-    color: var(--text);
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .path.gone {
-    color: var(--faint);
-  }
-  .chip.warn {
-    color: var(--warn);
-  }
-  .row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 8px;
-  }
-  .ok {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--ok);
-    font-size: 12.5px;
-  }
-  .err {
-    color: var(--bad);
-    font-size: 12.5px;
-  }
-  .logo-dot {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    border: 3px solid transparent;
-    background:
-      linear-gradient(var(--bg-2), var(--bg-2)) padding-box,
-      var(--ring-linear) border-box;
-  }
-  .keys {
-    color: var(--faint);
-    font-size: 12.5px;
-    max-width: 900px;
-  }
-  .keys b {
-    color: var(--muted);
+  .v.sizes .label {
+    width: 100%;
   }
 </style>

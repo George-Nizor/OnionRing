@@ -1,111 +1,84 @@
 <script lang="ts">
   import type { Game } from "$lib/api";
   import { app } from "$lib/store.svelte";
-  import Cover from "./Cover.svelte";
-  import Icon from "./Icon.svelte";
+  import Art from "./Art.svelte";
+  import Glyph from "./Glyph.svelte";
 
-  let { game, selected = false, index = 0, grid = false }: { game: Game; selected?: boolean; index?: number; grid?: boolean } =
-    $props();
+  let {
+    game,
+    wide = false,
+    width = 168,
+    title = "focus",
+    onfocus,
+    index = 0,
+  }: { game: Game; wide?: boolean; width?: number; title?: "always" | "focus" | "never"; onfocus?: () => void; index?: number } = $props();
+
   const running = $derived(app.running.includes(game.id));
 </script>
 
 <button
   class="tile"
-  class:selected
-  class:grid
-  class:dim={game.missing || game.hidden}
-  style:--i={Math.min(index, 20)}
-  style:--c={app.accent(game)}
-  data-game={game.id}
-  onclick={() => app.select(game.id)}
-  ondblclick={() => app.play(game)}
+  class:wide
+  data-nav
+  data-game-id={game.id}
+  style:--w="{width}px"
+  style:--i={Math.min(index, 14)}
+  onclick={() => app.openGame(game)}
+  onfocus={() => onfocus?.()}
+  onmouseenter={(e) => (e.currentTarget as HTMLElement).focus({ preventScroll: true })}
   aria-label={game.title}
 >
   <div class="frame">
-    <Cover {game} />
-    {#if running || game.packed || game.missing || game.favorite}
-      <div class="flags">
-        {#if running}<span class="flag live"><span class="d"></span></span>{/if}
-        {#if game.packed}<span class="flag" title="Zipped"><Icon name="unpack" size={13} /></span>{/if}
-        {#if game.missing}<span class="flag warn" title="Missing"><Icon name="alert" size={13} /></span>{/if}
-        {#if game.favorite}<span class="flag star"><Icon name="star" size={13} /></span>{/if}
-      </div>
-    {/if}
+    <Art {game} kind={wide ? "wide" : "cover"} />
+    <span class="ribbon" aria-hidden="true"></span>
+    <div class="flags">
+      {#if running}<span class="flag live"><Glyph name="play" size={12} /></span>{/if}
+      {#if game.packed}<span class="flag"><Glyph name="zip" size={12} /></span>{/if}
+      {#if game.missing}<span class="flag"><Glyph name="alert" size={12} /></span>{/if}
+      {#if game.favorite}<span class="flag"><Glyph name="star" size={12} /></span>{/if}
+    </div>
   </div>
-  {#if grid}
-    <div class="name">{game.title}</div>
+  {#if title !== "never"}
+    <div class="name" class:always={title === "always"}><span>{game.title}</span></div>
   {/if}
 </button>
 
 <style>
   .tile {
-    position: relative;
     flex: none;
-    width: var(--tile-w, 156px);
+    width: var(--w);
     display: flex;
     flex-direction: column;
     gap: 10px;
     text-align: left;
-    outline: none;
-    animation: rise 0.6s var(--ease) both;
-    animation-delay: calc(var(--i) * 28ms);
-  }
-  .tile.grid {
-    width: auto;
-    content-visibility: auto;
-    contain-intrinsic-size: 170px 270px;
+    animation: rise 0.45s var(--ease) both;
+    animation-delay: calc(var(--i) * 30ms);
   }
   .frame {
     position: relative;
     aspect-ratio: 3 / 4;
-    border-radius: 12px;
+  }
+  .wide .frame {
+    aspect-ratio: 16 / 9;
+  }
+  .name {
+    font-family: var(--label);
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
     overflow: hidden;
-    container-type: inline-size;
-    background: #14111b;
-    transform-origin: 50% 100%;
-    box-shadow: 0 18px 34px -20px rgba(0, 0, 0, 0.95);
-    transition:
-      transform 0.4s var(--ease),
-      box-shadow 0.4s var(--ease),
-      filter 0.3s;
+    text-overflow: ellipsis;
+    opacity: 0;
+    min-height: 1.4em;
   }
-  .tile:not(.selected) .frame {
-    filter: brightness(0.82) saturate(0.95);
-  }
-  .tile:hover .frame {
-    filter: none;
-  }
-  /* Selection: a white ring with a slow onion-ring glow behind it. */
-  .frame::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    box-shadow:
-      inset 0 0 0 1px rgba(255, 255, 255, 0.1);
-    transition: box-shadow 0.3s;
-    pointer-events: none;
-  }
-  .selected .frame {
-    transform: scale(1.1);
-    box-shadow:
-      0 0 0 3px #fff,
-      0 0 0 7px rgba(255, 255, 255, 0.12),
-      0 30px 60px -18px rgba(0, 0, 0, 0.95),
-      0 0 70px -10px color-mix(in srgb, var(--c) 75%, transparent);
-  }
-  .tile.grid.selected .frame {
-    transform: scale(1.04);
-  }
-  .tile:focus-visible .frame {
-    box-shadow:
-      0 0 0 3px var(--coral),
-      0 20px 40px -18px rgba(0, 0, 0, 0.9);
+  .name.always,
+  .tile:focus-visible .name {
+    opacity: 1;
   }
   .flags {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 6px;
+    right: 6px;
     display: flex;
     gap: 4px;
   }
@@ -114,40 +87,93 @@
     height: 24px;
     display: grid;
     place-items: center;
-    border-radius: 50%;
-    background: rgba(6, 5, 9, 0.72);
-    backdrop-filter: blur(8px);
-    color: #fff;
+    background: var(--bg);
+    color: var(--fg);
   }
-  .flag.star {
-    color: var(--gold);
+
+  /* ---- pixel ---- */
+  :global(:root[data-theme="pixel"]) .tile:focus-visible {
+    background: none;
+    color: var(--fg);
   }
-  .flag.star :global(svg) {
-    fill: currentColor;
+  :global(:root[data-theme="pixel"]) .frame {
+    outline: 0 solid var(--fg);
   }
-  .flag.warn {
-    color: var(--warn);
+  :global(:root[data-theme="pixel"]) .tile:focus-visible .frame {
+    outline: 4px solid var(--fg);
+    outline-offset: 4px;
+    animation: pxgrow 0.16s steps(2) both;
   }
-  .flag .d {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--ok);
-    box-shadow: 0 0 10px var(--ok);
+  :global(:root[data-theme="pixel"]) .tile:focus-visible .frame::after {
+    content: "";
+    position: absolute;
+    inset: -14px;
+    background:
+      linear-gradient(90deg, var(--fg) 50%, transparent 0) 0 0 / 8px 2px repeat-x,
+      linear-gradient(90deg, var(--fg) 50%, transparent 0) 0 100% / 8px 2px repeat-x,
+      linear-gradient(0deg, var(--fg) 50%, transparent 0) 0 0 / 2px 8px repeat-y,
+      linear-gradient(0deg, var(--fg) 50%, transparent 0) 100% 0 / 2px 8px repeat-y;
+    animation: ants 0.5s steps(2) infinite;
+    pointer-events: none;
   }
-  .name {
-    font-size: 13.5px;
+  :global(:root[data-theme="pixel"]) .tile:focus-visible .name span {
+    background: var(--fg);
+    color: var(--bg);
+    padding: 2px 6px;
+  }
+  :global(:root[data-theme="pixel"]) .tile:focus-visible .name span::after {
+    content: "█";
+    margin-left: 2px;
+    animation: blink 0.8s steps(1) infinite;
+  }
+  :global(:root[data-theme="pixel"]) .ribbon {
+    display: none;
+  }
+  @keyframes pxgrow {
+    from {
+      transform: scale(0.94);
+    }
+  }
+
+  /* ---- paper ---- */
+  :global(:root[data-theme="paper"]) .frame {
+    box-shadow: 0 0 0 1px var(--line);
+    transition: transform 0.35s var(--ease);
+  }
+  :global(:root[data-theme="paper"]) .tile:focus-visible::after {
+    display: none;
+  }
+  :global(:root[data-theme="paper"]) .tile:focus-visible .frame {
+    transform: translateY(-6px);
+    box-shadow:
+      0 0 0 2px var(--line),
+      6px 6px 0 var(--line);
+  }
+  :global(:root[data-theme="paper"]) .tile:focus-visible :global(.art) {
+    filter: var(--img-filter-focus);
+  }
+  :global(:root[data-theme="paper"]) .ribbon {
+    position: absolute;
+    top: -2px;
+    right: 14px;
+    width: 18px;
+    height: 0;
+    background: var(--accent);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%);
+    transition: height 0.35s var(--ease);
+  }
+  :global(:root[data-theme="paper"]) .tile:focus-visible .ribbon {
+    height: 34px;
+  }
+  :global(:root[data-theme="paper"]) .name {
+    font-family: var(--title);
+    font-style: italic;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.8);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding: 0 2px;
+    font-size: 15px;
+    transition: opacity 0.3s;
   }
-  .selected .name {
-    color: #fff;
-  }
-  .dim {
-    opacity: 0.45;
+  :global(:root[data-theme="paper"]) .flag {
+    background: var(--panel);
+    box-shadow: 0 0 0 1px var(--line);
   }
 </style>

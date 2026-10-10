@@ -1,8 +1,10 @@
 <script lang="ts">
+  import { tick } from "svelte";
   import { open } from "@tauri-apps/plugin-dialog";
   import { api } from "$lib/api";
   import { app } from "$lib/store.svelte";
-  import Icon from "./Icon.svelte";
+  import { focusFirst } from "$lib/nav";
+  import Glyph from "./Glyph.svelte";
   import Logo from "./Logo.svelte";
 
   let { ondone }: { ondone: () => void } = $props();
@@ -13,13 +15,19 @@
   let chosen = $state<Set<string>>(new Set(app.boot?.suggestedSources ?? []));
   let error = $state("");
   let building = $state(false);
+  let panel = $state<HTMLElement>();
+
+  $effect(() => {
+    void step;
+    tick().then(() => focusFirst(panel));
+  });
 
   async function browseRoot() {
-    const d = await open({ directory: true, multiple: false, title: "Where should OnionRing keep its library?" });
+    const d = await open({ directory: true, multiple: false, title: "Where should OnionRing keep its files?" });
     if (typeof d === "string") root = d.toLowerCase().endsWith("onionring") ? d : `${d.replace(/\\$/, "")}\\OnionRing`;
   }
   async function addFolder() {
-    const d = await open({ directory: true, multiple: false, title: "Folder with emulators or games" });
+    const d = await open({ directory: true, multiple: false, title: "A folder with emulators or games" });
     if (typeof d === "string" && !folders.includes(d)) {
       folders = [...folders, d];
       chosen = new Set([...chosen, d]);
@@ -31,7 +39,6 @@
     else n.add(f);
     chosen = n;
   }
-
   async function next() {
     error = "";
     if (step === 1) {
@@ -53,191 +60,114 @@
   }
 </script>
 
-<div class="setup">
-  <div class="aurora"></div>
-  <div class="panel">
-    {#if step === 0}
-      <div class="hero-logo"><Logo size={120} busy /></div>
-      <h1 class="display">OnionRing</h1>
-      <p class="sub">One launcher for your emulators, native ports, recomps and decomps. Built for the games the big stores don't sell.</p>
-      <button class="btn primary big" onclick={() => step++}>Get started</button>
-    {:else if step === 1}
-      <div class="eyebrow">Step 1 of 2</div>
-      <h2 class="display">Where should your library live?</h2>
-      <p class="sub">
-        Artwork, the library database, and any ports or emulators you install go here. Pick a roomy drive. The app itself
-        stays tiny.
-      </p>
+<div class="setup" data-layer bind:this={panel}>
+  {#if step === 0}
+    <div class="center">
+      <Logo size={200} variant="color" state="idle" />
+      <h1>OnionRing</h1>
+      <p class="label">Your emulators and PC ports, in one place</p>
+      <button class="btn big primary" data-nav onclick={() => step++}><Glyph name="play" size={24} />Start</button>
+    </div>
+  {:else if step === 1}
+    <div class="center">
+      <Glyph name="disk" size={96} />
+      <h2>Where should OnionRing keep its files?</h2>
+      <p class="label">Art, downloads and installed ports go here. Pick a big drive.</p>
       <div class="pick">
-        <input class="field mono" bind:value={root} spellcheck="false" />
-        <button class="btn" onclick={browseRoot}><Icon name="folder" size={16} /> Browse</button>
+        <input class="field" data-nav bind:value={root} spellcheck="false" aria-label="Folder" />
+        <button class="btn big icon" data-nav onclick={browseRoot} aria-label="Browse"><Glyph name="folder" size={24} /></button>
       </div>
-      {#if error}<p class="err">{error}</p>{/if}
-      <div class="nav">
-        <button class="btn ghost" onclick={() => step--}>Back</button>
-        <button class="btn primary" onclick={next} disabled={!root}>Continue</button>
-      </div>
-    {:else if step === 2}
-      <div class="eyebrow">Step 2 of 2</div>
-      <h2 class="display">Already have emulators set up?</h2>
-      <p class="sub">
-        Point OnionRing at them. It finds your emulators and games where they are and never moves or changes them. No
-        setup yet? Skip this and install emulators and ports from inside the app.
-      </p>
+      {#if error}<p class="err label">{error}</p>{/if}
+      <button class="btn big primary" data-nav onclick={next} disabled={!root}><Glyph name="check" size={24} />Use this folder</button>
+    </div>
+  {:else if step === 2}
+    <div class="center">
+      <Glyph name="pad" size={96} />
+      <h2>Got emulators already?</h2>
+      <p class="label">Tick the folders they're in. They stay where they are.</p>
       <div class="folders">
         {#each folders as f (f)}
-          <label class="folder" class:on={chosen.has(f)}>
-            <input type="checkbox" checked={chosen.has(f)} onchange={() => toggle(f)} />
-            <Icon name="folder" size={18} />
-            <span class="mono">{f}</span>
-            {#if app.boot?.suggestedSources.includes(f)}<span class="chip">Found</span>{/if}
-          </label>
+          <button class="folder" class:on={chosen.has(f)} data-nav onclick={() => toggle(f)}>
+            <Glyph name={chosen.has(f) ? "check" : "folder"} size={36} /><span>{f}</span>
+          </button>
         {/each}
-        <button class="add" onclick={addFolder}><Icon name="plus" size={16} /> Add a folder</button>
+        <button class="folder" data-nav onclick={addFolder}><Glyph name="plus" size={36} /><span>Add a folder</span></button>
       </div>
-      <div class="nav">
-        <button class="btn ghost" onclick={() => step--} disabled={building}>Back</button>
-        <button class="btn primary" onclick={next} disabled={building}>
-          {#if building}<Logo size={18} busy /> Building your library…{:else}{chosen.size ? "Build my library" : "Skip for now"}{/if}
-        </button>
-      </div>
-    {:else}
-      <div class="hero-logo"><Logo size={90} /></div>
-      <h2 class="display">You're all set</h2>
-      <p class="sub">{app.games.length} games found. Artwork keeps loading in the background.</p>
-      <button class="btn primary big" onclick={() => { app.section = "library"; ondone(); }}>Open my library</button>
-    {/if}
-  </div>
+      <button class="btn big primary" data-nav onclick={next} disabled={building}>
+        {#if building}<Logo size={28} variant="auto" state="busy" progress={0.5} />Looking…{:else}<Glyph name="play" size={24} />{chosen.size ? "Find my games" : "Skip"}{/if}
+      </button>
+    </div>
+  {:else}
+    <div class="center">
+      <Logo size={160} variant="color" state="done" />
+      <h2>{app.games.length} games found</h2>
+      <button class="btn big primary" data-nav onclick={ondone}><Glyph name="home" size={24} />Let's go</button>
+    </div>
+  {/if}
 </div>
 
 <style>
   .setup {
     position: fixed;
-    inset: var(--titlebar) 0 0 0;
-    z-index: 50;
+    inset: 0;
+    z-index: 70;
     display: grid;
     place-items: center;
     background: var(--bg);
-    overflow: hidden;
   }
-  .aurora {
-    position: absolute;
-    inset: -20%;
-    background:
-      radial-gradient(40% 40% at 30% 30%, rgba(255, 181, 71, 0.18), transparent 70%),
-      radial-gradient(40% 40% at 70% 40%, rgba(255, 93, 122, 0.16), transparent 70%),
-      radial-gradient(50% 50% at 50% 80%, rgba(157, 107, 255, 0.2), transparent 70%);
-    filter: blur(40px);
-    animation: float 18s ease-in-out infinite alternate;
-  }
-  @keyframes float {
-    to {
-      transform: rotate(8deg) scale(1.1);
-    }
-  }
-  .panel {
-    position: relative;
-    width: min(640px, 90vw);
-    text-align: center;
+  .center {
+    width: min(680px, 90vw);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 14px;
-    animation: rise 0.6s var(--ease);
-  }
-  .hero-logo {
-    margin-bottom: 10px;
-    filter: drop-shadow(0 20px 60px rgba(255, 93, 122, 0.45));
+    gap: 18px;
+    text-align: center;
+    animation: rise 0.5s var(--ease) both;
   }
   h1 {
     margin: 0;
-    font-size: 54px;
-    font-weight: 700;
-    letter-spacing: -0.03em;
+    font-family: var(--title);
+    font-weight: 800;
+    font-size: 72px;
   }
   h2 {
     margin: 0;
-    font-size: 28px;
-    font-weight: 650;
-    letter-spacing: -0.02em;
-  }
-  .sub {
-    margin: 0 0 10px;
-    color: var(--muted);
-    font-size: 15px;
-    max-width: 520px;
-  }
-  .btn.big {
-    height: 50px;
-    padding: 0 30px;
-    font-size: 15px;
-    border-radius: 15px;
+    font-family: var(--title);
+    font-weight: 800;
+    font-size: 40px;
   }
   .pick {
     display: flex;
-    gap: 8px;
+    gap: 10px;
     width: 100%;
   }
-  .pick .field {
+  .field {
     flex: 1;
-    height: 44px;
-  }
-  .pick .btn {
-    height: 44px;
+    height: 60px;
+    padding: 0 16px;
+    font-size: 18px;
+    background: var(--bg);
+    border: var(--border) solid var(--line);
   }
   .err {
-    color: var(--bad);
-    margin: 0;
-  }
-  .nav {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    margin-top: 16px;
+    color: var(--accent);
   }
   .folders {
-    width: 100%;
     display: flex;
     flex-direction: column;
     gap: 8px;
-    text-align: left;
+    width: 100%;
   }
   .folder {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
-    border-radius: 13px;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    cursor: pointer;
-    color: var(--muted);
-    transition: all 0.15s;
-  }
-  .folder.on {
-    border-color: rgba(255, 93, 122, 0.45);
-    background: rgba(255, 93, 122, 0.06);
-    color: var(--text);
-  }
-  .folder input {
-    accent-color: var(--coral);
-  }
-  .folder .mono {
-    flex: 1;
-    font-size: 13px;
-  }
-  .add {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    height: 46px;
-    border-radius: 13px;
-    border: 1px dashed var(--line-2);
-    color: var(--muted);
-  }
-  .add:hover {
-    color: var(--text);
-    background: var(--surface);
+    gap: 16px;
+    height: 64px;
+    padding: 0 16px;
+    font-family: var(--title);
+    font-size: 20px;
+    font-weight: 700;
+    text-align: left;
+    border: var(--border) solid var(--line);
   }
 </style>

@@ -2,9 +2,14 @@ import { listen } from "@tauri-apps/api/event";
 import { api, type Bootstrap, type Game, type Platform, type Progress } from "./api";
 import { norm } from "./format";
 
-export type Section = "library" | "ports" | "emulators" | "storage" | "settings";
-export type Filter = "all" | "recent" | "favorites" | "ports" | `platform:${string}`;
-export type Sort = "title" | "recent" | "added" | "playtime" | "size";
+export type Theme = "pixel" | "paper";
+export type ViewName = "home" | "library" | "game" | "get" | "systems" | "tidy" | "settings";
+export interface View {
+  name: ViewName;
+  gameId?: number;
+  tab?: string;
+}
+export type Sort = "title" | "recent" | "playtime" | "added" | "size";
 
 export interface Toast {
   id: number;
@@ -15,9 +20,17 @@ export interface Toast {
 const SORTS: Record<Sort, (a: Game, b: Game) => number> = {
   title: (a, b) => a.title.localeCompare(b.title),
   recent: (a, b) => (b.lastPlayed ?? 0) - (a.lastPlayed ?? 0) || a.title.localeCompare(b.title),
-  added: (a, b) => b.addedAt - a.addedAt || a.title.localeCompare(b.title),
   playtime: (a, b) => b.playtime - a.playtime || a.title.localeCompare(b.title),
+  added: (a, b) => b.addedAt - a.addedAt || a.title.localeCompare(b.title),
   size: (a, b) => b.size - a.size,
+};
+export const SORT_ORDER: Sort[] = ["title", "recent", "playtime", "added", "size"];
+export const SORT_LABEL: Record<Sort, string> = {
+  title: "A to Z",
+  recent: "Last played",
+  playtime: "Most played",
+  added: "Newest",
+  size: "Biggest",
 };
 
 function load<T>(k: string, fallback: T): T {
@@ -32,7 +45,7 @@ function save(k: string, v: unknown) {
   try {
     localStorage.setItem(`onionring.${k}`, JSON.stringify(v));
   } catch {
-    /* storage unavailable: preferences just won't persist */
+    /* preferences just won't persist */
   }
 }
 
@@ -40,66 +53,76 @@ class AppStore {
   boot = $state<Bootstrap | null>(null);
   games = $state<Game[]>([]);
   loaded = $state(false);
-  section = $state<Section>("library");
-  filter = $state<Filter>(load("filter", "all"));
-  sort = $state<Sort>(load("sort", "title"));
+
+  view = $state<View>({ name: "home" });
+  history = $state<View[]>([]);
+  menuOpen = $state(false);
+  searchOpen = $state(false);
   query = $state("");
-  selectedId = $state<number | null>(load("selected", null));
+
+  theme = $state<Theme>(load("theme", "pixel"));
+  platformFilter = $state<string>(load("platformFilter", "all"));
+  sort = $state<Sort>(load("sort", "title"));
+  /** The game the home spotlight is showing (follows focus). */
+  spotlightId = $state<number | null>(null);
+
   progress = $state<Progress | null>(null);
+  installing = $state<Record<string, string>>({});
   running = $state<number[]>([]);
   toasts = $state<Toast[]>([]);
-  showHidden = $state(false);
-  view = $state<"shelf" | "grid">(load("view", "shelf"));
-  /** Accent colours for ports (from the catalog), keyed by app id. */
   accents = $state<Record<string, string>>({});
-
-  accent(g: Game): string {
-    return (g.appId && this.accents[g.appId]) || this.platforms.get(g.platform)?.color || "#ff5d7a";
-  }
-
-  setView(v: "shelf" | "grid") {
-    this.view = v;
-    save("view", v);
-  }
 
   platforms = $derived(new Map<string, Platform>((this.boot?.platforms ?? []).map((p) => [p.id, p])));
 
+  visibleGames = $derived(this.games.filter((g) => !g.hidden));
+
   counts = $derived.by(() => {
     const c = new Map<string, number>();
-    for (const g of this.games) if (!g.hidden) c.set(g.platform, (c.get(g.platform) ?? 0) + 1);
+    for (const g of this.visibleGames) c.set(g.platform, (c.get(g.platform) ?? 0) + 1);
     return c;
   });
 
-  visible = $derived.by(() => {
-    const q = norm(this.query);
-    let list = this.games.filter((g) => this.showHidden || !g.hidden);
-    const f = this.filter;
-    if (f === "recent") list = list.filter((g) => g.lastPlayed);
-    else if (f === "favorites") list = list.filter((g) => g.favorite);
-    else if (f === "ports") list = list.filter((g) => g.kind === "port");
-    else if (f.startsWith("platform:")) list = list.filter((g) => g.platform === f.slice(9));
-    if (q) list = list.filter((g) => norm(g.title).includes(q) || (g.serial ?? "").toLowerCase().includes(q));
-    const sort = f === "recent" ? SORTS.recent : SORTS[this.sort];
-    return [...list].sort(sort);
+  library = $derived.by(() => {
+    let list = this.visibleGames;
+    const f = this.platformFilter;
+    if (f === "favorites") list = list.filter((g) => g.favorite);
+    else if (f !== "all") list = list.filter((g) => g.platform === f);
+    return [...list].sort(SORTS[this.sort]);
   });
 
-  selected = $derived(this.games.find((g) => g.id === this.selectedId) ?? this.visible[0] ?? null);
+  searchResults = $derived.by(() => {
+    const q = norm(this.query);
+    if (!q) return [];
+    return this.visibleGames.filter((g) => norm(g.title).includes(q)).slice(0, 24);
+  });
 
-  recent = $derived(
-    this.games.filter((g) => g.lastPlayed && !g.hidden).sort(SORTS.recent).slice(0, 8),
-  );
+  /** Most recently played first, then newest additions, for the home "jump back in" row. */
+  continueList = $derived.by(() => {
+    const played = this.visibleGames.filter((g) => g.lastPlayed).sort(SORTS.recent);
+    const rest = this.visibleGames.filter((g) => !g.lastPlayed).sort(SORTS.added);
+    return [...played, ...rest].slice(0, 10);
+  });
+
+  spotlight = $derived(this.games.find((g) => g.id === this.spotlightId) ?? this.continueList[0] ?? null);
+  current = $derived(this.view.gameId ? (this.games.find((g) => g.id === this.view.gameId) ?? null) : null);
 
   async init() {
+    this.applyTheme();
     this.boot = await api.bootstrap();
     await listen<Progress>("progress", (e) => {
       this.progress = e.payload.stage === "idle" ? null : e.payload;
     });
     await listen("library-changed", () => this.reload());
-    await listen<number>("game-started", (e) => {
-      this.running = [...this.running, e.payload];
-    });
-    await listen<{ id: number; seconds: number }>("game-ended", (e) => {
-      this.running = this.running.filter((r) => r !== e.payload.id);
+    await listen<number>("game-started", (e) => (this.running = [...this.running, e.payload]));
+    await listen<{ id: number }>("game-ended", (e) => (this.running = this.running.filter((r) => r !== e.payload.id)));
+    await listen<{ id: string; message: string; done: boolean; error: string | null }>("install", (e) => {
+      const { id, message, done, error } = e.payload;
+      if (done) {
+        const { [id]: _, ...rest } = this.installing;
+        this.installing = rest;
+        if (error) this.toast(error, "error", 9000);
+        else this.toast("Installed. It's in your library.", "ok");
+      } else this.installing = { ...this.installing, [id]: message };
     });
     if (this.boot.dataRoot) {
       await this.reload();
@@ -118,20 +141,53 @@ class AppStore {
     }
   }
 
-  select(id: number | null) {
-    this.selectedId = id;
-    save("selected", id);
+  // ---- navigation -------------------------------------------------------------------------
+  go(v: View) {
+    if (this.view.name === v.name && this.view.gameId === v.gameId && this.view.tab === v.tab) return;
+    this.history = [...this.history, this.view].slice(-30);
+    this.view = v;
+    this.menuOpen = false;
+  }
+  back(): boolean {
+    if (this.searchOpen) {
+      this.searchOpen = false;
+      return true;
+    }
+    if (this.menuOpen) {
+      this.menuOpen = false;
+      return true;
+    }
+    const prev = this.history.at(-1);
+    if (!prev) return false;
+    this.history = this.history.slice(0, -1);
+    this.view = prev;
+    return true;
+  }
+  openGame(g: Game) {
+    this.go({ name: "game", gameId: g.id });
   }
 
-  setFilter(f: Filter) {
-    this.section = "library";
-    this.filter = f;
-    save("filter", f);
+  setTheme(t: Theme) {
+    this.theme = t;
+    save("theme", t);
+    this.applyTheme();
+  }
+  applyTheme() {
+    document.documentElement.dataset.theme = this.theme;
+  }
+  setPlatformFilter(f: string) {
+    this.platformFilter = f;
+    save("platformFilter", f);
+  }
+  cycleSort() {
+    const i = SORT_ORDER.indexOf(this.sort);
+    this.sort = SORT_ORDER[(i + 1) % SORT_ORDER.length];
+    save("sort", this.sort);
   }
 
-  setSort(s: Sort) {
-    this.sort = s;
-    save("sort", s);
+  accent(g: Game): string {
+    if (this.theme === "pixel") return "#fff";
+    return (g.appId && this.accents[g.appId]) || "var(--accent)";
   }
 
   toast(text: string, kind: Toast["kind"] = "info", ms = 4200) {
@@ -142,10 +198,10 @@ class AppStore {
 
   async play(g: Game) {
     if (g.packed) {
-      this.toast(`Unpacking ${g.title}…`);
+      this.toast(`Unzipping ${g.title}…`);
       try {
         await api.unpack(g.id);
-        this.toast(`${g.title} is ready to play`, "ok");
+        this.toast(`${g.title} is unzipped and ready`, "ok");
       } catch (e) {
         this.toast(String(e), "error", 8000);
       }
@@ -167,10 +223,7 @@ class AppStore {
   async scan() {
     try {
       const s = await api.scan();
-      this.toast(
-        `Library updated: ${s.games} games${s.newGames ? `, ${s.newGames} new` : ""}, ${s.emulators} emulators`,
-        "ok",
-      );
+      this.toast(`${s.games} games, ${s.emulators} emulators${s.newGames ? `, ${s.newGames} new` : ""}`, "ok");
     } catch (e) {
       this.toast(String(e), "error", 8000);
     }

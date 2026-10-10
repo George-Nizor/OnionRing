@@ -1,12 +1,12 @@
 <script lang="ts">
   import { app } from "$lib/store.svelte";
-  import Icon from "./Icon.svelte";
+  import Glyph from "./Glyph.svelte";
 </script>
 
 <div class="toasts" aria-live="polite">
   {#each app.toasts as t (t.id)}
     <div class="toast {t.kind}">
-      <Icon name={t.kind === "error" ? "alert" : t.kind === "ok" ? "check" : "sparkle"} size={16} />
+      <Glyph name={t.kind === "error" ? "alert" : t.kind === "ok" ? "check" : "info"} size={24} />
       <span>{t.text}</span>
     </div>
   {/each}
@@ -15,41 +15,43 @@
 <style>
   .toasts {
     position: fixed;
-    right: 22px;
-    bottom: 22px;
-    z-index: 100;
+    right: 26px;
+    bottom: calc(var(--hints) + 20px);
+    z-index: 60;
     display: flex;
     flex-direction: column;
-    gap: 8px;
     align-items: flex-end;
+    gap: 10px;
     pointer-events: none;
   }
   .toast {
     display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    max-width: 440px;
-    padding: 12px 16px;
-    border-radius: 14px;
-    background: rgba(24, 21, 32, 0.94);
-    border: 1px solid var(--line-2);
-    box-shadow: 0 20px 50px -18px rgba(0, 0, 0, 0.9);
-    backdrop-filter: blur(16px);
-    font-size: 13px;
-    animation: rise 0.35s var(--ease);
-    pointer-events: auto;
+    align-items: center;
+    gap: 12px;
+    max-width: 480px;
+    padding: 14px 18px;
+    font-family: var(--label);
+    font-size: 15px;
+    font-weight: 700;
   }
-  .toast :global(svg) {
-    flex: none;
-    margin-top: 1px;
+  :global(:root[data-theme="pixel"]) .toast {
+    background: var(--fg);
+    color: var(--bg);
+    animation: pxin 0.2s steps(3) both;
   }
-  .ok :global(svg) {
-    color: var(--ok);
+  :global(:root[data-theme="paper"]) .toast {
+    background: var(--panel);
+    border: 2px solid var(--line);
+    box-shadow: 5px 5px 0 var(--line);
+    animation: rise 0.3s var(--ease) both;
   }
-  .error :global(svg) {
-    color: var(--bad);
+  :global(:root[data-theme="paper"]) .toast.error {
+    border-color: var(--accent);
+    box-shadow: 5px 5px 0 var(--accent);
   }
-  .info :global(svg) {
-    color: var(--gold);
+  @keyframes pxin {
+    from {
+      transform: translateX(110%);
+    }
   }
 </style>
