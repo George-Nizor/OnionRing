@@ -1,5 +1,6 @@
 /* OnionRing has two themes that share one layout:
-   - pixel: 1-bit black and white, pixel fonts, pixel icons, stepped motion.
+   - pixel: 8-bit. Black screen, a small console palette for accents and selection, pixel
+     fonts, pixel icons, stepped motion. Photos stay in full colour.
    - paper: an e-reader. Ink on paper, a reading serif, a few muted colours, e-ink refreshes.
    Components only use these tokens; theme-specific effects live under [data-theme]. */
 
@@ -28,22 +29,23 @@
   color-scheme: dark;
   --bg: #000;
   --fg: #fff;
-  --muted: #fff;
-  --faint: #8a8a8a;
+  --muted: #c2c3c7;
+  --faint: #83769c;
   --line: #fff;
-  --panel: #000;
-  --hi-bg: #fff; /* focused/selected */
+  --panel: #1d2b53;
+  /* 8-bit palette: selection is the classic yellow cursor */
+  --hi-bg: #ffec27; /* focused/selected */
   --hi-fg: #000;
-  --accent: #fff;
-  --accent-2: #fff;
-  --accent-3: #fff;
+  --accent: #ff004d;
+  --accent-2: #29adff;
+  --accent-3: #00e436;
   --title: "Pixelify Sans Variable", monospace;
   --text: "Pixelify Sans Variable", monospace;
   --label: "Silkscreen", monospace;
   --radius: 0px;
   --border: 3px;
-  --img-filter: grayscale(1) contrast(1.25) brightness(1.02);
-  --img-filter-focus: grayscale(1) contrast(1.35) brightness(1.08);
+  --img-filter: saturate(1.05);
+  --img-filter-focus: saturate(1.15) brightness(1.04);
   --step: steps(5, end);
 }
 
@@ -134,7 +136,7 @@ img {
   font-weight: 700;
 }
 
-/* Images follow the theme: crisp greyscale in pixel, newsprint grey in paper. */
+/* Images follow the theme: full colour in pixel, soft colour in paper. */
 .art {
   filter: var(--img-filter);
   transition: filter 0.4s;

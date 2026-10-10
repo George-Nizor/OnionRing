@@ -118,7 +118,7 @@
   $effect(() => () => clearInterval(timer));
 
   const themes: [Theme, string, string][] = [
-    ["pixel", "Pixel", "Black and white, chunky and blinky"],
+    ["pixel", "Pixel", "8-bit colour, chunky and blinky"],
     ["paper", "Paper", "Ink on paper, like an e-reader"],
   ];
 </script>
@@ -263,7 +263,7 @@
         <p>The logo moves with what the app is doing. Try each state.</p>
       </div>
       <div class="body stage">
-        <div class="hero"><Logo size={200} variant="color" state={logoState} {progress} /></div>
+        <div class="hero"><Logo size={200} variant="pixel" state={logoState} {progress} /></div>
         <div class="right">
           <div class="states">
             {#each [["idle", "Idle"], ["busy", "Working"], ["launch", "Launch"], ["done", "Done"]] as [s, label] (s)}
@@ -274,7 +274,7 @@
             <div class="v" data-theme="pixel"><Logo size={80} variant="pixel" state={logoState} {progress} /><span class="label">Pixel</span></div>
             <div class="v" data-theme="paper"><Logo size={80} variant="ink" state={logoState} {progress} /><span class="label">Paper</span></div>
             <div class="v sizes">
-              <div class="row">{#each [16, 24, 32, 48] as s (s)}<Logo size={s} variant="color" state="still" />{/each}</div>
+              <div class="row">{#each [16, 24, 32, 48] as s (s)}<Logo size={s} variant="pixel" state="still" />{/each}</div>
               <span class="label">Small sizes</span>
             </div>
           </div>

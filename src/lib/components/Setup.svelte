@@ -63,7 +63,7 @@
 <div class="setup" data-layer bind:this={panel}>
   {#if step === 0}
     <div class="center">
-      <Logo size={200} variant="color" state="idle" />
+      <Logo size={200} variant="pixel" state="idle" />
       <h1>OnionRing</h1>
       <p class="label">Your emulators and PC ports, in one place</p>
       <button class="btn big primary" data-nav onclick={() => step++}><Glyph name="play" size={24} />Start</button>
@@ -99,7 +99,7 @@
     </div>
   {:else}
     <div class="center">
-      <Logo size={160} variant="color" state="done" />
+      <Logo size={160} variant="pixel" state="done" />
       <h2>{app.games.length} games found</h2>
       <button class="btn big primary" data-nav onclick={ondone}><Glyph name="home" size={24} />Let's go</button>
     </div>

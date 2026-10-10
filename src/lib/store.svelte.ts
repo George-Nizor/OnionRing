@@ -227,7 +227,6 @@ class AppStore {
   }
 
   accent(g: Game): string {
-    if (this.theme === "pixel") return "#fff";
     return (g.appId && this.accents[g.appId]) || "var(--accent)";
   }
 
