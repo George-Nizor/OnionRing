@@ -76,7 +76,9 @@
     cat = await api.catalog();
     // Arriving from search with something to show.
     const item = app.view.item;
-    if (item && tab === "find" && !query) {
+    if (item && tab === "find" && item !== itemSearched) {
+      // Arriving with a system to look for (from the library): search it once.
+      itemSearched = item;
       query = item;
       find();
     } else if (item && !sheet) {
@@ -88,6 +90,15 @@
       else if (b) showSheet({ kind: "web", b });
     }
   }
+  // Back (Escape, B) closes an open sheet before it leaves Get more.
+  $effect(() =>
+    app.onBack(() => {
+      if (!sheet) return false;
+      sheet = null;
+      tick().then(() => focusFirst(document.querySelector(".get")));
+      return true;
+    }),
+  );
   const loadUpdates = () => api.availableUpdates().then((u) => (updates = u)).catch(() => (updates = updates ?? []));
   // Load once, then again whenever an install finishes.
   let busyCount = -1;
@@ -168,7 +179,11 @@
         .finally(() => (relLoading = false));
     }
     await tick();
-    focusFirst(sheetEl);
+    // Start on the main action without scrolling the sheet: focusing its first link scrolled
+    // the title out of view on small windows.
+    const main = sheetEl?.querySelector<HTMLElement>(".actions .btn.primary:not(:disabled)");
+    if (main) main.focus({ preventScroll: true });
+    else focusFirst(sheetEl);
   }
   function install(id: string) {
     app.installing = { ...app.installing, [id]: "Starting" };
@@ -215,7 +230,16 @@
     sheet = null;
     await load();
   }
+  function openTab(id: string) {
+    app.view = { ...app.view, tab: id };
+    sheet = null;
+    // Find is a search box: start typing straight away.
+    if (id === "find") tick().then(() => finderInput?.focus());
+  }
+
   // ---- find on GitHub
+  let finderInput = $state<HTMLInputElement>();
+  let itemSearched: string | undefined;
   let query = $state("");
   let results = $state<GithubFound[] | null>(null);
   let searching = $state(false);
@@ -225,12 +249,12 @@
   let ghName = $state("");
   let ghSystem = $state("");
   let adding = $state(false);
-  /** "owner/name" from a github.com link or that form typed directly; null for a search. */
+  /** "owner/name" from a github.com link; null for anything else, which is searched for
+   *  ("ff7/remake" is a search, not a project). */
   function repoOf(q: string): string | null {
     const s = q.trim().replace(/^https?:\/\//, "").replace(/^www\./, "");
-    const m = s.match(/^(?:github\.com\/)?([\w.-]+)\/([\w.-]+?)(?:\.git)?(?:\/.*)?$/);
-    if (!m || /\s/.test(s) || (!s.startsWith("github.com/") && s.split("/").length !== 2)) return null;
-    return `${m[1]}/${m[2]}`;
+    const m = s.match(/^github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?(?:[/?#].*)?$/);
+    return m && !/\s/.test(s) ? `${m[1]}/${m[2]}` : null;
   }
   /** A readable name from a project name: "minecraft-souls_mashup" -> "Minecraft souls mashup". */
   const titleOf = (n: string) => {
@@ -303,7 +327,7 @@
 <div class="get">
   <nav class="tabs">
     {#each TABS as [id, icon, label] (id)}
-      <button class="tab" class:on={tab === id} data-nav onclick={() => { app.view = { ...app.view, tab: id }; sheet = null; }}>
+      <button class="tab" class:on={tab === id} data-nav onclick={() => openTab(id)}>
         <Glyph name={icon} size={24} /><span>{label}</span>
         {#if id === "updates" && updates?.length}<span class="badge" aria-label="{updates.length} updates">{updates.length}</span>{/if}
       </button>
@@ -398,7 +422,7 @@
   {:else if tab === "find"}
     <form class="finder" onsubmit={(e) => { e.preventDefault(); find(); }}>
       <span class="fi"><Glyph name="search" size={24} /></span>
-      <input class="field" data-nav bind:value={query} spellcheck="false" placeholder="A game, a mod, a project name, or a github.com link" aria-label="Find on GitHub" />
+      <input class="field" data-nav bind:this={finderInput} bind:value={query} spellcheck="false" placeholder="A game, a mashup, a project name, or a github.com link" aria-label="Find on GitHub" />
       <button class="btn primary" data-nav type="submit" disabled={searching || query.trim().length < 2}>
         <Glyph name={searching ? "refresh" : "search"} size={24} />{searching ? "Looking…" : "Find"}
       </button>
@@ -409,7 +433,7 @@
       <div class="done intro">
         <span class="fbig"><Glyph name="search" size={96} /></span>
         <h2>Find something new to play</h2>
-        <p>Search GitHub for ports, recomps, fan games and mashups that publish a Windows download. OnionRing installs them like any other port: the download is checked, updates come in on their own, and your saves are kept.</p>
+        <p>Search GitHub for ports, recomps, fan games and mashups that publish a Windows download. OnionRing installs them like any other port: the download is checked, updates come in on their own, and files the game writes next to itself, like saves and settings, move across to each new version.</p>
       </div>
     {:else if !results.length}
       <p class="empty">Nothing on GitHub matches that. Try fewer words, or paste the project's github.com link.</p>

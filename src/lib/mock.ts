@@ -231,7 +231,8 @@ export async function installMock(dataRoot: string) {
         }
         case "add_github_port": {
           const repo = String(args.repo);
-          const id = `gh-${repo.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+          const [owner, name] = repo.toLowerCase().split("/").map((s) => s.replace(/[^a-z0-9-]/g, "_"));
+          const id = `gh-${owner}--${name}`;
           const p = { id, game: String(args.game).trim(), name: repo.split("/")[1], kind: "Added by you", original: args.system ? [String(args.system)] : [], repo, requires: null, licence: null, blurb: null, accent: null, featured: false };
           if (!p.game) throw "Give it a name.";
           snap.catalog.ports = [...snap.catalog.ports.filter((x) => x.id !== id), p];

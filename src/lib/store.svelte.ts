@@ -213,9 +213,14 @@ class AppStore {
   /** Install OnionRing's own update. The installer closes and restarts the app; the version is
    *  remembered so the next start can tell whether it took. */
   async installUpdate(u: Update) {
+    // Download first; the installer then closes the app, so wait for a game or an install of
+    // OnionRing's own (an emulator, a port, an AnyPS5 conversion) to finish before running it.
+    await u.download();
+    const idle = async () => !this.running.length && !Object.keys(this.installing).length && !(await api.busy().catch(() => false));
+    while (!(await idle())) await new Promise((r) => setTimeout(r, 15_000));
     save("pendingUpdate", { version: u.version, at: Date.now() });
     try {
-      await u.downloadAndInstall();
+      await u.install();
     } catch (e) {
       save("pendingUpdate", null);
       throw e;
@@ -259,6 +264,13 @@ class AppStore {
     this.searchOpen = false;
     this.query = "";
   }
+  /** Panels inside a view (a details sheet) that Back closes before it leaves the view. */
+  private backHandlers: (() => boolean)[] = [];
+  /** Register `fn` to run on Back; it returns true when it handled it. Returns the unregister. */
+  onBack(fn: () => boolean): () => void {
+    this.backHandlers = [...this.backHandlers, fn];
+    return () => (this.backHandlers = this.backHandlers.filter((f) => f !== fn));
+  }
   back(): boolean {
     if (this.searchOpen) {
       this.closeSearch();
@@ -268,6 +280,7 @@ class AppStore {
       this.menuOpen = false;
       return true;
     }
+    for (const fn of [...this.backHandlers].reverse()) if (fn()) return true;
     const prev = this.history.at(-1);
     if (!prev) return false;
     this.history = this.history.slice(0, -1);

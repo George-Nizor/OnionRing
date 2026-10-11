@@ -169,8 +169,18 @@ pub fn convert(db: &crate::db::Db, root: &DataRoot, game: &crate::model::Game, p
         let _ = std::fs::remove_dir_all(&out);
         bail!(msg);
     }
-    let _ = std::fs::remove_dir_all(&dest);
-    std::fs::rename(&out, &dest).context("replacing the converted game")?;
+    // Move the old program aside first: a rename fails cleanly while a file in it is in use,
+    // where a delete could stop halfway and leave neither version.
+    let old = dest.with_file_name(format!("{}.old", dest.file_name().unwrap_or_default().to_string_lossy()));
+    let _ = std::fs::remove_dir_all(&old);
+    if dest.exists() {
+        std::fs::rename(&dest, &old).context("The converted game is in use. Close it and try again.")?;
+    }
+    if let Err(e) = std::fs::rename(&out, &dest) {
+        let _ = std::fs::rename(&old, &dest);
+        return Err(e).context("replacing the converted game");
+    }
+    let _ = std::fs::remove_dir_all(&old);
     let exe = dest.join("app.exe");
     db.kv_set(&kv_key(game.id), &exe.to_string_lossy())?;
     if let Some(v) = installed(db, root) {

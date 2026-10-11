@@ -80,6 +80,11 @@ fn is_skipped(e: &DirEntry) -> bool {
     name.starts_with('.') || SKIP_DIRS.contains(&name.as_str()) || name.ends_with("_old")
 }
 
+/// Whether `id` names an instance of emulator `def_id`: the id itself or `<def_id>-<n>`.
+fn instance_of(id: &str, def_id: &str) -> bool {
+    id == def_id || id.strip_prefix(def_id).and_then(|r| r.strip_prefix('-')).is_some_and(|n| n.parse::<u32>().is_ok())
+}
+
 /// A folder path in one spelling, for comparing folders: lower case, one kind of slash.
 fn own_key(p: &Path) -> String {
     path_str(p).replace('/', "\\").trim_end_matches('\\').to_lowercase()
@@ -332,16 +337,37 @@ pub fn scan(root: &DataRoot, cat: &Catalog, db: &Db, progress: &dyn Fn(Progress)
     let mut emu_ids: HashMap<String, Vec<(String, PathBuf)>> = HashMap::new(); // platform -> [(instance id, dir)]
     let mut used: HashSet<String> = HashSet::new();
     w.emus.sort_by(|a, b| b.managed.cmp(&a.managed).then(a.exe.cmp(&b.exe)));
-    for e in &w.emus {
-        let Some(def) = cat.emulator(&e.def_id) else { continue };
-        let mut id = def.id.clone();
-        let mut k = 2;
-        while used.contains(&id) {
-            id = format!("{}-{k}", def.id);
-            k += 1;
+    // A program keeps the id it had: games' chosen emulator and launch options are stored by id,
+    // so finding another copy must not move them onto a different program.
+    let known: HashMap<String, String> = db.emulator_rows()?.into_iter().map(|(id, _, exe, ..)| (lower(Path::new(&exe)), id)).collect();
+    let mut kept: Vec<Option<String>> = vec![None; w.emus.len()];
+    for (i, e) in w.emus.iter().enumerate() {
+        if let Some(id) = known.get(&lower(&e.exe))
+            && instance_of(id, &e.def_id)
+            && used.insert(id.clone())
+        {
+            kept[i] = Some(id.clone());
         }
-        used.insert(id.clone());
-        let name = if id == def.id { def.name.clone() } else { format!("{} ({k})", def.name) };
+    }
+    for (i, e) in w.emus.iter().enumerate() {
+        let Some(def) = cat.emulator(&e.def_id) else { continue };
+        let id = match kept[i].take() {
+            Some(id) => id,
+            None => {
+                let mut id = def.id.clone();
+                let mut k = 2;
+                while used.contains(&id) {
+                    id = format!("{}-{k}", def.id);
+                    k += 1;
+                }
+                used.insert(id.clone());
+                id
+            }
+        };
+        let name = match id.strip_prefix(&def.id).and_then(|r| r.strip_prefix('-')) {
+            Some(n) => format!("{} ({n})", def.name),
+            None => def.name.clone(),
+        };
         db.upsert_emulator(&id, &name, &path_str(&e.exe), e.version.as_deref(), e.managed, seen)?;
         let dir = e.exe.parent().map(|p| p.to_path_buf()).unwrap_or_default();
         for p in &def.platforms {
@@ -536,5 +562,45 @@ mod tests {
         assert_eq!(v(r"G:\Emulation\PS2\pcsx2-v2.3.70-windows-x64-Qt\pcsx2-qt.exe").as_deref(), Some("2.3.70"));
         assert_eq!(v(r"G:\Emulation\DS\desmume-0.9.13-win64\DeSmuME_0.9.13_x64.exe").as_deref(), Some("0.9.13"));
         assert_eq!(v(r"G:\Emulation\GC\Dolphin-x64\Dolphin.exe"), None);
+    }
+
+    #[test]
+    fn instances() {
+        assert!(instance_of("pcsx2", "pcsx2"));
+        assert!(instance_of("pcsx2-3", "pcsx2"));
+        assert!(!instance_of("pcsx2-qt", "pcsx2"));
+        assert!(!instance_of("dolphin", "pcsx2"));
+    }
+
+    #[test]
+    fn emulator_ids_stay_with_their_program() {
+        let tmp = crate::util::TempDir::new("emu-ids");
+        let dir = tmp.path();
+        let src = dir.join("Emulation");
+        let exe = |folder: &str| {
+            let d = src.join(folder);
+            std::fs::create_dir_all(&d).unwrap();
+            std::fs::write(d.join("pcsx2-qt.exe"), b"MZ").unwrap();
+            d.join("pcsx2-qt.exe")
+        };
+        let root = DataRoot::open(dir.join("data")).unwrap();
+        let db = Db::open(&root.db()).unwrap();
+        let cat = Catalog::load(None).unwrap();
+        db.add_source(&path_str(&src)).unwrap();
+        let (b, c) = (exe("pcsx2-b"), exe("pcsx2-c"));
+        scan(&root, &cat, &db, &|_| {}).unwrap();
+        let ids = || -> HashMap<String, String> { db.emulator_rows().unwrap().into_iter().map(|r| (r.2, r.0)).collect() };
+        let before = ids();
+        assert_eq!(before[&path_str(&b)], "pcsx2");
+        assert_eq!(before[&path_str(&c)], "pcsx2-2");
+        // A copy that sorts first must not take over the ids of the two already known.
+        let a = exe("pcsx2-a");
+        scan(&root, &cat, &db, &|_| {}).unwrap();
+        let after = ids();
+        assert_eq!(after[&path_str(&b)], "pcsx2");
+        assert_eq!(after[&path_str(&c)], "pcsx2-2");
+        assert_eq!(after[&path_str(&a)], "pcsx2-3");
+        let names: HashMap<String, String> = db.emulator_rows().unwrap().into_iter().map(|r| (r.0, r.1)).collect();
+        assert_eq!(names["pcsx2-3"], "PCSX2 (3)");
     }
 }

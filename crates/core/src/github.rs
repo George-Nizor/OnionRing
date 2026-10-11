@@ -84,6 +84,7 @@ fn get_cached(root: &DataRoot, url: &str) -> Result<String> {
             }
         }
         Err(ureq::Error::Status(404, _)) => bail!("{url} not found (repository moved or removed?)"),
+        Err(ureq::Error::Status(422, _)) => bail!("GitHub couldn't search for that. Try different words."),
         Err(e) => match cached {
             Some(c) => Ok(c.body),
             None => Err(e).context(format!("fetching {url}")),

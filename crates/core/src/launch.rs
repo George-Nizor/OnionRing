@@ -62,7 +62,7 @@ pub fn plan(db: &Db, cat: &Catalog, game: &Game) -> Result<Plan> {
     if game.missing {
         bail!("The game files are no longer where they were found. Rescan your library.");
     }
-    let emu_id = game.emulator.as_deref().context("No emulator for this platform yet. Add one in Emulators.")?;
+    let emu_id = game.emulator.as_deref().context("No emulator for this system yet. Get one from Get more, or pick one in the game's options.")?;
     let emu = emulators(db, cat, 0)?.into_iter().find(|e| e.id == emu_id).context("That emulator is no longer registered.")?;
     let exe = PathBuf::from(&emu.exe);
     if !exe.is_file() {

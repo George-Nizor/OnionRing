@@ -112,10 +112,22 @@ pub fn inspect(root: &DataRoot, repo: &str) -> Result<Inspection> {
     })
 }
 
-/// The newest stable release, else the newest of any kind (some projects only ship test
-/// builds). The flag says whether a test build was picked.
+/// The release the installer will pick (`github::latest`: the one GitHub marks as latest,
+/// else the newest stable, else the newest test build), or `None` when there are none. The
+/// flag says whether it is a test build.
 fn newest(root: &DataRoot, repo: &str) -> Result<(Option<Release>, bool)> {
-    let rel = github::newest_of(github::releases(root, repo, 10)?, false);
+    // Asking for the release list first tells a missing project apart from one with no releases.
+    let list = github::releases(root, repo, 10).map_err(|e| {
+        if format!("{e:#}").contains("not found") {
+            anyhow!("There's no GitHub project called {repo}.")
+        } else {
+            e
+        }
+    })?;
+    if list.is_empty() {
+        return Ok((None, false));
+    }
+    let rel = github::latest(root, repo, false).ok().or_else(|| github::newest_of(list, false));
     let prerelease = rel.as_ref().is_some_and(|r| r.prerelease);
     Ok((rel, prerelease))
 }
@@ -125,7 +137,12 @@ pub fn valid_repo(raw: &str) -> Result<String> {
     let s = raw.trim().trim_end_matches('/').trim_end_matches(".git");
     let s = s.strip_prefix("https://").or_else(|| s.strip_prefix("http://")).unwrap_or(s);
     let s = s.strip_prefix("www.").unwrap_or(s);
-    let s = s.strip_prefix("github.com/").unwrap_or(s);
+    let s = match s.strip_prefix("github.com/") {
+        Some(rest) => rest,
+        // Another site's link ("gitlab.com/a/b") is not a GitHub project.
+        None if s.split('/').next().is_some_and(|host| host.contains('.')) => bail!("Only GitHub projects can be added. Use owner/name or a github.com link."),
+        None => s,
+    };
     let parts: Vec<&str> = s.split('/').collect();
     let ok = |p: &str| !p.is_empty() && p.chars().all(|c| c.is_ascii_alphanumeric() || "-_.".contains(c)) && p != "." && p != "..";
     if parts.len() < 2 || !ok(parts[0]) || !ok(parts[1]) {
@@ -134,10 +151,12 @@ pub fn valid_repo(raw: &str) -> Result<String> {
     Ok(format!("{}/{}", parts[0], parts[1]))
 }
 
-/// The catalog id for a project added from GitHub.
+/// The catalog id for a project added from GitHub: owner and name joined by "--" (GitHub
+/// names never contain "--" next to the slash, so two projects can't share one).
 pub fn local_port_id(repo: &str) -> String {
-    let slug: String = repo.to_lowercase().chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '-' }).collect();
-    format!("gh-{}", slug.trim_matches('-'))
+    let part = |s: &str| s.to_lowercase().chars().map(|c| if c.is_ascii_alphanumeric() || c == '-' { c } else { '_' }).collect::<String>();
+    let (owner, name) = repo.split_once('/').unwrap_or((repo, ""));
+    format!("gh-{}--{}", part(owner), part(name))
 }
 
 /// Add a GitHub project to `catalog.local.json` as a port (other keys are kept). `game` is what
@@ -183,6 +202,16 @@ pub fn add_local_port(path: &Path, root: &DataRoot, repo: &str, game: &str, syst
         .or_insert(serde_json::json!([]))
         .as_array_mut()
         .ok_or_else(|| anyhow!("\"ports\" in catalog.local.json is not a list"))?;
+    // The same id for a different project (names differing only in "." vs "_") would take over
+    // the other one's install folder.
+    if let Some(other) = list
+        .iter()
+        .filter(|p| p.get("id").and_then(|i| i.as_str()) == Some(port.id.as_str()))
+        .filter_map(|p| p.get("repo").and_then(|r| r.as_str()))
+        .find(|r| !r.eq_ignore_ascii_case(&port.repo))
+    {
+        bail!("{other} is already in your list under the same name. Remove it first to add {}.", port.repo);
+    }
     list.retain(|p| p.get("id").and_then(|i| i.as_str()) != Some(port.id.as_str()));
     list.push(serde_json::to_value(&port)?);
     std::fs::write(path, serde_json::to_string_pretty(&v)?)?;
@@ -212,14 +241,15 @@ mod tests {
         assert_eq!(valid_repo(" https://github.com/Zelda64Recomp/Zelda64Recomp/ ").unwrap(), "Zelda64Recomp/Zelda64Recomp");
         assert_eq!(valid_repo("github.com/a/b.git").unwrap(), "a/b");
         assert_eq!(valid_repo("https://github.com/a/b/releases/latest").unwrap(), "a/b");
-        for bad in ["", "shipwright", "a/", "/b", "a b/c", "../x", "a/.."] {
+        for bad in ["", "shipwright", "a/", "/b", "a b/c", "../x", "a/..", "gitlab.com/a/b", "https://example.com/x/y"] {
             assert!(valid_repo(bad).is_err(), "{bad}");
         }
     }
 
     #[test]
     fn ids() {
-        assert_eq!(local_port_id("HarbourMasters/Shipwright"), "gh-harbourmasters-shipwright");
-        assert_eq!(local_port_id("a_b/c.d"), "gh-a-b-c-d");
+        assert_eq!(local_port_id("HarbourMasters/Shipwright"), "gh-harbourmasters--shipwright");
+        assert_eq!(local_port_id("a_b/c.d"), "gh-a_b--c_d");
+        assert_ne!(local_port_id("a/b-c"), local_port_id("a-b/c"));
     }
 }

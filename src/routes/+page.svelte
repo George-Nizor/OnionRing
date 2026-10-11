@@ -63,8 +63,10 @@
   });
 
   // New view: put focus on its first control, so a controller always has somewhere to start.
+  // Switching tabs inside a view keeps focus where it is (on the tab just picked).
+  const screen = $derived(`${app.view.name}:${app.view.gameId ?? ""}`);
   $effect(() => {
-    void app.view;
+    void screen;
     tick().then(() => focusFirst(main));
   });
   // The library can change on any scan; keep the emulator list in step.

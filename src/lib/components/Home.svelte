@@ -200,7 +200,7 @@
         <span class="pic more"><Glyph name="plus" size={48} /></span>
         <span class="cap">
           <span class="nm"><span>Get more ports</span></span>
-          {#if portCount}<span class="meta label">{portCount} to choose from</span>{/if}
+          {#if portCount}<span class="meta label"><span class="ell">{portCount} to choose from</span></span>{/if}
         </span>
       </button>
     </div>
@@ -601,6 +601,12 @@
     gap: var(--s2);
     color: var(--faint);
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* .meta is a flex row, where text-overflow has no effect: the text carries its own. */
+  .ell {
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
   }

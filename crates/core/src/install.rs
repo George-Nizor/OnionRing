@@ -91,6 +91,10 @@ pub struct Target {
     pub persist: Vec<String>,
     pub carry: Vec<String>,
     pub portable_marker: Option<String>,
+    /// Nobody has said where this program keeps its saves (a project added from GitHub), so
+    /// an update carries over every file the previous version had that the new download
+    /// doesn't: whatever the game wrote next to itself (saves, settings) comes along.
+    pub keep_new_files: bool,
 }
 
 impl Target {
@@ -109,6 +113,7 @@ impl Target {
                 persist: p.persist.clone(),
                 carry: p.carry.clone(),
                 portable_marker: None,
+                keep_new_files: p.asset == "auto" && p.persist.is_empty(),
             });
         }
         if let Some(e) = cat.emulator(id) {
@@ -125,6 +130,7 @@ impl Target {
                 persist: e.persist.clone(),
                 carry: e.carry.clone(),
                 portable_marker: e.portable.clone(),
+                keep_new_files: false,
             });
         }
         bail!("{id} is not in the catalog")
@@ -322,6 +328,10 @@ pub fn install_archive(
                 let _ = std::fs::copy(&from, &to);
             }
         }
+        if t.keep_new_files {
+            progress("Bringing your files across");
+            carry_new_files(&prev_dir, &vdir)?;
+        }
     }
     for (f, bytes) in &carried {
         let _ = std::fs::write(vdir.join(f), bytes);
@@ -380,6 +390,27 @@ pub fn install_archive(
     std::fs::write(app_dir.join("app.json"), serde_json::to_string_pretty(&app)?)?;
     progress("Installed");
     Ok(app)
+}
+
+/// Copy every file under `from` that `to` doesn't have (files a program wrote next to itself).
+/// Links are not followed, and files the new version ships win over the old ones.
+fn carry_new_files(from: &Path, to: &Path) -> Result<()> {
+    if !from.is_dir() {
+        return Ok(());
+    }
+    let walk = walkdir::WalkDir::new(from).follow_links(false).into_iter().filter_entry(|e| e.depth() == 0 || !is_link(e.path()));
+    for e in walk.filter_map(|e| e.ok()).filter(|e| e.file_type().is_file()) {
+        let rel = e.path().strip_prefix(from)?;
+        let dest = to.join(rel);
+        if dest.exists() {
+            continue;
+        }
+        if let Some(parent) = dest.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        std::fs::copy(e.path(), &dest).with_context(|| format!("keeping {}", rel.display()))?;
+    }
+    Ok(())
 }
 
 /// Remove persist junctions from a version folder before deleting it, so deletion can never
@@ -462,4 +493,28 @@ pub fn check_update(root: &DataRoot, t: &Target) -> Result<Option<UpdateInfo>> {
         published: rel.published_at,
         url: rel.html_url,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn carries_files_the_program_wrote() {
+        let tmp = crate::util::TempDir::new("carry");
+        let (old, new) = (tmp.path().join("v1"), tmp.path().join("v2"));
+        for (dir, files) in [(&old, &["game.exe", "saves/slot1.sav", "settings.ini"][..]), (&new, &["game.exe", "data/new.pak"][..])] {
+            for f in files {
+                let p = dir.join(f);
+                std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+                std::fs::write(&p, format!("{} {f}", dir.display())).unwrap();
+            }
+        }
+        carry_new_files(&old, &new).unwrap();
+        assert!(new.join("saves/slot1.sav").is_file());
+        assert!(new.join("settings.ini").is_file());
+        assert!(new.join("data/new.pak").is_file());
+        // The new version's own files are not replaced.
+        assert!(std::fs::read_to_string(new.join("game.exe")).unwrap().contains("v2"));
+    }
 }
