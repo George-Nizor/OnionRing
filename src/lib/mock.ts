@@ -212,6 +212,12 @@ export async function installMock(dataRoot: string) {
         case "open_folder": return null;
         case "available_updates": return clone(snap.updates ?? []);
         case "busy": return false;
+        case "set_github_token": {
+          const t = (args.token as string | null)?.trim();
+          if (t && t.length < 20) throw "GitHub didn't accept that token. Check it was copied whole and hasn't expired.";
+          snap.bootstrap.githubToken = !!t;
+          return null;
+        }
 
         // ---- find on GitHub (a fixed answer: the preview has no network access to GitHub)
         case "github_search": {

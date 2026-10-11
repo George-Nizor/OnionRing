@@ -14,6 +14,9 @@ use std::path::{Path, PathBuf};
 #[serde(rename_all = "camelCase")]
 pub struct AppConfig {
     pub data_root: Option<PathBuf>,
+    /// A GitHub token the player added in Settings, for GitHub's higher request limit.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub github_token: Option<String>,
 }
 
 impl AppConfig {

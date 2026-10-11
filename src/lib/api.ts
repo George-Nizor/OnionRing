@@ -172,6 +172,8 @@ export interface Bootstrap {
   suggestedRoot: string;
   suggestedSources: string[];
   platforms: Platform[];
+  /** A GitHub token is saved (Settings). */
+  githubToken?: boolean;
 }
 
 export interface ScanSummary {
@@ -372,6 +374,8 @@ export const api = {
   availableUpdates: () => invoke<AvailableUpdate[]>("available_updates"),
   /** Something is installing or converting, so OnionRing must not restart for its own update. */
   busy: () => invoke<boolean>("busy"),
+  /** Save a GitHub token (checked with GitHub first), or forget it with null. */
+  setGithubToken: (token: string | null) => invoke<void>("set_github_token", { token }),
 
   githubSearch: (query: string) => invoke<GithubFound[]>("github_search", { query }),
   githubInspect: (repo: string) => invoke<GithubInspection>("github_inspect", { repo }),

@@ -52,8 +52,28 @@ fn agent() -> ureq::Agent {
         .build()
 }
 
+static TOKEN: std::sync::RwLock<Option<String>> = std::sync::RwLock::new(None);
+
+/// Use this token (from Settings) for GitHub requests. The environment variables still win.
+pub fn set_token(t: Option<String>) {
+    *TOKEN.write().unwrap_or_else(|e| e.into_inner()) = t.filter(|t| !t.is_empty());
+}
+
 fn token() -> Option<String> {
-    std::env::var("ONIONRING_GITHUB_TOKEN").or_else(|_| std::env::var("GITHUB_TOKEN")).ok().filter(|t| !t.is_empty())
+    std::env::var("ONIONRING_GITHUB_TOKEN")
+        .or_else(|_| std::env::var("GITHUB_TOKEN"))
+        .ok()
+        .filter(|t| !t.is_empty())
+        .or_else(|| TOKEN.read().unwrap_or_else(|e| e.into_inner()).clone())
+}
+
+/// Whether GitHub accepts a token.
+pub fn check_token(t: &str) -> Result<()> {
+    match agent().get("https://api.github.com/rate_limit").set("Authorization", &format!("Bearer {t}")).call() {
+        Ok(_) => Ok(()),
+        Err(ureq::Error::Status(401, _)) => bail!("GitHub didn't accept that token. Check it was copied whole and hasn't expired."),
+        Err(e) => Err(e).context("Couldn't reach GitHub to check the token"),
+    }
 }
 
 fn get_cached(root: &DataRoot, url: &str) -> Result<String> {
@@ -80,7 +100,7 @@ fn get_cached(root: &DataRoot, url: &str) -> Result<String> {
             // Rate limited: fall back to the last good answer if we have one.
             match cached {
                 Some(c) => Ok(c.body),
-                None => bail!("GitHub rate limit reached. Try again later, or set GITHUB_TOKEN."),
+                None => bail!("GitHub's limit for this hour is used up. Try again later, or add a GitHub token in Settings."),
             }
         }
         Err(ureq::Error::Status(404, _)) => bail!("{url} not found (repository moved or removed?)"),

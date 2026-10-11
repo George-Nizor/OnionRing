@@ -3,6 +3,7 @@
   import { listen } from "@tauri-apps/api/event";
   import { ask, open } from "@tauri-apps/plugin-dialog";
   import { check, type Update } from "@tauri-apps/plugin-updater";
+  import { openUrl } from "@tauri-apps/plugin-opener";
   import { api, type Backup, type SaveSource, type Source } from "$lib/api";
   import { app, type Theme } from "$lib/store.svelte";
   import { bytes } from "$lib/format";
@@ -73,6 +74,20 @@
       app.toast(String(e), "error", 9000);
     }
     backingUp = false;
+  }
+  let token = $state("");
+  let tokenSaving = $state(false);
+  async function saveToken(t: string | null) {
+    tokenSaving = true;
+    try {
+      await api.setGithubToken(t);
+      token = "";
+      if (app.boot) app.boot.githubToken = !!t;
+      app.toast(t ? "GitHub token saved" : "GitHub token removed", "ok");
+    } catch (e) {
+      app.toast(String(e), "error", 9000);
+    }
+    tokenSaving = false;
   }
   async function installUpdate() {
     if (!update) return;
@@ -242,6 +257,30 @@
             <div class="item none"><span class="ic"><Glyph name="zip" size={24} /></span><div class="iname"><b>No backups yet</b><span class="label">Your first one shows up here.</span></div></div>
           {/each}
         </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="side">
+        <h2><Glyph name="globe" size={24} />GitHub</h2>
+        <p>Installs, updates and Find ask GitHub. Without a token it answers 60 times an hour; with one, 5,000.</p>
+      </div>
+      <div class="body">
+        {#if app.boot?.githubToken}
+          <div class="list">
+            <div class="item"><span class="ic"><Glyph name="check" size={24} /></span><div class="iname"><b>Token saved</b><span class="label">Stored on this PC only</span></div>
+              <button class="btn" data-nav onclick={() => saveToken(null)} disabled={tokenSaving}><Glyph name="close" size={24} />Remove</button>
+            </div>
+          </div>
+        {:else}
+          <div class="acts">
+            <input class="token" data-nav type="password" bind:value={token} placeholder="Paste a GitHub token" spellcheck="false" autocomplete="off" aria-label="GitHub token"
+              onkeydown={(e) => e.key === "Enter" && token.trim() && saveToken(token)} />
+            <button class="btn" data-nav onclick={() => saveToken(token)} disabled={tokenSaving || !token.trim()}><Glyph name="check" size={24} />{tokenSaving ? "Checking…" : "Save"}</button>
+            <button class="btn" data-nav onclick={() => openUrl("https://github.com/settings/personal-access-tokens/new")}><Glyph name="globe" size={24} />Make one</button>
+          </div>
+          <p class="hint">A fine-grained token with no permissions is enough: OnionRing only reads public projects.</p>
+        {/if}
       </div>
     </section>
 
@@ -539,6 +578,25 @@
     animation: arrive 0.6s steps(3) both;
   }
 
+  .token {
+    flex: 1;
+    min-width: 200px;
+    max-width: 440px;
+    height: 48px;
+    padding: 0 14px;
+    font-size: 16px;
+    background: var(--bg);
+    border: var(--border) solid var(--line);
+  }
+  :global(:root[data-theme="paper"]) .token {
+    border-width: 1.5px;
+    border-radius: var(--radius);
+  }
+  .hint {
+    margin-top: 12px;
+    font-size: 14px;
+    color: var(--muted);
+  }
   .acts {
     display: flex;
     flex-wrap: wrap;

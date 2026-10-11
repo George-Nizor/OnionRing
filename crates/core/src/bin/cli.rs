@@ -68,7 +68,7 @@ fn main() -> Result<()> {
         }
         ["root", path] => {
             let root = DataRoot::open(PathBuf::from(path))?;
-            AppConfig { data_root: Some(root.root.clone()) }.save()?;
+            AppConfig { data_root: Some(root.root.clone()), ..AppConfig::load() }.save()?;
             println!("data root set to {}", root.root.display());
         }
         ["anyps5", "install"] => {

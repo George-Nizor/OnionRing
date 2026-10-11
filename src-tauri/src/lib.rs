@@ -95,6 +95,8 @@ struct Bootstrap {
     suggested_root: String,
     suggested_sources: Vec<String>,
     platforms: Vec<Platform>,
+    /// A GitHub token is set (the token itself never goes to the UI).
+    github_token: bool,
 }
 
 #[tauri::command]
@@ -105,13 +107,29 @@ fn bootstrap(app: AppHandle, st: State<AppState>) -> Res<Bootstrap> {
         suggested_root: util::path_str(&suggest_data_root()),
         suggested_sources: suggest_emulation_dirs().iter().map(|p| util::path_str(p)).collect(),
         platforms: st.cat().platforms.clone(),
+        github_token: AppConfig::load().github_token.is_some(),
     })
+}
+
+/// Save (or with `None`, forget) a GitHub token. A new token is tried first, so a typo is
+/// caught here and not on the next download.
+#[tauri::command]
+async fn set_github_token(token: Option<String>) -> Res<()> {
+    blocking(move || {
+        let token = token.map(|t| t.trim().to_string()).filter(|t| !t.is_empty());
+        if let Some(t) = &token {
+            onionring_core::github::check_token(t).map_err(err)?;
+        }
+        onionring_core::github::set_token(token.clone());
+        AppConfig { github_token: token, ..AppConfig::load() }.save().map_err(err)
+    })
+    .await
 }
 
 #[tauri::command]
 fn set_data_root(app: AppHandle, path: String) -> Res<()> {
     let root = DataRoot::open(PathBuf::from(&path)).map_err(err)?;
-    AppConfig { data_root: Some(root.root.clone()) }.save().map_err(err)?;
+    AppConfig { data_root: Some(root.root.clone()), ..AppConfig::load() }.save().map_err(err)?;
     use_root(&app, root)?;
     rewatch(&app);
     // On first run there was no data folder at start, so the updater starts now.
@@ -1142,7 +1160,9 @@ pub fn run() {
             watch_gen: AtomicU64::new(0),
         })
         .setup(|app| {
-            if let Some(path) = AppConfig::load().data_root {
+            let config = AppConfig::load();
+            onionring_core::github::set_token(config.github_token.clone());
+            if let Some(path) = config.data_root {
                 match DataRoot::open(path) {
                     Ok(root) => {
                         use_root(app.handle(), root)?;
@@ -1164,6 +1184,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             bootstrap,
             busy,
+            set_github_token,
             anyps5_status,
             anyps5_convert,
             anyps5_forget,
