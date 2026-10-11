@@ -93,5 +93,12 @@
     font-size: clamp(14px, 11cqw, 34px);
     line-height: 1.02;
     text-wrap: balance;
+    /* Long titles end in an ellipsis inside the cover instead of running out of its top. */
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 5;
+    line-clamp: 5;
+    overflow: hidden;
   }
 </style>

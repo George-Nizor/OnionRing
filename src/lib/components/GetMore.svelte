@@ -94,8 +94,7 @@
   $effect(() =>
     app.onBack(() => {
       if (!sheet) return false;
-      sheet = null;
-      tick().then(() => focusFirst(document.querySelector(".get")));
+      closeSheet();
       return true;
     }),
   );
@@ -155,7 +154,16 @@
   // ---- actions
   let rel = $state<ReleaseDetails | null>(null);
   let relLoading = $state(false);
+  /** What had focus before the sheet opened (a card), to return to when it closes. */
+  let sheetFrom: HTMLElement | null = null;
+  function closeSheet() {
+    sheet = null;
+    const back = sheetFrom;
+    sheetFrom = null;
+    tick().then(() => (back?.isConnected ? back.focus({ preventScroll: true }) : focusFirst(document.querySelector(".get"))));
+  }
   async function showSheet(s: NonNullable<typeof sheet>) {
+    if (!sheet && document.activeElement instanceof HTMLElement && !sheetEl?.contains(document.activeElement)) sheetFrom = document.activeElement;
     sheet = s;
     rel = null;
     if (s.kind === "gh") {
@@ -167,7 +175,14 @@
       const repo = s.f.repo;
       const still = () => sheet?.kind === "gh" && sheet.f.repo === repo;
       api.githubInspect(repo)
-        .then((i) => still() && (gh = i))
+        .then(async (i) => {
+          if (!still()) return;
+          gh = i;
+          // "Add and install" appears only now; move there unless the player already moved.
+          const was = document.activeElement;
+          await tick();
+          if (was === document.activeElement && sheetEl?.contains(was)) sheetEl.querySelector<HTMLElement>(".actions .btn.primary")?.focus({ preventScroll: true });
+        })
         .catch((e) => still() && (ghError = String(e)));
     }
     const rid = s.kind === "port" ? s.p.id : s.kind === "emu" && s.e.repo ? s.e.id : null;
@@ -181,7 +196,7 @@
     await tick();
     // Start on the main action without scrolling the sheet: focusing its first link scrolled
     // the title out of view on small windows.
-    const main = sheetEl?.querySelector<HTMLElement>(".actions .btn.primary:not(:disabled)");
+    const main = sheetEl?.querySelector<HTMLElement>(".actions .btn.primary:not(:disabled)") ?? sheetEl?.querySelector<HTMLElement>(".actions .btn");
     if (main) main.focus({ preventScroll: true });
     else focusFirst(sheetEl);
   }
@@ -227,7 +242,7 @@
   }
   async function removeOwn(b: BrowserGame) {
     await api.removeBrowserGame(b.id);
-    sheet = null;
+    closeSheet();
     await load();
   }
   function openTab(id: string) {
@@ -302,7 +317,7 @@
   async function removeFound(p: PortDef) {
     try {
       await api.removeGithubPort(p.id);
-      sheet = null;
+      closeSheet();
       await load();
     } catch (e) {
       app.toast(String(e), "error");
@@ -327,7 +342,7 @@
 <div class="get">
   <nav class="tabs">
     {#each TABS as [id, icon, label] (id)}
-      <button class="tab" class:on={tab === id} data-nav onclick={() => openTab(id)}>
+      <button class="tab" class:on={tab === id} data-nav data-nav-start={tab === id || undefined} onclick={() => openTab(id)}>
         <Glyph name={icon} size={24} /><span>{label}</span>
         {#if id === "updates" && updates?.length}<span class="badge" aria-label="{updates.length} updates">{updates.length}</span>{/if}
       </button>
@@ -504,9 +519,9 @@
               <h3>{u.name}</h3>
             </div>
             <div class="vers">
-              <span class="old">{u.installed}</span>
+              <span class="old" title={u.installed}>{u.installed}</span>
               <span class="arrow"><Glyph name="back" size={24} /></span>
-              <span class="new">{u.latest}</span>
+              <span class="new" title={u.latest}>{u.latest}</span>
               {#if day(u.published)}<span class="when">{day(u.published)}</span>{/if}
             </div>
             <div class="acts">
@@ -538,7 +553,7 @@
 </div>
 
 {#if sheet}
-  <div class="scrim" role="presentation" onclick={() => (sheet = null)}></div>
+  <div class="scrim" role="presentation" onclick={closeSheet}></div>
   <aside class="sheet" data-layer bind:this={sheetEl}>
     {#if sheet.kind === "port"}
       {@const p = sheet.p}
@@ -689,7 +704,7 @@
         {/if}
       </div>
     {/if}
-    <button class="btn icon close" data-nav onclick={() => (sheet = null)} aria-label="Close"><Glyph name="close" size={24} /></button>
+    <button class="btn icon close" data-nav onclick={closeSheet} aria-label="Close"><Glyph name="close" size={24} /></button>
   </aside>
 {/if}
 
@@ -1159,6 +1174,13 @@
     font-family: var(--label);
     font-size: 16px;
     font-weight: 700;
+  }
+  .vers .old,
+  .vers .new {
+    max-width: 16ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .vers .old {
     color: var(--faint);

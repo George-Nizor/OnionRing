@@ -400,6 +400,7 @@
     line-height: 1.02;
     letter-spacing: -0.01em;
     text-wrap: balance;
+    overflow-wrap: anywhere;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;

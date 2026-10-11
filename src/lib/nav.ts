@@ -17,8 +17,11 @@ function candidates(): HTMLElement[] {
   return [...layer.querySelectorAll<HTMLElement>("[data-nav]:not([disabled])")].filter(visible);
 }
 
+/** Focus where a screen starts: an element marked `data-nav-start` (the selected tab or
+ *  filter), else its first control. */
 export function focusFirst(scope?: Element | null) {
-  const el = (scope ?? document).querySelector<HTMLElement>("[data-nav]:not([disabled])");
+  const s = scope ?? document;
+  const el = s.querySelector<HTMLElement>("[data-nav][data-nav-start]:not([disabled])") ?? s.querySelector<HTMLElement>("[data-nav]:not([disabled])");
   el?.focus({ preventScroll: true });
   el?.scrollIntoView({ block: "nearest", inline: "nearest" });
 }
@@ -58,7 +61,8 @@ export function move(dir: Dir): boolean {
   }
   if (!best) return false;
   best.focus({ preventScroll: true });
-  best.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+  const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  best.scrollIntoView({ block: "nearest", inline: "nearest", behavior: still ? "auto" : "smooth" });
   return true;
 }
 

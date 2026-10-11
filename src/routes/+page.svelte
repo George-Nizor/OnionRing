@@ -2,7 +2,7 @@
   import { onMount, tick } from "svelte";
   import { api, type BrowserGame, type Emulator } from "$lib/api";
   import { app } from "$lib/store.svelte";
-  import { focusFirst, move, startGamepad, type PadAction } from "$lib/nav";
+  import { focusFirst, move, startGamepad, type Dir, type PadAction } from "$lib/nav";
   import StatusBar from "$lib/components/StatusBar.svelte";
   import Menu from "$lib/components/Menu.svelte";
   import Transition from "$lib/components/Transition.svelte";
@@ -107,16 +107,31 @@
     return false;
   }
 
+  function leavesField(f: HTMLInputElement, key: string): boolean {
+    if (key === "ArrowUp" || key === "ArrowDown") return true;
+    const { selectionStart: a, selectionEnd: b } = f;
+    if (a === null || b === null) return true; // fields without a caret
+    if (a !== b) return false;
+    return key === "ArrowLeft" ? a === 0 : a === f.value.length;
+  }
+
   function onkey(e: KeyboardEvent) {
     const typing = (e.target as HTMLElement)?.closest("input, textarea, select");
     const keys: Record<string, string> = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right", Escape: "b" };
     if (typing) {
+      if (e.defaultPrevented) return; // the field handled it (search's own keys)
+      const field = e.target as HTMLInputElement;
       if (e.ctrlKey && e.key.toLowerCase() === "k") {
         app.openSearch();
         e.preventDefault();
       } else if (e.key === "Escape") {
-        (e.target as HTMLElement).blur();
-        act("b");
+        // Leave the field; go back only from an empty one, so Escape never throws away typing.
+        const empty = !("value" in field) || !field.value;
+        field.blur();
+        if (empty) act("b");
+        e.preventDefault();
+      } else if (field.tagName === "INPUT" && keys[e.key] && leavesField(field, e.key) && move(keys[e.key] as Dir)) {
+        // Arrows move on from a one-line field: up and down always, left and right from its ends.
         e.preventDefault();
       }
       return;

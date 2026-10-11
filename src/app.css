@@ -93,6 +93,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+:root[data-theme="pixel"] ::selection {
+  background: var(--hi-bg);
+  color: var(--hi-fg);
+}
 :root[data-theme="pixel"] body {
   -webkit-font-smoothing: none;
   font-smooth: never;

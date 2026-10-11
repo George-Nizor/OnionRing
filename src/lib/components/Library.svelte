@@ -158,10 +158,10 @@
 <div class="lib">
   <aside class="side">
     <nav class="group">
-      <button class="item" class:on={f === "all"} data-nav onclick={() => app.setPlatformFilter("all")}>
+      <button class="item" class:on={f === "all"} data-nav data-nav-start={f === "all" || undefined} onclick={() => app.setPlatformFilter("all")}>
         <span class="ico"><Glyph name="library" size={24} /></span><span class="nm">All games</span><em>{app.visibleGames.length}</em>
       </button>
-      <button class="item" class:on={f === "favorites"} data-nav onclick={() => app.setPlatformFilter("favorites")}>
+      <button class="item" class:on={f === "favorites"} data-nav data-nav-start={f === "favorites" || undefined} onclick={() => app.setPlatformFilter("favorites")}>
         <span class="ico"><Glyph name="star" size={24} /></span><span class="nm">Favourites</span><em>{favCount}</em>
       </button>
     </nav>
@@ -169,7 +169,7 @@
     <div class="group">
       <h2 class="gh label">Collections</h2>
       {#each colTabs as t (t.id)}
-        <button class="item" class:on={f === t.id} data-nav onclick={() => app.setPlatformFilter(t.id)}>
+        <button class="item" class:on={f === t.id} data-nav data-nav-start={f === t.id || undefined} onclick={() => app.setPlatformFilter(t.id)}>
           <span class="ico"><LibGlyph name={f === t.id ? "bookmark-on" : "bookmark"} size={24} /></span><span class="nm">{t.label}</span><em>{t.n}</em>
         </button>
       {/each}
@@ -200,7 +200,7 @@
       <div class="group">
         <h2 class="gh label">Systems</h2>
         {#each sysTabs as t (t.id)}
-          <button class="item sys" class:on={f === t.id} data-nav onclick={() => app.setPlatformFilter(t.id)} title={t.label}>
+          <button class="item sys" class:on={f === t.id} data-nav data-nav-start={f === t.id || undefined} onclick={() => app.setPlatformFilter(t.id)} title={t.label}>
             <span class="ico art"><SystemArt id={t.id} label={t.label} /></span><span class="nm">{t.label}</span><em>{t.n}</em>
           </button>
         {/each}

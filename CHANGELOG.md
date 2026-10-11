@@ -13,6 +13,11 @@
 - Scans skip OnionRing's own folders when the data folder sits inside an emulation folder.
 - Systems of your own: the controller icon fits the library list, the game page shows it without a black box, and search finds games by system name.
 - Pixel theme with reduced motion: cards no longer stay half faded.
+- Projects added from Find keep the files they write next to themselves (saves, settings) across updates.
+- A game's chosen emulator and launch options stay with the same program when another copy of that emulator is found.
+- Settings has a GitHub section: an optional token lifts GitHub's limit from 60 to 5,000 requests an hour, which Find and update checks share.
+- Keyboard and controller: Back closes a Get more sheet before leaving the page, and focus returns to the card you opened it from. Escape in a text box keeps what you typed, and arrow keys move out of one-line boxes. Get more and the library start on the selected tab or filter, Stats starts on its content, and arrow scrolling respects reduced motion.
+- Long titles wrap and end in an ellipsis on covers and the game page; long version numbers no longer push names out of the Updates list.
 
 ## 0.1.0 (2026-10-10)
 

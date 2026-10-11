@@ -1,6 +1,7 @@
 <!-- Play history: totals, the last 12 weeks, most played and recent sessions. -->
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
+  import { focusFirst } from "$lib/nav";
   import { listen } from "@tauri-apps/api/event";
   import { api, type PlayTotals, type Session, type TopGame, type WeekTotal, type Game } from "$lib/api";
   import { app } from "$lib/store.svelte";
@@ -30,7 +31,15 @@
     top = tg;
     recent = lists.flat().sort((a, b) => b.started - a.started).slice(0, 6);
     sel = Math.max(0, w.length - 1);
+    // The page's controls exist only now; start focus on them, not on the window.
+    if (first) {
+      first = false;
+      await tick();
+      if (!root?.contains(document.activeElement)) focusFirst(root);
+    }
   }
+  let first = true;
+  let root = $state<HTMLElement>();
 
   onMount(() => {
     load();
@@ -91,7 +100,7 @@
   }
 </script>
 
-<div class="stats">
+<div class="stats" bind:this={root}>
   {#if totals}
     <div class="cells" class:quiet={!played}>
       <div class="cell">
