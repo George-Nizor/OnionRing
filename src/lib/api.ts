@@ -127,6 +127,29 @@ export interface ReleaseDetails {
   url: string | null;
 }
 
+/** A GitHub project found by the Find tab. */
+export interface GithubFound {
+  repo: string;
+  name: string;
+  description: string | null;
+  stars: number;
+  pushed: string | null;
+  url: string;
+  /** Its catalog entry, when OnionRing already lists it. */
+  portId: string | null;
+}
+
+/** What installing a GitHub project's newest release would download. */
+export interface GithubInspection {
+  repo: string;
+  tag: string | null;
+  published: string | null;
+  prerelease: boolean;
+  asset: string | null;
+  size: number | null;
+  checksum: boolean;
+}
+
 export interface CatalogView {
   ports: PortDef[];
   emulators: EmulatorDef[];
@@ -347,6 +370,13 @@ export const api = {
 
   /** Every update available, ports and emulators. Slow the first time (asks GitHub). */
   availableUpdates: () => invoke<AvailableUpdate[]>("available_updates"),
+  /** Something is installing or converting, so OnionRing must not restart for its own update. */
+  busy: () => invoke<boolean>("busy"),
+
+  githubSearch: (query: string) => invoke<GithubFound[]>("github_search", { query }),
+  githubInspect: (repo: string) => invoke<GithubInspection>("github_inspect", { repo }),
+  addGithubPort: (repo: string, game: string, system: string | null) => invoke<PortDef>("add_github_port", { repo, game, system }),
+  removeGithubPort: (id: string) => invoke<void>("remove_github_port", { id }),
 
   collections: () => invoke<Collection[]>("collections"),
   createCollection: (name: string) => invoke<Collection>("create_collection", { name }),

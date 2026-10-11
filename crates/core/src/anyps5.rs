@@ -123,7 +123,10 @@ pub fn convert(db: &crate::db::Db, root: &DataRoot, game: &crate::model::Game, p
     }
 
     let name = game.serial.clone().unwrap_or_else(|| util::short_hash(&game.key));
-    let out = root.apps().join(format!("ps5-{}", name.replace(|c: char| !c.is_ascii_alphanumeric(), "-")));
+    let dest = root.apps().join(format!("ps5-{}", name.replace(|c: char| !c.is_ascii_alphanumeric(), "-")));
+    // Build next to the current program and swap it in only when the conversion worked, so a
+    // failed reconversion (after an AnyPS5 update) leaves the game playable.
+    let out = dest.with_file_name(format!("{}.new", dest.file_name().unwrap_or_default().to_string_lossy()));
     let _ = std::fs::remove_dir_all(&out);
     let app0 = out.join("app0");
     std::fs::create_dir_all(&app0)?;
@@ -160,8 +163,15 @@ pub fn convert(db: &crate::db::Db, root: &DataRoot, game: &crate::model::Game, p
     if !res.status.success() || !exe.is_file() {
         let err = String::from_utf8_lossy(&res.stderr);
         let line = err.lines().rev().find(|l| !l.trim().is_empty()).unwrap_or("no details").trim();
-        bail!("AnyPS5 could not convert {}: {line}", game.title);
+        let msg = format!("AnyPS5 could not convert {}: {line}", game.title);
+        // Keep the log where it can be read; drop the half-built folder.
+        let _ = std::fs::copy(out.join("anyps5-convert.log"), root.apps().join(format!("{}-failed.log", dest.file_name().unwrap_or_default().to_string_lossy())));
+        let _ = std::fs::remove_dir_all(&out);
+        bail!(msg);
     }
+    let _ = std::fs::remove_dir_all(&dest);
+    std::fs::rename(&out, &dest).context("replacing the converted game")?;
+    let exe = dest.join("app.exe");
     db.kv_set(&kv_key(game.id), &exe.to_string_lossy())?;
     if let Some(v) = installed(db, root) {
         db.kv_set(&built_key(game.id), &v)?;

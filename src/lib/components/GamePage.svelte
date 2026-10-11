@@ -6,7 +6,7 @@
   import Art from "./Art.svelte";
   import Glyph from "./Glyph.svelte";
   import LibGlyph from "./LibGlyph.svelte";
-  import SystemArt from "./SystemArt.svelte";
+  import SystemArt, { hasSystemArt } from "./SystemArt.svelte";
   import CollectionPicker from "./CollectionPicker.svelte";
   import LaunchOptions from "./LaunchOptions.svelte";
   import PlayHistory from "./PlayHistory.svelte";
@@ -109,7 +109,7 @@
       {#if hasArt}
         <Art game={g} kind="wide" />
       {:else}
-        <div class="field" aria-hidden="true"><div class="sys"><SystemArt id={g.platform} /></div></div>
+        <div class="field" aria-hidden="true"><div class="sys" class:bare={!hasSystemArt(g.platform)}><SystemArt id={g.platform} /></div></div>
       {/if}
     </div>
 
@@ -200,7 +200,13 @@
           <div class="callout">
             <Glyph name="alert" size={24} />
             <div class="ct"><b>No emulator for {platform?.name ?? "this system"} yet</b><span>Get one and this game is ready to play.</span></div>
-            <div class="ca"><button class="btn" data-nav onclick={() => app.go({ name: "get", tab: "emulators" })}><Glyph name="get" size={24} />Get one</button></div>
+            <div class="ca">
+              {#if (app.catalog?.emulators ?? []).some((e) => e.platforms.includes(g.platform))}
+                <button class="btn" data-nav onclick={() => app.go({ name: "get", tab: "emulators" })}><Glyph name="get" size={24} />Get one</button>
+              {:else}
+                <button class="btn" data-nav onclick={() => app.go({ name: "get", tab: "find", item: platform?.name ?? g.platform })}><Glyph name="search" size={24} />Find one</button>
+              {/if}
+            </div>
           </div>
         {:else if g.missing}
           <div class="callout">
@@ -336,6 +342,10 @@
     color: var(--fg);
     background: var(--bg);
     padding: 12px;
+  }
+  /* A system of your own has no console art: just the controller, on the dotted field. */
+  :global(:root[data-theme="pixel"]) .sys.bare {
+    background: none;
   }
   :global(:root[data-theme="paper"]) .field {
     background:

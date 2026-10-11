@@ -313,6 +313,8 @@ img {
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    /* The pixel theme's steps() would otherwise stop entrances on an in-between frame. */
+    animation-timing-function: linear !important;
     transition-duration: 0.01ms !important;
   }
 }

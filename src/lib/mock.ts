@@ -50,6 +50,13 @@ interface Snapshot {
 
 type Args = Record<string, unknown>;
 
+/** What the preview's GitHub search finds. */
+const FOUND = [
+  { repo: "HarbourMasters/Shipwright", name: "Shipwright", description: "PC port of Ocarina of Time", stars: 3800, pushed: "2026-10-01T00:00:00Z", url: "https://github.com/HarbourMasters/Shipwright" },
+  { repo: "example/minecraft-souls-mashup", name: "minecraft-souls-mashup", description: "A Minecraft and Elden Ring mashup built as a standalone game", stars: 420, pushed: "2026-09-12T00:00:00Z", url: "https://github.com/example/minecraft-souls-mashup" },
+  { repo: "example/mashup-source-only", name: "mashup-source-only", description: "A mashup that only publishes source code", stars: 12, pushed: "2025-01-02T00:00:00Z", url: "https://github.com/example/mashup-source-only" },
+];
+
 const clone = <T>(v: T): T => structuredClone(v);
 const unix = () => Math.floor(Date.now() / 1000);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -204,6 +211,35 @@ export async function installMock(dataRoot: string) {
         case "setup_checks": return clone(snap.checks ?? []);
         case "open_folder": return null;
         case "available_updates": return clone(snap.updates ?? []);
+        case "busy": return false;
+
+        // ---- find on GitHub (a fixed answer: the preview has no network access to GitHub)
+        case "github_search": {
+          const q = String(args.query ?? "").trim().toLowerCase();
+          if (q.length < 2) throw "Type at least two letters to search.";
+          await sleep(400);
+          return FOUND.filter((f) => `${f.repo} ${f.description}`.toLowerCase().includes(q) || q === "all").map((f) => ({
+            ...f,
+            portId: snap.catalog.ports.find((p) => p.repo.toLowerCase() === f.repo.toLowerCase())?.id ?? null,
+          }));
+        }
+        case "github_inspect": {
+          await sleep(300);
+          const repo = String(args.repo);
+          const none = repo.endsWith("source-only");
+          return { repo, tag: none ? null : "v1.2.0", published: "2026-09-30T12:00:00Z", prerelease: false, asset: none ? null : "game-windows-x64.zip", size: none ? null : 48_000_000, checksum: !none };
+        }
+        case "add_github_port": {
+          const repo = String(args.repo);
+          const id = `gh-${repo.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+          const p = { id, game: String(args.game).trim(), name: repo.split("/")[1], kind: "Added by you", original: args.system ? [String(args.system)] : [], repo, requires: null, licence: null, blurb: null, accent: null, featured: false };
+          if (!p.game) throw "Give it a name.";
+          snap.catalog.ports = [...snap.catalog.ports.filter((x) => x.id !== id), p];
+          return clone(p);
+        }
+        case "remove_github_port":
+          snap.catalog.ports = snap.catalog.ports.filter((x) => x.id !== args.id);
+          return null;
 
         // ---- collections
         case "collections":

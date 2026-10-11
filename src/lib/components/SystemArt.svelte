@@ -59,6 +59,18 @@
   .none {
     display: grid;
     place-items: center;
+    /* A grid item never shrinks below its content by default; the glyph must fit the slot. */
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
     color: var(--faint);
+  }
+  /* The fallback controller shrinks to fit small slots (the library's 32x24 system icons). */
+  .none :global(svg) {
+    width: 100%;
+    height: 100%;
+    max-width: 144px;
+    max-height: 144px;
+    min-height: 0;
   }
 </style>

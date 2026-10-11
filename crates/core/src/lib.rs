@@ -7,6 +7,7 @@ pub mod catalog;
 pub mod checks;
 pub mod db;
 pub mod disc;
+pub mod discover;
 pub mod github;
 pub mod install;
 pub mod launch;

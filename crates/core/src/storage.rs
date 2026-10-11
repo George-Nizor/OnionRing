@@ -83,7 +83,7 @@ pub fn report(root: &DataRoot, db: &Db) -> Result<Report> {
             redundant,
         });
     }
-    groups.sort_by(|a, b| b.reclaimable.cmp(&a.reclaimable));
+    groups.sort_by_key(|g| std::cmp::Reverse(g.reclaimable));
     Ok(Report {
         library_size,
         reclaimable: groups.iter().map(|g| g.reclaimable).sum(),

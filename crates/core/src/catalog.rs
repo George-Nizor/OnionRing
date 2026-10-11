@@ -189,7 +189,7 @@ pub struct BrowserGame {
     pub verified: Option<String>,
 }
 
-fn read_local(path: &Path) -> Result<serde_json::Value> {
+pub(crate) fn read_local(path: &Path) -> Result<serde_json::Value> {
     Ok(match std::fs::read_to_string(path) {
         Ok(s) => serde_json::from_str(&s)?,
         Err(_) => serde_json::json!({}),

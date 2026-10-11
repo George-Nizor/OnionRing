@@ -239,6 +239,14 @@
             <button class="btn icon" data-nav onclick={startRename} aria-label="Rename collection" title="Rename"><LibGlyph name="pencil" size={24} /></button>
             <button class="btn icon" class:on={confirming} data-nav onclick={() => (confirming = !confirming)} aria-label="Delete collection" title="Delete"><LibGlyph name="trash" size={24} /></button>
           {/if}
+          {#if sys}
+            <button
+              class="btn icon"
+              data-nav
+              onclick={() => app.go(sys.id === "port" ? { name: "get", tab: "ports" } : { name: "get", tab: "find", item: sys.label })}
+              aria-label="Find more {sys.label}"
+              title="Find more"><Glyph name="search" size={24} /></button>
+          {/if}
           <button class="btn sort" data-nav onclick={() => app.cycleSort()} title="Change order">
             <Glyph name="sliders" size={24} />
             {#key app.sort}<span class="s">{SORT_LABEL[app.sort]}</span>{/key}

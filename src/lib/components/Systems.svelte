@@ -171,7 +171,12 @@
           {:else}
             <div class="emu empty">
               <p class="line"><Glyph name="info" size={24} /><span>Nothing on this PC plays {r.p.name} games yet.</span></p>
-              <button class="btn primary" data-nav onclick={() => app.go({ name: "get", tab: "emulators" })}><Glyph name="get" size={24} />Get an emulator</button>
+              {#if (app.catalog?.emulators ?? []).some((e) => e.platforms.includes(r.id))}
+                <button class="btn primary" data-nav onclick={() => app.go({ name: "get", tab: "emulators" })}><Glyph name="get" size={24} />Get an emulator</button>
+              {:else}
+                <!-- A system of your own (catalog.local.json): OnionRing has no emulator to offer. -->
+                <button class="btn primary" data-nav onclick={() => app.go({ name: "get", tab: "find", item: r.p.name })}><Glyph name="search" size={24} />Find on GitHub</button>
+              {/if}
             </div>
           {/each}
         </div>

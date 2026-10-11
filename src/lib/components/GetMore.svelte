@@ -2,7 +2,7 @@
   import { tick } from "svelte";
   import { open } from "@tauri-apps/plugin-dialog";
   import { openUrl } from "@tauri-apps/plugin-opener";
-  import { api, type AvailableUpdate, type BrowserGame, type CatalogView, type Emulator, type EmulatorDef, type PortDef, type ReleaseDetails } from "$lib/api";
+  import { api, type AvailableUpdate, type BrowserGame, type CatalogView, type Emulator, type EmulatorDef, type GithubFound, type GithubInspection, type PortDef, type ReleaseDetails } from "$lib/api";
   import { app } from "$lib/store.svelte";
   import { focusFirst } from "$lib/nav";
   import { bytes, norm } from "$lib/format";
@@ -14,7 +14,9 @@
   let cat = $state<CatalogView | null>(null);
   let updates = $state<AvailableUpdate[] | null>(null);
   let consoleFilter = $state<string | null>(null);
-  let sheet = $state<{ kind: "port"; p: PortDef } | { kind: "emu"; e: EmulatorDef } | { kind: "web"; b: BrowserGame } | { kind: "add" } | null>(null);
+  let sheet = $state<
+    { kind: "port"; p: PortDef } | { kind: "emu"; e: EmulatorDef } | { kind: "web"; b: BrowserGame } | { kind: "add" } | { kind: "gh"; f: GithubFound } | null
+  >(null);
   let sheetEl = $state<HTMLElement>();
   const tab = $derived(app.view.tab ?? "ports");
 
@@ -22,6 +24,7 @@
     ["ports", "cart", "Ports"],
     ["emulators", "pad", "Emulators"],
     ["browser", "globe", "Browser"],
+    ["find", "search", "Find"],
     ["updates", "refresh", "Updates"],
   ];
 
@@ -73,7 +76,10 @@
     cat = await api.catalog();
     // Arriving from search with something to show.
     const item = app.view.item;
-    if (item && !sheet) {
+    if (item && tab === "find" && !query) {
+      query = item;
+      find();
+    } else if (item && !sheet) {
       const p = cat.ports.find((x) => x.id === item);
       const e = cat.emulators.find((x) => x.id === item);
       const b = cat.browser.find((x) => x.id === item);
@@ -141,6 +147,18 @@
   async function showSheet(s: NonNullable<typeof sheet>) {
     sheet = s;
     rel = null;
+    if (s.kind === "gh") {
+      gh = null;
+      ghError = null;
+      ghName = titleOf(s.f.name);
+      ghSystem = "";
+      // The sheet may have moved on by the time GitHub answers.
+      const repo = s.f.repo;
+      const still = () => sheet?.kind === "gh" && sheet.f.repo === repo;
+      api.githubInspect(repo)
+        .then((i) => still() && (gh = i))
+        .catch((e) => still() && (ghError = String(e)));
+    }
     const rid = s.kind === "port" ? s.p.id : s.kind === "emu" && s.e.repo ? s.e.id : null;
     if (rid) {
       relLoading = true;
@@ -197,6 +215,78 @@
     sheet = null;
     await load();
   }
+  // ---- find on GitHub
+  let query = $state("");
+  let results = $state<GithubFound[] | null>(null);
+  let searching = $state(false);
+  let searchError = $state<string | null>(null);
+  let gh = $state<GithubInspection | null>(null);
+  let ghError = $state<string | null>(null);
+  let ghName = $state("");
+  let ghSystem = $state("");
+  let adding = $state(false);
+  /** "owner/name" from a github.com link or that form typed directly; null for a search. */
+  function repoOf(q: string): string | null {
+    const s = q.trim().replace(/^https?:\/\//, "").replace(/^www\./, "");
+    const m = s.match(/^(?:github\.com\/)?([\w.-]+)\/([\w.-]+?)(?:\.git)?(?:\/.*)?$/);
+    if (!m || /\s/.test(s) || (!s.startsWith("github.com/") && s.split("/").length !== 2)) return null;
+    return `${m[1]}/${m[2]}`;
+  }
+  /** A readable name from a project name: "minecraft-souls_mashup" -> "Minecraft souls mashup". */
+  const titleOf = (n: string) => {
+    const t = n.replace(/[-_.]+/g, " ").trim();
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  };
+  const portOfRepo = (repo: string) => cat?.ports.find((p) => p.repo.toLowerCase() === repo.toLowerCase()) ?? null;
+  async function find() {
+    const q = query.trim();
+    if (!q || searching) return;
+    searchError = null;
+    const repo = repoOf(q);
+    if (repo) {
+      const p = portOfRepo(repo);
+      if (p) showSheet({ kind: "port", p });
+      else showSheet({ kind: "gh", f: { repo, name: repo.split("/")[1], description: null, stars: 0, pushed: null, url: `https://github.com/${repo}`, portId: null } });
+      return;
+    }
+    searching = true;
+    try {
+      results = await api.githubSearch(q);
+    } catch (e) {
+      searchError = String(e);
+      results = null;
+    }
+    searching = false;
+  }
+  function openFound(f: GithubFound) {
+    const p = f.portId ? cat?.ports.find((x) => x.id === f.portId) : portOfRepo(f.repo);
+    if (p) showSheet({ kind: "port", p });
+    else showSheet({ kind: "gh", f });
+  }
+  async function addAndInstall(f: GithubFound) {
+    adding = true;
+    try {
+      const p = await api.addGithubPort(f.repo, ghName, ghSystem.trim() || null);
+      await load();
+      install(p.id);
+      showSheet({ kind: "port", p: cat?.ports.find((x) => x.id === p.id) ?? p });
+    } catch (e) {
+      app.toast(String(e), "error", 9000);
+    }
+    adding = false;
+  }
+  async function removeFound(p: PortDef) {
+    try {
+      await api.removeGithubPort(p.id);
+      sheet = null;
+      await load();
+    } catch (e) {
+      app.toast(String(e), "error");
+    }
+  }
+  const systemNames = $derived([...new Set([...app.platforms.values()].filter((p) => p.id !== "port").map((p) => p.name))]);
+  const stars = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(n >= 10_000 ? 0 : 1)}k` : String(n));
+
   function playWeb(b: BrowserGame) {
     api.openBrowserGame(b.id).catch((e) => app.toast(String(e), "error"));
   }
@@ -305,6 +395,48 @@
         </button>
       {/each}
     </div>
+  {:else if tab === "find"}
+    <form class="finder" onsubmit={(e) => { e.preventDefault(); find(); }}>
+      <span class="fi"><Glyph name="search" size={24} /></span>
+      <input class="field" data-nav bind:value={query} spellcheck="false" placeholder="A game, a mod, a project name, or a github.com link" aria-label="Find on GitHub" />
+      <button class="btn primary" data-nav type="submit" disabled={searching || query.trim().length < 2}>
+        <Glyph name={searching ? "refresh" : "search"} size={24} />{searching ? "Looking…" : "Find"}
+      </button>
+    </form>
+    {#if searchError}
+      <div class="callout"><Glyph name="alert" size={24} /><div><p>{searchError}</p></div></div>
+    {:else if results === null}
+      <div class="done intro">
+        <span class="fbig"><Glyph name="search" size={96} /></span>
+        <h2>Find something new to play</h2>
+        <p>Search GitHub for ports, recomps, fan games and mashups that publish a Windows download. OnionRing installs them like any other port: the download is checked, updates come in on their own, and your saves are kept.</p>
+      </div>
+    {:else if !results.length}
+      <p class="empty">Nothing on GitHub matches that. Try fewer words, or paste the project's github.com link.</p>
+    {:else}
+      <div class="grid">
+        {#each results as f, i (f.repo)}
+          {@const listed = f.portId ?? portOfRepo(f.repo)?.id}
+          <button class="card" data-nav style:--i={Math.min(i, 24)} onclick={() => openFound(f)} onmouseenter={hover}>
+            <span class="body">
+              <span class="name">{titleOf(f.name)}</span>
+              <span class="by">{f.repo}</span>
+              {#if f.description}<span class="desc">{f.description}</span>{/if}
+            </span>
+            <span class="foot">
+              <span class="chips">
+                <span class="chip"><Glyph name="star" size={12} />{stars(f.stars)}</span>
+                {#if day(f.pushed)}<span class="chip">{day(f.pushed)}</span>{/if}
+              </span>
+              <span class="state">
+                {#if listed && installed.has(listed)}<Glyph name="check" size={24} />
+                {:else}<Glyph name={listed ? "cart" : "get"} size={24} />{/if}
+              </span>
+            </span>
+          </button>
+        {/each}
+      </div>
+    {/if}
   {:else}
     <!-- Updates -->
     {#if updates === null}
@@ -415,6 +547,9 @@
             <Glyph name={inst ? "refresh" : "get"} size={24} />{inst ? (up ? `Update to ${up.latest}` : "Reinstall") : "Get"}
           </button>
           <button class="btn big" data-nav onclick={() => fromFile(p.id)}><Glyph name="zip" size={24} />From a zip</button>
+          {#if p.id.startsWith("gh-") && !inst}
+            <button class="btn big" data-nav onclick={() => removeFound(p)}><Glyph name="close" size={24} />Remove</button>
+          {/if}
         {/if}
       </div>
     {:else if sheet.kind === "web"}
@@ -444,6 +579,41 @@
         {#if b.status === "custom"}
           <button class="btn big" data-nav onclick={() => removeOwn(b)}><Glyph name="close" size={24} />Remove</button>
         {/if}
+      </div>
+    {:else if sheet.kind === "gh"}
+      {@const f = sheet.f}
+      <div class="sbody pad">
+        <div class="kicker"><span class="chip"><Glyph name="globe" size={12} />GitHub</span>{#if f.stars}<span class="chip"><Glyph name="star" size={12} />{stars(f.stars)}</span>{/if}</div>
+        <h2>{titleOf(f.name)}</h2>
+        <div class="sub">{f.repo}</div>
+        {#if f.description}<p class="blurb">{f.description}</p>{/if}
+        <dl class="facts">
+          <div><dt><Glyph name="globe" size={24} />Source</dt><dd><button class="link" data-nav onclick={() => openUrl(f.url)}>github.com/{f.repo}</button></dd></div>
+          {#if gh?.tag}
+            <div><dt><Glyph name="refresh" size={24} />Latest</dt><dd>{gh.tag}{gh.prerelease ? " (test build)" : ""}{gh.published ? ` · ${day(gh.published)}` : ""}</dd></div>
+            {#if gh.asset}<div><dt><Glyph name="disk" size={24} />Download</dt><dd>{gh.size ? bytes(gh.size) : gh.asset}{gh.checksum ? " · checked against its published hash" : ""}</dd></div>{/if}
+          {:else if !gh && !ghError}
+            <div><dt><Glyph name="refresh" size={24} />Latest</dt><dd class="faint">Checking…</dd></div>
+          {/if}
+        </dl>
+        {#if ghError}
+          <div class="callout"><Glyph name="alert" size={24} /><div><p>{ghError}</p></div></div>
+        {:else if gh && !gh.tag}
+          <div class="callout"><Glyph name="alert" size={24} /><div><span class="label">Nothing to install</span><p>This project hasn't published any releases. Its page may explain how to build or get it.</p></div></div>
+        {:else if gh && !gh.asset}
+          <div class="callout"><Glyph name="alert" size={24} /><div><span class="label">No Windows download</span><p>The newest release has no Windows build OnionRing can recognise. Its page may have one under another name.</p></div></div>
+        {:else if gh}
+          <label class="in"><span class="label">Name in your library</span><input class="field" data-nav bind:value={ghName} spellcheck="false" maxlength="120" /></label>
+          <label class="in"><span class="label">What it plays or is based on (optional)</span><input class="field" data-nav bind:value={ghSystem} list="gh-systems" spellcheck="false" placeholder="Nintendo 64, mashup, …" /></label>
+          <datalist id="gh-systems">{#each systemNames as n (n)}<option value={n}></option>{/each}</datalist>
+          <div class="callout quiet"><Glyph name="info" size={24} /><div><p>Anyone can publish on GitHub. Only install projects you trust; OnionRing checks the download matches what the project published, not what it does.</p></div></div>
+        {/if}
+      </div>
+      <div class="actions">
+        {#if gh?.asset}
+          <button class="btn big primary" data-nav onclick={() => addAndInstall(f)} disabled={adding || !ghName.trim()}><Glyph name="get" size={24} />{adding ? "Adding…" : "Add and install"}</button>
+        {/if}
+        <button class="btn big" data-nav onclick={() => openUrl(f.url)}><Glyph name="globe" size={24} />Project page</button>
       </div>
     {:else if sheet.kind === "add"}
       <div class="sbody pad">
@@ -1326,6 +1496,49 @@
     flex-direction: column;
     gap: 8px;
   }
+  /* ---- find ------------------------------------------------------------------------------ */
+  .finder {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .finder .field {
+    flex: 1;
+    min-width: 0;
+  }
+  .finder .btn {
+    height: 52px;
+  }
+  .fi {
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+  }
+  .desc {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 14px;
+    line-height: 1.35;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+  }
+  .intro {
+    max-width: 640px;
+    margin: 48px auto 0;
+  }
+  .fbig {
+    color: var(--muted);
+  }
+  .chip :global(svg) {
+    display: inline-block;
+    vertical-align: -1px;
+    margin-right: 4px;
+  }
+
   .in {
     display: flex;
     flex-direction: column;

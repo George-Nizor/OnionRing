@@ -4,6 +4,7 @@ One launcher for the games the big stores don't sell: your emulators and their g
 
 - **Adopts your setup as it is.** Point it at your emulation folder. It finds the emulators and games where they are and never moves or changes them.
 - **Installs ports and emulators for you.** 225 community ports, recomps and decomps with Windows builds, plus the main emulators, are installed from their official GitHub Releases. Each download is checked against the hash the project published. Saves are kept across updates.
+- **Finds more.** Get more > Find searches GitHub for ports, fan games and mashups that publish a Windows download, and installs them the same way.
 - **Small app, your data on your drive.** The installer is a few MB. Your library, artwork, installs and downloads live in a data folder you choose (for example `G:\OnionRing`).
 - **Looks like a console.** The selected game's art fills the screen, with a cover shelf, keyboard and controller navigation, and playtime tracking.
 

@@ -142,7 +142,7 @@
             <div class="grid">
               {#each games as g, i (g.id)}
                 <button class="hit" class:top={typing && i === 0} data-nav data-game-id={g.id} onclick={() => openGame(g)}>
-                  <span class="th cover"><Art game={g} /></span>
+                  <span class="th cover"><Art game={g} plain /></span>
                   <span class="tx">
                     <span class="nm">{g.title}</span>
                     <span class="mt label">{g.kind === "port" ? "PC port" : (app.platforms.get(g.platform)?.short ?? "")}</span>

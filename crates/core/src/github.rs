@@ -91,12 +91,22 @@ fn get_cached(root: &DataRoot, url: &str) -> Result<String> {
     }
 }
 
+/// GET a GitHub API URL through the ETag cache.
+pub fn get(root: &DataRoot, url: &str) -> Result<String> {
+    get_cached(root, url)
+}
+
 pub fn releases(root: &DataRoot, repo: &str, per_page: u32) -> Result<Vec<Release>> {
     let body = get_cached(root, &format!("https://api.github.com/repos/{repo}/releases?per_page={per_page}"))?;
     Ok(serde_json::from_str(&body)?)
 }
 
 /// Newest release. Stable unless `prerelease` is set (some projects only ship nightlies).
+///
+/// When `/releases/latest` can't be read (rate limited with nothing cached, or a project with
+/// only test builds), the release list stands in. It must still prefer a stable release: picking
+/// a newer test build here and the stable one next time would make every update check see a
+/// "new" version and reinstall on each start.
 pub fn latest(root: &DataRoot, repo: &str, prerelease: bool) -> Result<Release> {
     if !prerelease {
         let body = get_cached(root, &format!("https://api.github.com/repos/{repo}/releases/latest"));
@@ -105,7 +115,16 @@ pub fn latest(root: &DataRoot, repo: &str, prerelease: bool) -> Result<Release> 
                 return Ok(r);
             }
     }
-    releases(root, repo, 5)?.into_iter().next().context("no releases published")
+    newest_of(releases(root, repo, 10)?, prerelease).context("no releases published")
+}
+
+/// The release `latest` picks from a list (newest first): the first stable one unless test
+/// builds are wanted or there are only test builds.
+pub fn newest_of(list: Vec<Release>, prerelease: bool) -> Option<Release> {
+    if !prerelease && let Some(i) = list.iter().position(|r| !r.prerelease) {
+        return list.into_iter().nth(i);
+    }
+    list.into_iter().next()
 }
 
 /// Score a release asset as "the Windows x64 portable archive". `None` = not a candidate.
@@ -193,4 +212,22 @@ pub fn download(url: &str, dest: &Path, progress: &dyn Fn(u64, u64)) -> Result<(
     std::fs::rename(&tmp, dest)?;
     progress(done, total.max(done));
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn rel(tag: &str, prerelease: bool) -> Release {
+        Release { tag_name: tag.into(), name: None, prerelease, published_at: None, html_url: None, assets: vec![] }
+    }
+
+    #[test]
+    fn newest_prefers_stable() {
+        let list = || vec![rel("nightly-2", true), rel("v1.1", false), rel("v1.0", false)];
+        assert_eq!(newest_of(list(), false).unwrap().tag_name, "v1.1");
+        assert_eq!(newest_of(list(), true).unwrap().tag_name, "nightly-2");
+        assert_eq!(newest_of(vec![rel("nightly-2", true), rel("nightly-1", true)], false).unwrap().tag_name, "nightly-2");
+        assert!(newest_of(vec![], false).is_none());
+    }
 }

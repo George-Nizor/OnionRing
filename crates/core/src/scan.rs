@@ -80,6 +80,11 @@ fn is_skipped(e: &DirEntry) -> bool {
     name.starts_with('.') || SKIP_DIRS.contains(&name.as_str()) || name.ends_with("_old")
 }
 
+/// A folder path in one spelling, for comparing folders: lower case, one kind of slash.
+fn own_key(p: &Path) -> String {
+    path_str(p).replace('/', "\\").trim_end_matches('\\').to_lowercase()
+}
+
 fn version_from_dirs(exe: &Path) -> Option<String> {
     exe.ancestors().skip(1).take(2).find_map(|d| {
         let n = d.file_name()?.to_string_lossy().to_string();
@@ -269,6 +274,12 @@ pub fn scan(root: &DataRoot, cat: &Catalog, db: &Db, progress: &dyn Fn(Progress)
     let seen = now();
     let sources = db.sources()?;
     let mut w = Walk { cat, emus: vec![], items: vec![], archives: vec![], registered: HashSet::new(), unclassified: 0 };
+    // OnionRing's own folders, for a data folder inside a source folder: its installs are added
+    // below as managed apps, and its downloads, art and backups are not games.
+    let own: Vec<String> = [root.apps(), root.downloads(), root.media(), root.cache(), root.reclaim(), root.backups()]
+        .iter()
+        .map(|p| own_key(p))
+        .collect();
 
     for (i, src) in sources.iter().enumerate() {
         if !src.exists {
@@ -278,7 +289,7 @@ pub fn scan(root: &DataRoot, cat: &Catalog, db: &Db, progress: &dyn Fn(Progress)
         let mut game_dirs: Vec<PathBuf> = Vec::new();
         let mut n = 0usize;
         let it = WalkDir::new(&src.path).follow_links(false).into_iter().filter_entry(|e| {
-            if is_skipped(e) {
+            if is_skipped(e) || (e.file_type().is_dir() && own.contains(&own_key(e.path()))) {
                 return false;
             }
             if e.file_type().is_dir() && e.depth() > 0 {

@@ -2,8 +2,9 @@
   import { src, type Game } from "$lib/api";
   import { app } from "$lib/store.svelte";
 
-  /** `cover` = box art (3:4), `wide` = background/key art (16:9). Falls back to a typeset cover. */
-  let { game, kind = "cover" }: { game: Game; kind?: "cover" | "wide" } = $props();
+  /** `cover` = box art (3:4), `wide` = background/key art (16:9). Falls back to a typeset cover,
+   *  or to a blank panel with `plain` (thumbnails too small for text, with the title beside them). */
+  let { game, kind = "cover", plain = false }: { game: Game; kind?: "cover" | "wide"; plain?: boolean } = $props();
 
   const url = $derived(
     kind === "wide"
@@ -32,7 +33,7 @@
 <div class="frame">
   {#if url && !failed}
     <img class="art" class:fit src={url} alt="" loading="lazy" decoding="async" {onload} onerror={() => (failed = true)} />
-  {:else}
+  {:else if !plain}
     <div class="typeset">
       {#if logo}<img class="logo art" src={logo} alt="" />{/if}
       <div class="t">{game.title}</div>

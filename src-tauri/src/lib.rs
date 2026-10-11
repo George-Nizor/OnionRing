@@ -114,6 +114,8 @@ fn set_data_root(app: AppHandle, path: String) -> Res<()> {
     AppConfig { data_root: Some(root.root.clone()) }.save().map_err(err)?;
     use_root(&app, root)?;
     rewatch(&app);
+    // On first run there was no data folder at start, so the updater starts now.
+    keep_apps_current(&app);
     Ok(())
 }
 
@@ -280,7 +282,7 @@ async fn scan_library(app: AppHandle) -> Res<ScanSummary> {
 async fn refresh_art(app: AppHandle, force: bool) -> Res<usize> {
     blocking(move || {
         let st = app.state::<AppState>();
-        let _guard = st.work.lock().unwrap();
+        let _guard = st.work.lock().unwrap_or_else(|e| e.into_inner());
         let progress = emit_progress(&app);
         let n = art::refresh(&st.root()?, &st.cat(), &st.db()?, force, &progress).map_err(err)?;
         progress(Progress::new("idle", "", 1, 1));
@@ -335,7 +337,7 @@ async fn launch_game(app: AppHandle, id: i64) -> Res<()> {
             };
             report("Updating the PC version");
             let res = {
-                let _guard = st.work.lock().unwrap();
+                let _guard = st.work.lock().unwrap_or_else(|e| e.into_inner());
                 onionring_core::anyps5::convert(&db, &st.root()?, &game, &report)
             };
             let error = res.as_ref().err().map(err);
@@ -356,11 +358,20 @@ struct AppUpdated {
     version: String,
 }
 
+/// An app OnionRing installed is updated automatically only once its installed copy is this old.
+/// Some projects (RPCS3) publish a build for every commit, several a day; without this every
+/// start would download and install another one. The Updates tab still offers every release.
+const AUTO_UPDATE_AFTER: i64 = 3 * 24 * 3600;
+
 /// Keep everything OnionRing installed on its latest release: emulators, ports and AnyPS5.
 /// Runs 30 s after start, then every six hours, and waits while a game is being played.
 /// Emulators found on the PC (not installed by OnionRing) are left alone; the Updates tab lists
-/// them. Each update emits "app-updated" so the UI can say what changed.
+/// them. Each update emits "app-updated" so the UI can say what changed. Starts once per run.
 fn keep_apps_current(app: &AppHandle) {
+    static STARTED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+    if STARTED.swap(true, Ordering::SeqCst) {
+        return;
+    }
     let app = app.clone();
     std::thread::spawn(move || {
         std::thread::sleep(std::time::Duration::from_secs(30));
@@ -372,7 +383,7 @@ fn keep_apps_current(app: &AppHandle) {
             if let (Ok(db), Ok(root)) = (st.db(), st.root()) {
                 let mut changed = false;
                 let res = {
-                    let _guard = st.work.lock().unwrap();
+                    let _guard = st.work.lock().unwrap_or_else(|e| e.into_inner());
                     onionring_core::anyps5::update_if_newer(&db, &root, &|_| {})
                 };
                 match res {
@@ -383,13 +394,20 @@ fn keep_apps_current(app: &AppHandle) {
                     Err(e) => eprintln!("AnyPS5 update check: {e:#}"),
                 }
                 let ups = updates::available_updates(&root, &st.cat(), &db).unwrap_or_default();
+                let now = util::now();
                 for u in ups.into_iter().filter(|u| u.managed) {
                     if st.running.load(Ordering::SeqCst) > 0 {
                         break;
                     }
                     let Ok(t) = Target::from_catalog(&st.cat(), &u.id) else { continue };
                     let res = {
-                        let _guard = st.work.lock().unwrap();
+                        let _guard = st.work.lock().unwrap_or_else(|e| e.into_inner());
+                        // Look again now that nothing else is installing: the player may have
+                        // updated it from the Updates tab since the list was made.
+                        let fresh = install::installed(&root, &u.id).is_some_and(|a| now - a.installed_at < AUTO_UPDATE_AFTER);
+                        if fresh || !matches!(install::check_update(&root, &t), Ok(Some(c)) if c.available) {
+                            continue;
+                        }
                         install::install_latest(&root, &t, &|_| {})
                     };
                     match res {
@@ -407,6 +425,13 @@ fn keep_apps_current(app: &AppHandle) {
             std::thread::sleep(std::time::Duration::from_secs(6 * 3600));
         }
     });
+}
+
+/// Something is installing, updating or converting right now, so OnionRing must not restart
+/// (the self-update exits the app to run its installer).
+#[tauri::command]
+fn busy(st: State<AppState>) -> bool {
+    matches!(st.work.try_lock(), Err(TryLockError::WouldBlock))
 }
 
 #[tauri::command]
@@ -514,6 +539,46 @@ fn add_browser_game(app: AppHandle, st: State<AppState>, title: String, url: Str
     let g = onionring_core::catalog::add_local_browser_game(&st.root()?.local_catalog(), &title, &url).map_err(err)?;
     reload_catalog(&app)?;
     Ok(g)
+}
+
+/// Search GitHub for projects with Windows builds (the "Find" tab).
+#[tauri::command]
+async fn github_search(app: AppHandle, query: String) -> Res<Vec<onionring_core::discover::Found>> {
+    blocking(move || {
+        let st = app.state::<AppState>();
+        onionring_core::discover::search(&st.root()?, &st.cat(), &query).map_err(err)
+    })
+    .await
+}
+
+/// What installing a project's newest release would download.
+#[tauri::command]
+async fn github_inspect(app: AppHandle, repo: String) -> Res<onionring_core::discover::Inspection> {
+    blocking(move || {
+        let st = app.state::<AppState>();
+        onionring_core::discover::inspect(&st.root()?, &repo).map_err(err)
+    })
+    .await
+}
+
+/// Add a GitHub project to the catalog as a port of the player's own. Install it with
+/// `install_latest` and the returned id.
+#[tauri::command]
+async fn add_github_port(app: AppHandle, repo: String, game: String, system: Option<String>) -> Res<PortDef> {
+    blocking(move || {
+        let st = app.state::<AppState>();
+        let root = st.root()?;
+        let p = onionring_core::discover::add_local_port(&root.local_catalog(), &root, &repo, &game, system.as_deref()).map_err(err)?;
+        reload_catalog(&app)?;
+        Ok(p)
+    })
+    .await
+}
+
+#[tauri::command]
+fn remove_github_port(app: AppHandle, st: State<AppState>, id: String) -> Res<()> {
+    onionring_core::discover::remove_local_port(&st.root()?.local_catalog(), &id).map_err(err)?;
+    reload_catalog(&app)
 }
 
 #[tauri::command]
@@ -643,7 +708,7 @@ fn install_with(
         let _ = app.emit("install", InstallEvent { id: id.to_string(), message: m.to_string(), done: false, error: None });
     };
     let result = {
-        let _guard = st.work.lock().unwrap();
+        let _guard = st.work.lock().unwrap_or_else(|e| e.into_inner());
         f(&root, &target, &report)
     };
     match result {
@@ -689,7 +754,7 @@ async fn anyps5_convert(app: AppHandle, id: i64) -> Res<()> {
         let report = |m: &str| {
             let _ = app.emit("install", InstallEvent { id: "anyps5".into(), message: m.to_string(), done: false, error: None });
         };
-        let _guard = st.work.lock().unwrap();
+        let _guard = st.work.lock().unwrap_or_else(|e| e.into_inner());
         onionring_core::anyps5::convert(&db, &root, &game, &report).map_err(err)?;
         let _ = app.emit("library-changed", ());
         Ok(())
@@ -1017,7 +1082,7 @@ async fn reclaim(app: AppHandle, paths: Vec<String>) -> Res<(usize, i64)> {
     blocking(move || {
         let st = app.state::<AppState>();
         let r = {
-            let _guard = st.work.lock().unwrap();
+            let _guard = st.work.lock().unwrap_or_else(|e| e.into_inner());
             storage::reclaim(&st.root()?, &st.db()?, &paths).map_err(err)?
         };
         let _ = app.emit("library-changed", ());
@@ -1089,8 +1154,16 @@ pub fn run() {
             }
             Ok(())
         })
+        // Closing the main window quits, even while a browser game's window is open: a process
+        // left running with no main window can't be brought back by starting OnionRing again.
+        .on_window_event(|window, event| {
+            if window.label() == "main" && matches!(event, tauri::WindowEvent::Destroyed) {
+                window.app_handle().exit(0);
+            }
+        })
         .invoke_handler(tauri::generate_handler![
             bootstrap,
+            busy,
             anyps5_status,
             anyps5_convert,
             anyps5_forget,
@@ -1127,6 +1200,10 @@ pub fn run() {
             install_from_file,
             check_updates,
             available_updates,
+            github_search,
+            github_inspect,
+            add_github_port,
+            remove_github_port,
             save_sources,
             back_up_saves,
             backups,

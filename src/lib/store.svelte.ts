@@ -1,7 +1,7 @@
 import { listen } from "@tauri-apps/api/event";
 import { api, type Bootstrap, type CatalogView, type Game, type Platform, type Progress, type ScanSummary } from "./api";
 import { norm } from "./format";
-import { check } from "@tauri-apps/plugin-updater";
+import { check, type Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 
 export type Theme = "pixel" | "paper";
@@ -47,6 +47,16 @@ function load<T>(k: string, fallback: T): T {
     return fallback;
   }
 }
+/** Whether dotted version `a` is newer than `b` ("0.1.10" > "0.1.9"). */
+export function newer(a: string, b: string): boolean {
+  const pa = a.split(/[.+-]/).map((x) => parseInt(x, 10) || 0);
+  const pb = b.split(/[.+-]/).map((x) => parseInt(x, 10) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] ?? 0) - (pb[i] ?? 0);
+    if (d) return d > 0;
+  }
+  return false;
+}
 function save(k: string, v: unknown) {
   try {
     localStorage.setItem(`onionring.${k}`, JSON.stringify(v));
@@ -90,7 +100,9 @@ class AppStore {
     const hit = (...s: (string | null | undefined)[]) => norm(s.filter(Boolean).join(" ")).includes(q);
     const c = this.catalog;
     return {
-      games: this.visibleGames.filter((g) => hit(g.title, g.serial)).slice(0, 18),
+      games: this.visibleGames
+        .filter((g) => hit(g.title, g.serial, this.platforms.get(g.platform)?.name, this.platforms.get(g.platform)?.short))
+        .slice(0, 18),
       ports: (c?.ports ?? []).filter((p) => hit(p.game, p.name, p.original.join(" "))).slice(0, 12),
       emulators: (c?.emulators ?? []).filter((e) => hit(e.name, e.platforms.map((p) => this.platforms.get(p)?.name).join(" "))).slice(0, 8),
       browser: (c?.browser ?? []).filter((b) => hit(b.title, b.project, b.original)).slice(0, 12),
@@ -161,23 +173,54 @@ class AppStore {
   }
 
   /** Installed builds keep themselves current from the latest GitHub release: check shortly
-   *  after start and every six hours, install quietly, then restart. Never while a game runs. */
+   *  after start and every six hours, install quietly, then restart. Never while a game runs or
+   *  something is installing (the installer closes the app).
+   *
+   *  The version being installed is remembered, so the next start can say whether it worked.
+   *  An update that didn't take is not tried again on every start; Settings offers it instead. */
   private autoUpdate() {
     if (import.meta.env.DEV || !("__TAURI_INTERNALS__" in window)) return;
+    const now = this.boot?.version ?? "";
+    const pending = load<{ version: string; at: number } | null>("pendingUpdate", null);
+    if (pending) {
+      save("pendingUpdate", null);
+      if (newer(pending.version, now)) {
+        this.toast(`The update to ${pending.version} didn't finish. Settings can try it again.`, "error", 12000);
+        save("failedUpdate", { version: pending.version, at: Date.now() });
+      } else {
+        this.toast(`OnionRing updated to ${now}`, "ok", 6000);
+        save("failedUpdate", null);
+      }
+    }
     const run = async () => {
-      if (this.running.length) return;
+      if (this.running.length || Object.keys(this.installing).length) return;
       try {
+        if (await api.busy()) return;
         const u = await check();
         if (!u) return;
+        const failed = load<{ version: string; at: number } | null>("failedUpdate", null);
+        if (failed?.version === u.version && Date.now() - failed.at < 24 * 3600 * 1000) return;
         this.toast(`Updating OnionRing to ${u.version}…`, "info", 8000);
-        await u.downloadAndInstall();
-        await relaunch();
+        await this.installUpdate(u);
       } catch {
         /* offline or GitHub unreachable: try again next time */
       }
     };
     setTimeout(run, 8000);
     setInterval(run, 6 * 3600 * 1000);
+  }
+
+  /** Install OnionRing's own update. The installer closes and restarts the app; the version is
+   *  remembered so the next start can tell whether it took. */
+  async installUpdate(u: Update) {
+    save("pendingUpdate", { version: u.version, at: Date.now() });
+    try {
+      await u.downloadAndInstall();
+    } catch (e) {
+      save("pendingUpdate", null);
+      throw e;
+    }
+    await relaunch();
   }
 
   async loadCatalog() {

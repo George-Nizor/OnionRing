@@ -212,7 +212,7 @@ fn read_backup(dir: &Path) -> Option<Backup> {
     if items.is_empty() {
         return None;
     }
-    items.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    items.sort_by_key(|i| i.name.to_lowercase());
     let created = manifest.as_ref().map(|m| m.created).unwrap_or_else(|| {
         std::fs::metadata(dir)
             .and_then(|m| m.modified())

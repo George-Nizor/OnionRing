@@ -271,9 +271,21 @@ pub fn install_archive(
     extract(&kept, &staging)?;
     let entries: Vec<_> = std::fs::read_dir(&staging)?.filter_map(|e| e.ok()).collect();
     let content = if entries.len() == 1 && entries[0].path().is_dir() { entries[0].path() } else { staging.clone() };
+    // Find the program before touching the installed copy, so a release with a new layout
+    // fails here and leaves the working version in place.
+    let exe = match detect_exe(&content, t) {
+        Some(e) => e,
+        None => {
+            let _ = std::fs::remove_dir_all(&staging);
+            bail!("could not find the program to start in this download");
+        }
+    };
 
     let vdir = app_dir.join(&vname);
+    // Reinstalling the same version replaces its folder: keep its carried settings files.
+    let mut carried: Vec<(String, Vec<u8>)> = vec![];
     if vdir.exists() {
+        carried = t.carry.iter().filter_map(|f| std::fs::read(vdir.join(f)).ok().map(|b| (f.clone(), b))).collect();
         unlink_persist(&vdir, &t.persist);
         std::fs::remove_dir_all(&vdir)?;
     }
@@ -311,6 +323,9 @@ pub fn install_archive(
             }
         }
     }
+    for (f, bytes) in &carried {
+        let _ = std::fs::write(vdir.join(f), bytes);
+    }
     if let Some(marker) = &t.portable_marker {
         let m = vdir.join(marker);
         if !m.exists() {
@@ -322,7 +337,6 @@ pub fn install_archive(
     remove_link(&current);
     junction::create(&vdir, &current).context("pointing current at the new version")?;
 
-    let exe = detect_exe(&vdir, t).context("could not find the program to start in this download")?;
     let mut versions: Vec<String> = previous.as_ref().map(|p| p.versions.clone()).unwrap_or_default();
     versions.retain(|v| v != &version);
     versions.insert(0, version.clone());
@@ -331,6 +345,17 @@ pub fn install_archive(
         let d = app_dir.join(safe_version(&old));
         unlink_persist(&d, &t.persist);
         let _ = std::fs::remove_dir_all(&d);
+    }
+    // Downloads are kept for the same versions (offline reinstall, rollback), not forever:
+    // projects that publish a build per commit would otherwise fill the drive.
+    let keep: Vec<String> = versions.iter().map(|v| safe_version(v)).collect();
+    if let Ok(rd) = std::fs::read_dir(root.downloads().join(&t.id)) {
+        for e in rd.filter_map(|e| e.ok()) {
+            let name = e.file_name().to_string_lossy().to_string();
+            if e.path().is_dir() && !keep.contains(&name) {
+                let _ = std::fs::remove_dir_all(e.path());
+            }
+        }
     }
 
     let app = InstalledApp {
@@ -380,7 +405,7 @@ pub fn install_latest(root: &DataRoot, t: &Target, progress: &dyn Fn(&str)) -> R
     let have = dest.is_file() && expected.as_deref().is_some_and(|e| sha256_file(&dest).ok().as_deref() == Some(e));
     if !have {
         github::download(&asset.browser_download_url, &dest, &|done, total| {
-            let pct = if total > 0 { done * 100 / total } else { 0 };
+            let pct = (done * 100).checked_div(total).unwrap_or(0);
             progress(&format!("Downloading {} ({pct}%)", asset.name));
         })?;
     }
@@ -427,9 +452,11 @@ pub fn check_update(root: &DataRoot, t: &Target) -> Result<Option<UpdateInfo>> {
     let Some(app) = installed(root, &t.id) else { return Ok(None) };
     let Some(repo) = t.repo.as_deref() else { return Ok(None) };
     let rel = github::latest(root, repo, t.prerelease)?;
+    // A newer release without a Windows download can't be installed, so it isn't an update.
+    let installable = t.asset.as_deref().is_some_and(|p| github::pick_asset(&rel, p).is_ok());
     Ok(Some(UpdateInfo {
         id: t.id.clone(),
-        available: app.source.tag.as_deref() != Some(rel.tag_name.as_str()),
+        available: installable && app.source.tag.as_deref() != Some(rel.tag_name.as_str()),
         installed: app.version,
         latest: rel.tag_name,
         published: rel.published_at,

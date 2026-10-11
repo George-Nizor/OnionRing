@@ -3,7 +3,6 @@
   import { listen } from "@tauri-apps/api/event";
   import { ask, open } from "@tauri-apps/plugin-dialog";
   import { check, type Update } from "@tauri-apps/plugin-updater";
-  import { relaunch } from "@tauri-apps/plugin-process";
   import { api, type Backup, type SaveSource, type Source } from "$lib/api";
   import { app, type Theme } from "$lib/store.svelte";
   import { bytes } from "$lib/format";
@@ -12,7 +11,7 @@
 
   let sources = $state<Source[]>([]);
   let update = $state<Update | null>(null);
-  let updateState = $state<"idle" | "checking" | "none" | "error" | "installing">("idle");
+  let updateState = $state<"idle" | "checking" | "none" | "error" | "installing" | "failed">("idle");
   let autoScan = $state<boolean | null>(null);
   let saveSources = $state<SaveSource[]>([]);
   let backups = $state<Backup[]>([]);
@@ -74,6 +73,15 @@
       app.toast(String(e), "error", 9000);
     }
     backingUp = false;
+  }
+  async function installUpdate() {
+    if (!update) return;
+    updateState = "installing";
+    try {
+      await app.installUpdate(update);
+    } catch {
+      updateState = "failed";
+    }
   }
   async function checkUpdate() {
     updateState = "checking";
@@ -245,7 +253,7 @@
       <div class="body">
         <div class="acts">
           {#if update}
-            <button class="btn primary" data-nav disabled={updateState === "installing"} onclick={async () => { updateState = "installing"; await update?.downloadAndInstall(); await relaunch(); }}>
+            <button class="btn primary" data-nav disabled={updateState === "installing"} onclick={installUpdate}>
               <Glyph name="get" size={24} />{updateState === "installing" ? "Installing…" : `Install ${update.version}`}
             </button>
           {:else}
@@ -253,6 +261,7 @@
           {/if}
           {#if updateState === "none"}<span class="note"><Glyph name="check" size={24} />Up to date</span>{/if}
           {#if updateState === "error"}<span class="note"><Glyph name="alert" size={24} />Can't reach the update server</span>{/if}
+          {#if updateState === "failed"}<span class="note"><Glyph name="alert" size={24} />The update didn't download. Try again in a moment.</span>{/if}
         </div>
       </div>
     </section>
