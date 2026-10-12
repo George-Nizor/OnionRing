@@ -523,22 +523,6 @@
     "featured": false
   },
   {
-    "id": "conker-s-bad-fur-day-recompiled",
-    "game": "Conker's Bad Fur Day",
-    "name": "Conker's Bad Fur Day: Recompiled",
-    "kind": "Recomp",
-    "original": [
-      "Nintendo 64"
-    ],
-    "repo": "sciaschi/CBFD-Recompiled",
-    "asset": "auto",
-    "prerelease": false,
-    "requires": "Your own ROM dump.",
-    "licence": null,
-    "blurb": "By sciaschi. Active (README mentions AI tooling).",
-    "featured": false
-  },
-  {
     "id": "conkerbfdreloaded-conker-s-bad-fur-day",
     "game": "Conker's Bad Fur Day",
     "name": "ConkerBFDReloaded (Conker's Bad Fur Day)",
@@ -552,6 +536,22 @@
     "requires": "Your own ROM dump.",
     "licence": null,
     "blurb": "By dahmedvall95. Active.",
+    "featured": false
+  },
+  {
+    "id": "conker-s-bad-fur-day-recompiled",
+    "game": "Conker's Bad Fur Day",
+    "name": "Conker's Bad Fur Day: Recompiled",
+    "kind": "Recomp",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "sciaschi/CBFD-Recompiled",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By sciaschi. Active (README mentions AI tooling).",
     "featured": false
   },
   {
@@ -988,22 +988,6 @@
     "featured": false
   },
   {
-    "id": "phase-distorter-earthbound",
-    "game": "EarthBound",
-    "name": "Phase Distorter (EarthBound)",
-    "kind": "Native port",
-    "original": [
-      "SNES"
-    ],
-    "repo": "TheRunaway5/Phase-Distorter",
-    "asset": "auto",
-    "prerelease": false,
-    "requires": "Your own ROM dump.",
-    "licence": null,
-    "blurb": "By TheRunaway5. Active.",
-    "featured": false
-  },
-  {
     "id": "earthbound-native",
     "game": "EarthBound",
     "name": "EarthBound Native",
@@ -1017,6 +1001,22 @@
     "requires": "Your own ROM dump.",
     "licence": null,
     "blurb": "By seanstaggsQU. Active.",
+    "featured": false
+  },
+  {
+    "id": "phase-distorter-earthbound",
+    "game": "EarthBound",
+    "name": "Phase Distorter (EarthBound)",
+    "kind": "Native port",
+    "original": [
+      "SNES"
+    ],
+    "repo": "TheRunaway5/Phase-Distorter",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By TheRunaway5. Active.",
     "featured": false
   },
   {
@@ -1097,22 +1097,6 @@
     "requires": "Your own disc/XBLA dump.",
     "licence": null,
     "blurb": "By FluffyQuack. Slow.",
-    "featured": false
-  },
-  {
-    "id": "f-zero-recomp",
-    "game": "F-Zero",
-    "name": "F-Zero Recomp",
-    "kind": "Recomp",
-    "original": [
-      "SNES"
-    ],
-    "repo": "craigshaw/FZeroRecomp",
-    "asset": "auto",
-    "prerelease": false,
-    "requires": "Your own ROM dump.",
-    "licence": null,
-    "blurb": "By Craig Shaw. Active.",
     "featured": false
   },
   {
@@ -1639,7 +1623,7 @@
     ],
     "repo": "mstan/MegaManX4Recomp",
     "asset": "auto",
-    "prerelease": false,
+    "prerelease": true,
     "requires": "Your own disc image.",
     "licence": null,
     "blurb": "By mstan. Active (README mentions AI tooling).",
@@ -1824,22 +1808,6 @@
     "featured": false
   },
   {
-    "id": "ninja-s-dawn-ninja-gaiden-ii",
-    "game": "Ninja Gaiden II",
-    "name": "Ninja's Dawn (Ninja Gaiden II)",
-    "kind": "Recomp",
-    "original": [
-      "Xbox 360"
-    ],
-    "repo": "TheSaltTrader/Ninja-s-Dawn---A-Ninja-Gaiden-2-Recompilation-Project",
-    "asset": "auto",
-    "prerelease": false,
-    "requires": "Your own disc/XBLA dump.",
-    "licence": null,
-    "blurb": "By TheSaltTrader. Active.",
-    "featured": false
-  },
-  {
     "id": "ogre-battle-64-recomp-ogre-battle-64-person-of-lordly-caliber",
     "game": "Ogre Battle 64: Person of Lordly Caliber",
     "name": "Ogre Battle 64: Recomp (Ogre Battle 64: Person of Lordly Caliber)",
@@ -1917,6 +1885,22 @@
     "requires": "Your own disc/XBLA dump.",
     "licence": null,
     "blurb": "By TekRantGaming. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "p-t-for-pc",
+    "game": "P.T.",
+    "name": "P.T. for PC",
+    "kind": "Native port",
+    "original": [
+      "PlayStation 4"
+    ],
+    "repo": "LoreanXavier/pt-pc",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own decrypted game dump.",
+    "licence": null,
+    "blurb": "By LoreanXavier. Active.",
     "featured": false
   },
   {
@@ -3081,22 +3065,6 @@
     "requires": "Your own ROM dump.",
     "licence": null,
     "blurb": "By mstan. Active (README mentions AI tooling).",
-    "featured": false
-  },
-  {
-    "id": "relic-of-the-past-the-legend-of-zelda-a-link-to-the-past",
-    "game": "The Legend of Zelda: A Link to the Past",
-    "name": "Relic of the Past (The Legend of Zelda: A Link to the Past)",
-    "kind": "Native port",
-    "original": [
-      "SNES"
-    ],
-    "repo": "drizztdourden08/relic-of-the-past",
-    "asset": "auto",
-    "prerelease": true,
-    "requires": "Your own ROM dump.",
-    "licence": null,
-    "blurb": "By Drizztdourden_. Active.",
     "featured": false
   },
   {
