@@ -1,7 +1,14 @@
 {
   "hosts": [
     { "id": "skyrim-se", "name": "Skyrim Special Edition", "steam": 489830, "exe": "SkyrimSE.exe" },
-    { "id": "elden-ring", "name": "Elden Ring", "steam": 1245620, "exe": "Game\\eldenring.exe" }
+    { "id": "elden-ring", "name": "Elden Ring", "steam": 1245620, "exe": "Game\\eldenring.exe" },
+    { "id": "stardew-valley", "name": "Stardew Valley", "steam": 413150, "exe": "Stardew Valley.exe" },
+    { "id": "witcher-3", "name": "The Witcher 3: Wild Hunt", "steam": 292030, "exe": "bin\\x64_dx12\\witcher3.exe" },
+    { "id": "garrys-mod", "name": "Garry's Mod", "steam": 4000, "exe": "garrysmod\\gameinfo.txt" },
+    { "id": "erenshor", "name": "Erenshor", "steam": 2382520, "exe": "Erenshor.exe" },
+    { "id": "shadow-gambit", "name": "Shadow Gambit: The Cursed Crew", "steam": 1545560, "exe": "ShadowGambit_TCC.exe" },
+    { "id": "trepang2", "name": "Trepang2", "steam": 1164940, "exe": "CPPFPS\\Binaries\\Win64\\CPPFPS-Win64-Shipping.exe" },
+    { "id": "ready-or-not", "name": "Ready or Not", "steam": 1144200, "exe": "ReadyOrNot\\Binaries\\Win64\\ReadyOrNot-Win64-Shipping.exe" }
   ],
   "mashups": [
     {
@@ -51,6 +58,169 @@
       "blurb": "Minecraft and Elden Ring run together and are drawn as one picture: the Lands Between, its enemies and bosses, with Minecraft's blocks, inventory, tools, crafting and HUD. Your Elden Ring game files are never changed. Early alpha.",
       "page": "https://www.nexusmods.com/eldenring/mods/11259",
       "featured": true
+    },
+    {
+      "id": "witchercraft",
+      "title": "Minecraft in The Witcher 3",
+      "name": "WitcherCraft",
+      "author": "Wanesia",
+      "host": "witcher-3",
+      "brings": "Minecraft",
+      "repo": "Wanesia/WitcherCraft",
+      "asset": "^WitcherCraft-[0-9][0-9.]*\\.zip$",
+      "deploy": "game",
+      "launch": { "from": "game", "exe": "bin\\x64_dx12\\witcher3.exe" },
+      "requires": "The Witcher 3: Wild Hunt next-gen (patch 5.0 or 5.01) on Steam, and a Microsoft account that owns Minecraft: Java Edition. The first start opens Prism Launcher to sign in and download Minecraft, then closes the game: start it again. Needs 16 GB of memory, keyboard and mouse. Turn off Frame Generation.",
+      "licence": "MIT",
+      "blurb": "Built on SkyCraft: play The Witcher 3 as Steve, with Minecraft's movement, blocks, mining and combat in Geralt's world. F8 switches back to Geralt. Very early."
+    },
+    {
+      "id": "deadpixel",
+      "title": "Minecraft in Trepang2",
+      "name": "DeadPixel",
+      "author": "ImmortalSouull",
+      "host": "trepang2",
+      "brings": "Minecraft",
+      "repo": "ImmortalSouull/DeadPixel",
+      "asset": "^DeadPixel-[0-9][0-9.]*\\.zip$",
+      "deploy": "folder",
+      "launch": { "from": "app", "exe": "DeadPixel.exe" },
+      "requires": "Trepang2 on Steam, and Minecraft: Java Edition with the official Minecraft Launcher. In DeadPixel press INSTALL once, then play; Trepang2 starts once Minecraft has loaded its world. Single player only.",
+      "licence": "MIT",
+      "blurb": "Minecraft's blocks, mobs and TNT appear inside Trepang2: bullets chew through blocks, Focus slows Minecraft down too, and zombies fight Trepang2's soldiers."
+    },
+    {
+      "id": "blockbreach",
+      "title": "Minecraft in Ready or Not",
+      "name": "BlockBreach",
+      "author": "ImmortalSouull",
+      "host": "ready-or-not",
+      "brings": "Minecraft",
+      "repo": "ImmortalSouull/BlockBreach",
+      "asset": "^BlockBreach-[0-9][0-9.]*\\.zip$",
+      "deploy": "folder",
+      "launch": { "from": "app", "exe": "BlockBreach.exe" },
+      "requires": "Ready or Not on Steam, running in DirectX 11, and Minecraft: Java Edition with the official Minecraft Launcher. BlockBreach finds both and starts Ready or Not once Minecraft has opened its world. Single player only.",
+      "licence": "MIT",
+      "blurb": "Minecraft's world, blocks and mobs inside Ready or Not's close-quarters missions, from the maker of DeadPixel."
+    },
+    {
+      "id": "g64",
+      "title": "Mario 64 in Garry's Mod",
+      "name": "G64",
+      "author": "ckosmic",
+      "host": "garrys-mod",
+      "brings": "Super Mario 64",
+      "repo": "ckosmic/g64",
+      "asset": "^libsm64-g64-[0-9][0-9.]*\\.zip$",
+      "deploy": "game",
+      "launch": { "from": "game", "exe": "bin\\win64\\gmod.exe" },
+      "needs": [
+        {
+          "what": "Garry's Mod 64-bit branch",
+          "paths": ["bin\\win64\\gmod.exe"],
+          "url": "https://github.com/ckosmic/g64#installation",
+          "help": "In Steam, open Garry's Mod's Properties, Betas, and choose \"x86-64 - Chromium + 64-bit binaries\"."
+        }
+      ],
+      "requires": "Subscribe to the G64 addon on the Steam Workshop, and have your own Super Mario 64 ROM (US version); set its path in the spawn menu under Utilities, G64, Settings.",
+      "blurb": "Spawn a playable Mario with Super Mario 64's real movement (libsm64) in any Garry's Mod map, multiplayer included.",
+      "page": "https://steamcommunity.com/sharedfiles/filedetails/?id=2814638140"
+    },
+    {
+      "id": "doomvalley",
+      "title": "Doom in Stardew Valley",
+      "name": "DoomValley",
+      "author": "wojciech-graj",
+      "host": "stardew-valley",
+      "brings": "Doom",
+      "repo": "wojciech-graj/DoomValley",
+      "asset": "^DoomValley\\.[0-9][0-9.]*\\.zip$",
+      "deploy": "game",
+      "into": "Mods",
+      "launch": { "from": "game", "exe": "StardewModdingAPI.exe" },
+      "needs": [
+        {
+          "what": "SMAPI",
+          "paths": ["StardewModdingAPI.exe"],
+          "url": "https://smapi.io/",
+          "help": "Run the SMAPI installer and point it at your Stardew Valley folder."
+        },
+        {
+          "what": "a Doom WAD",
+          "paths": ["Mods\\DoomValley\\*.wad"],
+          "url": "https://doomwiki.org/wiki/DOOM1.WAD",
+          "help": "Put a Doom WAD (the free shareware DOOM1.WAD works) in Mods\\DoomValley inside your Stardew Valley folder."
+        }
+      ],
+      "requires": "Stardew Valley on Steam with SMAPI, and a Doom WAD (the free shareware one is enough).",
+      "licence": "GPL-2.0",
+      "blurb": "A Doom arcade machine in Stardew Valley that runs the real Doom engine (doomgeneric). No sound yet."
+    },
+    {
+      "id": "erenshor-doom",
+      "title": "Doom in Erenshor",
+      "name": "ErenshorDoom",
+      "author": "xJeris",
+      "host": "erenshor",
+      "brings": "Doom",
+      "repo": "xJeris/ErenshorDoom",
+      "asset": "^ErenshorDoom-v[0-9][0-9.]*\\.zip$",
+      "deploy": "game",
+      "into": "BepInEx\\plugins",
+      "launch": { "from": "game", "exe": "Erenshor.exe" },
+      "needs": [
+        {
+          "what": "BepInEx 5",
+          "paths": ["BepInEx\\core\\BepInEx.dll"],
+          "url": "https://github.com/BepInEx/BepInEx/releases",
+          "help": "Download BepInEx 5.4 for Windows x64 and unzip it next to Erenshor.exe."
+        },
+        {
+          "what": "a Doom WAD",
+          "paths": ["BepInEx\\plugins\\ErenshorDoom\\*.wad"],
+          "url": "https://github.com/xJeris/ErenshorDoom/tree/main/WAD",
+          "help": "Put DOOM1.WAD (the free shareware one from that link, or your own) in BepInEx\\plugins\\ErenshorDoom."
+        }
+      ],
+      "requires": "Erenshor on Steam with BepInEx 5, and a Doom WAD (the free shareware one is enough).",
+      "licence": "GPL-2.0",
+      "blurb": "The real Doom engine (Managed Doom) runs in a window inside Erenshor. Open it with /doom or F9 while the world keeps going around you."
+    },
+    {
+      "id": "shadow-mario",
+      "title": "Mario 64 in Shadow Gambit",
+      "name": "Shadow Mario",
+      "author": "CrabNickolson",
+      "host": "shadow-gambit",
+      "brings": "Super Mario 64",
+      "repo": "CrabNickolson/shadow_mario_plugin",
+      "asset": "^com\\.crabnickolson\\.shadow_mario\\.[0-9][0-9.]*\\.zip$",
+      "deploy": "game",
+      "into": "BepInEx\\plugins",
+      "launch": { "from": "game", "exe": "ShadowGambit_TCC.exe" },
+      "needs": [
+        {
+          "what": "BepInEx 6 (IL2CPP)",
+          "paths": ["BepInEx\\core\\BepInEx.Unity.IL2CPP.dll"],
+          "url": "https://builds.bepinex.dev/projects/bepinex_be",
+          "help": "Download \"BepInEx Unity (IL2CPP) for Windows (x64) games\" from the newest build (or #682 if that fails) and unzip it next to ShadowGambit_TCC.exe."
+        },
+        {
+          "what": "Pirate Base Plugin",
+          "paths": ["BepInEx\\plugins\\com.crabnickolson.pirate_base\\PirateBasePlugin.dll"],
+          "url": "https://github.com/CrabNickolson/pirate_base_plugin/releases/latest",
+          "help": "Unzip the com.crabnickolson.pirate_base zip into BepInEx\\plugins."
+        },
+        {
+          "what": "Super Mario 64 ROM",
+          "paths": ["BepInEx\\plugins\\baserom.us.z64"],
+          "help": "Copy your own Super Mario 64 (USA) ROM into BepInEx\\plugins and name it baserom.us.z64."
+        }
+      ],
+      "requires": "Shadow Gambit 1.2.133 on Steam, a controller, and your own Super Mario 64 ROM. The first start takes a few minutes; use a new save profile.",
+      "licence": "MIT",
+      "blurb": "Swap any of your crew for Super Mario 64's Mario (libsm64): punch, stomp and ground-pound through stealth missions."
     }
   ]
 }

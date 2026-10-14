@@ -59,6 +59,12 @@
   .none {
     display: grid;
     place-items: center;
+    overflow: hidden;
     color: var(--faint);
+  }
+  /* The controller is drawn at 48 px; small slots (the sidebar) shrink it to fit. */
+  .none :global(svg) {
+    max-width: 100%;
+    max-height: 100%;
   }
 </style>
