@@ -78,6 +78,8 @@ impl DataRoot {
     /// Save backups, one folder per run (created on the first backup).
     pub fn backups(&self) -> PathBuf { self.root.join("Backups") }
     pub fn local_catalog(&self) -> PathBuf { self.root.join("catalog.local.json") }
+    /// The catalog last downloaded from `main` (see [`crate::catalog::refresh_live`]).
+    pub fn live_catalog(&self) -> PathBuf { self.root.join("catalog.live.json") }
     pub fn media_dir(&self, game_key: &str) -> PathBuf { self.media().join(crate::util::short_hash(game_key)) }
 }
 

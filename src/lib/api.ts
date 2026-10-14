@@ -14,7 +14,8 @@ export interface Game {
   key: string;
   title: string;
   platform: string;
-  kind: "rom" | "port";
+  /** "mashup": a mod OnionRing added to a game you own (see MashupDef). */
+  kind: "rom" | "port" | "mashup";
   launchPath: string;
   emulator: string | null;
   appId: string | null;
@@ -117,7 +118,7 @@ export interface BrowserGame {
   multiplayer: boolean;
 }
 
-export type PicKind = "system" | "emulator" | "port" | "browser";
+export type PicKind = "system" | "emulator" | "port" | "browser" | "mashup";
 
 export interface ReleaseDetails {
   tag: string;
@@ -127,10 +128,60 @@ export interface ReleaseDetails {
   url: string | null;
 }
 
+/** A mod that puts one game inside another ("Minecraft in Skyrim"), added to a game you own. */
+export interface MashupDef {
+  id: string;
+  /** "Minecraft in Skyrim" */
+  title: string;
+  /** The project's own name: "SkyCraft" */
+  name: string;
+  author: string | null;
+  /** The game it is added to (MashupState.host has its name). */
+  host: string;
+  /** The game it brings in. */
+  brings: string;
+  repo: string;
+  /** "game": copied into the game's folder (and taken back out on Remove). "folder": stays in its own folder. */
+  deploy: "game" | "folder";
+  requires: string | null;
+  licence: string | null;
+  blurb: string | null;
+  /** Its page elsewhere (Nexus Mods). */
+  page: string | null;
+  featured: boolean;
+}
+
+/** One file the mashup needs in the game's folder that you get yourself. */
+export interface NeedState {
+  what: string;
+  ok: boolean;
+  url: string | null;
+  help: string;
+}
+
+export interface MashupState {
+  id: string;
+  host: {
+    id: string;
+    name: string;
+    /** Where the game is (for an "open folder" button, never shown as text); null = not installed. */
+    dir: string | null;
+    /** You chose the folder (instead of OnionRing finding it in Steam). */
+    chosen: boolean;
+    steam: number | null;
+  };
+  /** Empty when the game isn't found. */
+  needs: NeedState[];
+  /** Its files are in the game's folder now. */
+  deployed: boolean;
+}
+
 export interface CatalogView {
   ports: PortDef[];
   emulators: EmulatorDef[];
   browser: BrowserGame[];
+  mashups: MashupDef[];
+  mashupStates: MashupState[];
   installed: InstalledApp[];
 }
 
@@ -208,7 +259,7 @@ export interface AvailableUpdate {
   /** App id when OnionRing installed it, emulator id (as in api.emulators()) otherwise. */
   id: string;
   name: string;
-  kind: "port" | "emulator";
+  kind: "port" | "emulator" | "mashup";
   installed: string;
   latest: string;
   /** OnionRing installed it: update with api.installLatest(id). Otherwise the player updates it from `url`. */
@@ -332,6 +383,10 @@ export const api = {
   removeBrowserGame: (id: string) => invoke<void>("remove_browser_game", { id }),
   picture: (kind: PicKind, id: string) => invoke<string | null>("picture", { kind, id }),
   releaseDetails: (id: string) => invoke<ReleaseDetails | null>("release_details", { id }),
+  /** Install a mashup with installLatest/installFromFile. This takes it back out of its game (restoring anything it replaced) and uninstalls it. Emits "library-changed". */
+  removeMashup: (id: string) => invoke<void>("remove_mashup", { id }),
+  /** Where you keep a game mashups are added to (MashupState.host.id); null goes back to finding it in Steam. */
+  setHostDir: (id: string, path: string | null) => invoke<void>("set_host_dir", { id, path }),
 
   /** Launch options for one game; null or [] goes back to the emulator's. Emits "library-changed". */
   setGameArgs: (id: number, args: string[] | null) => invoke<void>("set_game_args", { id, args }),

@@ -42,5 +42,7 @@
   { "id": "xbox", "name": "Xbox", "short": "XBOX", "color": "#4ade80", "libretro": "Microsoft - Xbox",
     "extensions": [".iso", ".xiso"], "hints": "\\bxbox\\b|xemu" },
   { "id": "port", "name": "Native ports", "short": "PORT", "color": "#ff9f43", "libretro": null,
+    "extensions": [], "hints": "" },
+  { "id": "mashup", "name": "Mashups", "short": "MASHUP", "color": "#a78bfa", "libretro": null,
     "extensions": [], "hints": "" }
 ]

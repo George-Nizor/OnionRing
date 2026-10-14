@@ -8,7 +8,8 @@ pub struct Game {
     pub key: String,
     pub title: String,
     pub platform: String,
-    /// "rom" (played through an emulator) or "port" (a native app installed by OnionRing).
+    /// "rom" (played through an emulator), "port" (a native app installed by OnionRing) or
+    /// "mashup" (a mod OnionRing added to a game the player owns, see `mashups`).
     pub kind: String,
     pub launch_path: String,
     pub emulator: Option<String>,

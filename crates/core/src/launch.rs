@@ -50,6 +50,10 @@ pub fn plan(db: &Db, cat: &Catalog, game: &Game) -> Result<Plan> {
         let args = game.user_args.as_deref().map(|a| fill(a, &game.launch_path, &dir, &dir)).unwrap_or_default();
         return Ok(Plan { program: exe, args, cwd });
     }
+    if game.kind == "mashup" {
+        let def = game.app_id.as_deref().and_then(|id| cat.mashup(id)).context("This mashup is no longer in the catalog.")?;
+        return crate::mashups::plan(cat, def, &game.launch_path, game.user_args.as_deref());
+    }
     // A PS5 game converted with AnyPS5 runs as its own Windows program.
     if let Some(exe) = crate::anyps5::converted(db, game.id) {
         let cwd = exe.parent().map(Path::to_path_buf).unwrap_or_default();

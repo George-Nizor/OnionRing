@@ -8,6 +8,9 @@
 //! onionring-cli games
 //! onionring-cli emulators
 //! onionring-cli install <id> [--archive <file> [--move]]
+//! onionring-cli mashups                  each mashup, its game and what it still needs
+//! onionring-cli mashup remove <id>        take a mashup out of its game and uninstall it
+//! onionring-cli catalog refresh          fetch the live catalog from main
 //! onionring-cli updates
 //! onionring-cli storage
 //! ```
@@ -28,7 +31,7 @@ fn gb(b: i64) -> String {
 fn open() -> Result<(DataRoot, Catalog, Db)> {
     let cfg = AppConfig::load();
     let root = DataRoot::open(cfg.data_root.context("no data root yet: run `onionring-cli root <path>`")?)?;
-    let cat = Catalog::load(Some(&root.local_catalog()))?;
+    let cat = Catalog::load_layers(onionring_core::catalog::live_layer(&root).as_deref(), Some(&root.local_catalog()))?;
     let db = Db::open(&root.db())?;
     Ok((root, cat, db))
 }
@@ -54,6 +57,7 @@ fn cached_pictures(root: &DataRoot, cat: &Catalog) -> serde_json::Map<String, se
     cat.emulators.iter().for_each(|e| add("emulator", &e.id));
     cat.browser.iter().for_each(|b| add("browser", &b.id));
     cat.ports.iter().for_each(|p| add("port", &p.id));
+    cat.mashups.iter().for_each(|m| add("mashup", &m.id));
     m
 }
 
@@ -147,6 +151,33 @@ fn main() -> Result<()> {
             };
             println!("{}", serde_json::to_string_pretty(&app)?);
         }
+        ["mashups"] => {
+            let (root, cat, _db) = open()?;
+            for s in onionring_core::mashups::states(&root, &cat) {
+                let installed = install::installed(&root, &s.id).map(|a| a.version).unwrap_or_else(|| "-".into());
+                let host = match &s.host.dir {
+                    Some(d) => format!("{} at {d}{}", s.host.name, if s.host.chosen { " (chosen)" } else { "" }),
+                    None => format!("{} not installed", s.host.name),
+                };
+                println!("{:<12} {:<10} {host}{}", s.id, installed, if s.deployed { "  [in the game]" } else { "" });
+                for n in s.needs {
+                    println!("    {} {}", if n.ok { "ok     " } else { "MISSING" }, n.what);
+                }
+            }
+        }
+        ["mashup", "remove", id] => {
+            let (root, cat, db) = open()?;
+            cat.mashup(id).with_context(|| format!("{id} is not a mashup"))?;
+            onionring_core::mashups::remove(&root, id)?;
+            db.forget_game(&format!("mashup:{id}"))?;
+            println!("removed {id}");
+        }
+        ["catalog", "refresh"] => {
+            let (root, _, _db) = open()?;
+            let changed = onionring_core::catalog::refresh_live(&root.live_catalog())?;
+            let cat = Catalog::load_layers(onionring_core::catalog::live_layer(&root).as_deref(), Some(&root.local_catalog()))?;
+            println!("{} ({} ports, {} emulators)", if changed { "updated" } else { "already current" }, cat.ports.len(), cat.emulators.len());
+        }
         ["updates"] => {
             let (root, cat, _db) = open()?;
             for app in install::installed_apps(&root) {
@@ -159,7 +190,7 @@ fn main() -> Result<()> {
             }
         }
         ["pictures", rest @ ..] => {
-            // Prefetch pictures: systems, emulators, browser games, and the first N ports
+            // Prefetch pictures: systems, emulators, browser games, mashups, and the first N ports
             // ("all" for every port). --refresh forgets port and browser pictures (and misses)
             // first, so they are looked up again; system and emulator pictures are kept.
             use onionring_core::pictures;
@@ -179,6 +210,7 @@ fn main() -> Result<()> {
             jobs.extend(cat.emulators.iter().map(|e| ("emulator", e.id.clone())));
             jobs.extend(cat.browser.iter().map(|b| ("browser", b.id.clone())));
             jobs.extend(cat.ports.iter().take(n).map(|p| ("port", p.id.clone())));
+            jobs.extend(cat.mashups.iter().map(|m| ("mashup", m.id.clone())));
             // A picture found to be generic is taken off the games that already had it, so go
             // round again until nothing changes.
             let have = |jobs: &[(&str, String)]| jobs.iter().filter(|(k, id)| pictures::cached(&root, k, id).is_some()).count();
@@ -195,7 +227,7 @@ fn main() -> Result<()> {
                 }
                 before = now;
             }
-            for kind in ["system", "emulator", "browser", "port"] {
+            for kind in ["system", "emulator", "browser", "port", "mashup"] {
                 let of: Vec<_> = jobs.iter().filter(|(k, _)| *k == kind).cloned().collect();
                 println!("{kind:<9} {} of {} have pictures", have(&of), of.len());
             }
@@ -249,7 +281,7 @@ fn main() -> Result<()> {
                 "games": games,
                 "emulators": emulators,
                 "sources": db.sources()?,
-                "catalog": { "ports": cat.ports, "emulators": cat.emulators, "browser": cat.browser, "installed": install::installed_apps(&root) },
+                "catalog": { "ports": cat.ports, "emulators": cat.emulators, "browser": cat.browser, "mashups": cat.mashups, "mashupStates": onionring_core::mashups::states(&root, &cat), "installed": install::installed_apps(&root) },
                 "storage": storage::report(&root, &db)?,
                 "pictures": cached_pictures(&root, &cat),
                 "updates": updates,
@@ -282,7 +314,7 @@ fn main() -> Result<()> {
             }
         }
         _ => {
-            eprintln!("{}", include_str!("cli.rs").lines().skip(2).take(11).map(|l| l.trim_start_matches("//! ")).collect::<Vec<_>>().join("\n"));
+            eprintln!("{}", include_str!("cli.rs").lines().skip(2).take(14).map(|l| l.trim_start_matches("//! ")).collect::<Vec<_>>().join("\n"));
         }
     }
     Ok(())

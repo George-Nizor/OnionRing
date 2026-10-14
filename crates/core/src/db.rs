@@ -245,6 +245,13 @@ impl Db {
         Ok(n as usize)
     }
 
+    /// Drop one game and its play history (something OnionRing installed was removed).
+    pub fn forget_game(&self, key: &str) -> Result<()> {
+        self.conn.execute("DELETE FROM sessions WHERE game_id IN (SELECT id FROM games WHERE key = ?1)", [key])?;
+        self.conn.execute("DELETE FROM games WHERE key = ?1", [key])?;
+        Ok(())
+    }
+
     /// Drop ROM games that have no copies left, when `gone(launch_path)` confirms the files are
     /// really gone (their source folder is online). Games on an unplugged drive are kept.
     pub fn forget_missing(&self, gone: impl Fn(&str) -> bool) -> Result<usize> {

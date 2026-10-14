@@ -26,7 +26,7 @@
   const newest = $derived([...app.visibleGames].sort((a, b) => b.addedAt - a.addedAt || a.title.localeCompare(b.title)).slice(0, 12));
   const systems = $derived(
     [...app.counts.entries()]
-      .filter(([id]) => id !== "port")
+      .filter(([id]) => id !== "port" && id !== "mashup")
       .map(([id, n]) => ({ p: app.platforms.get(id)!, n, ok: emulators.some((e) => e.platforms.includes(id) && !e.missing) }))
       .filter((s) => s.p)
       .sort((a, b) => b.n - a.n),

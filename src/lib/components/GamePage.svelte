@@ -1,5 +1,6 @@
 <script lang="ts">
   import { open } from "@tauri-apps/plugin-dialog";
+  import { openUrl } from "@tauri-apps/plugin-opener";
   import { api, type Copy, type Emulator, type EmulatorChecks } from "$lib/api";
   import { app } from "$lib/store.svelte";
   import { ago, bytes, playtime } from "$lib/format";
@@ -22,6 +23,9 @@
   const choices = $derived(emulators.filter((e) => g && e.platforms.includes(g.platform)));
   const running = $derived(g ? app.running.includes(g.id) : false);
   const port = $derived(g?.appId ? (app.catalog?.ports.find((p) => p.id === g.appId) ?? null) : null);
+  const mashup = $derived(g?.kind === "mashup" && g.appId ? (app.catalog?.mashups.find((m) => m.id === g.appId) ?? null) : null);
+  const mstate = $derived(mashup ? app.catalog?.mashupStates.find((s) => s.id === mashup.id) : undefined);
+  const unmet = $derived(mstate?.needs.filter((n) => !n.ok) ?? []);
   const installed = $derived(g?.appId ? app.catalog?.installed.find((a) => a.id === g.appId) : undefined);
   const mine = $derived(g ? collections.list.filter((c) => c.gameIds.includes(g.id)) : []);
   const hasArt = $derived(!!(g?.hero || g?.cover));
@@ -116,7 +120,7 @@
     <div class="head">
       <div class="cover"><Art game={g} /></div>
       <div class="info">
-        <span class="kicker label">{g.kind === "port" ? (port?.kind ?? "PC port") : (platform?.name ?? "")}</span>
+        <span class="kicker label">{g.kind === "port" ? (port?.kind ?? "PC port") : g.kind === "mashup" ? `Mashup${mstate ? ` · ${mstate.host.name}` : ""}` : (platform?.name ?? "")}</span>
         {#key g.id}<h1 class:long={g.title.length > 28}>{g.title}</h1>{/key}
 
         <dl class="stats">
@@ -177,7 +181,11 @@
               <button class="btn" data-nav onclick={useEmulator}><Glyph name="pad" size={24} />Play with the emulator instead</button>
             {/if}
             <button class="btn" data-nav onclick={pickCover}><Glyph name="library" size={24} />Change cover</button>
-            <button class="btn" data-nav onclick={() => api.reveal(g.launchPath)}><Glyph name="folder" size={24} />Open folder</button>
+            {#if g.kind === "mashup"}
+              {#if mstate?.host.dir}<button class="btn" data-nav onclick={() => api.openFolder(mstate.host.dir!).catch((e) => app.toast(String(e), "error"))}><Glyph name="folder" size={24} />Open {mstate.host.name} folder</button>{/if}
+            {:else}
+              <button class="btn" data-nav onclick={() => api.reveal(g.launchPath)}><Glyph name="folder" size={24} />Open folder</button>
+            {/if}
             <button class="btn" data-nav onclick={hide}><Glyph name="eye" size={24} />{g.hidden ? "Show in library" : "Hide from library"}</button>
           </div>
         {/if}
@@ -201,6 +209,21 @@
             <Glyph name="alert" size={24} />
             <div class="ct"><b>No emulator for {platform?.name ?? "this system"} yet</b><span>Get one and this game is ready to play.</span></div>
             <div class="ca"><button class="btn" data-nav onclick={() => app.go({ name: "get", tab: "emulators" })}><Glyph name="get" size={24} />Get one</button></div>
+          </div>
+        {:else if mstate && !mstate.host.dir}
+          <div class="callout">
+            <Glyph name="alert" size={24} />
+            <div class="ct"><b>{mstate.host.name} isn't installed</b><span>{mashup?.name} plays inside your own copy of {mstate.host.name}.</span></div>
+            <div class="ca"><button class="btn" data-nav onclick={() => app.go({ name: "get", tab: "mashups", item: mstate.id })}><Glyph name="mix" size={24} />Mashups</button></div>
+          </div>
+        {:else if unmet.length}
+          <div class="callout">
+            <Glyph name="alert" size={24} />
+            <div class="ct"><b>{mashup?.name} also needs {list(unmet.map((n) => n.what))}</b><span>{unmet[0].help}</span></div>
+            <div class="ca">
+              {#if unmet[0].url}<button class="btn" data-nav onclick={() => openUrl(unmet[0].url!)}><Glyph name="globe" size={24} />Get it</button>{/if}
+              <button class="btn" data-nav onclick={() => app.go({ name: "get", tab: "mashups", item: mstate!.id })}><Glyph name="mix" size={24} />Mashups</button>
+            </div>
           </div>
         {:else if g.missing}
           <div class="callout">
@@ -227,6 +250,14 @@
             <div class="sh"><Glyph name="info" size={24} /><h2 class="label">About this port</h2><span class="rule"></span></div>
             {#if port.blurb}<p class="blurb">{port.blurb}</p>{/if}
             {#if port.requires}<p class="needs"><Glyph name="alert" size={12} /><span><b>You need</b> {port.requires}</span></p>{/if}
+          </section>
+        {/if}
+
+        {#if mashup}
+          <section>
+            <div class="sh"><Glyph name="mix" size={24} /><h2 class="label">About this mashup</h2><span class="rule"></span></div>
+            {#if mashup.blurb}<p class="blurb">{mashup.blurb}</p>{/if}
+            {#if mashup.requires}<p class="needs"><Glyph name="alert" size={12} /><span><b>You need</b> {mashup.requires}</span></p>{/if}
           </section>
         {/if}
 

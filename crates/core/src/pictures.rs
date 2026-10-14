@@ -889,6 +889,27 @@ fn sources<'a>(root: &'a DataRoot, cat: &'a Catalog, kind: &str, id: &str) -> Ve
                 }
             }
         }
+        "mashup" => {
+            // The mod's own screenshots show the mashup itself; the host game's art comes next.
+            if let Some(m) = cat.mashup(id) {
+                let repo = m.repo.clone();
+                let readme: Rc<OnceCell<Readme>> = Rc::default();
+                {
+                    let (readme, repo) = (readme.clone(), repo.clone());
+                    out.push(Box::new(move || readme.get_or_init(|| readme_images(&repo)).own.clone()));
+                }
+                if let Some(app) = cat.host(&m.host).and_then(|h| h.steam) {
+                    out.push(Box::new(move || {
+                        ["library_hero.jpg", "header.jpg"].iter().map(|f| format!("https://cdn.akamai.steamstatic.com/steam/apps/{app}/{f}")).collect()
+                    }));
+                }
+                {
+                    let repo = repo.clone();
+                    out.push(Box::new(move || repo_preview(&repo)));
+                }
+                out.push(Box::new(move || readme.get_or_init(|| readme_images(&repo)).late.clone()));
+            }
+        }
         _ => {}
     }
     out

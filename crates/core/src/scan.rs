@@ -495,8 +495,30 @@ pub fn scan(root: &DataRoot, cat: &Catalog, db: &Db, progress: &dyn Fn(Progress)
         summary.games += 1;
     }
 
+    // ---- installed mashups (started through the game they were added to) --------------------
+    for app in installed.iter().filter(|a| a.kind == "mashup") {
+        let Some(def) = cat.mashup(&app.id) else { continue };
+        let up = GameUpsert {
+            key: format!("mashup:{}", app.id),
+            title: def.title.clone(),
+            platform: "mashup".into(),
+            kind: "mashup".into(),
+            launch_path: if app.exe.is_empty() { String::new() } else { path_str(&app.dir(root).join(&app.exe)) },
+            emulator: None,
+            app_id: Some(app.id.clone()),
+            serial: None,
+            region: None,
+            size: app.size as i64,
+            packed: false,
+        };
+        let (_, is_new) = db.upsert_game(&up, seen)?;
+        summary.new_games += is_new as usize;
+        summary.games += 1;
+    }
+
     db.sweep_unseen("rom", seen)?;
     db.sweep_unseen("port", seen)?;
+    db.sweep_unseen("mashup", seen)?;
     let online: Vec<String> = sources.iter().filter(|s| s.exists).map(|s| s.path.to_lowercase()).collect();
     // A game under an online source that this scan no longer recognised is gone for good.
     let gone = |p: &str| {

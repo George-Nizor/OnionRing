@@ -34,7 +34,8 @@ interface Snapshot {
   games: Game[];
   emulators: Emulator[];
   sources: Source[];
-  catalog: CatalogView;
+  /** Mashups arrived later; older snapshots have none. */
+  catalog: Omit<CatalogView, "mashups" | "mashupStates"> & Partial<Pick<CatalogView, "mashups" | "mashupStates">>;
   storage: StorageReport;
   pictures?: Record<string, string>;
   checks?: EmulatorChecks[];
@@ -169,7 +170,8 @@ export async function installMock(dataRoot: string) {
         case "games": return clone(snap.games);
         case "emulators": return snap.emulators;
         case "sources": return snap.sources;
-        case "catalog": return snap.catalog;
+        // Snapshots taken before mashups existed have none.
+        case "catalog": return { mashups: [], mashupStates: [], ...snap.catalog };
         case "storage_report": return snap.storage;
         case "check_updates": return [];
         case "game_copies": return [];
@@ -266,6 +268,12 @@ export async function installMock(dataRoot: string) {
         case "set_auto_scan":
           autoScan = Boolean(args.on);
           return null;
+
+        // ---- mashups (nothing is written; the snapshot keeps what it had)
+        case "remove_mashup":
+          await emit("library-changed");
+          return null;
+        case "set_host_dir": return null;
 
         default: return null;
       }

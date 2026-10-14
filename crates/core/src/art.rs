@@ -163,6 +163,15 @@ fn process(root: &DataRoot, cat: &Catalog, job: &Job, indexes: &Mutex<HashMap<(S
                 .find_map(|o| cat.platforms.iter().find(|p| p.name.eq_ignore_ascii_case(o)).and_then(|p| p.libretro.clone()));
         }
 
+    // Mashups: the mod's own screenshot (or its game's art), from the Get more picture.
+    if job.kind == "mashup"
+        && let Some(id) = &job.app_id
+        && let Ok(Some(p)) = crate::pictures::picture(root, cat, "mashup", id)
+    {
+        f.hero = copy_local(&p, &dir.join("hero.jpg"));
+        f.cover = copy_local(&p, &dir.join("cover.jpg"));
+    }
+
     // PS3 folder games: <game>\PS3_GAME\USRDIR\EBOOT.BIN -> PS3_GAME\PIC1.PNG / ICON0.PNG
     if job.platform == "ps3" {
         let eboot = Path::new(&job.launch_path);

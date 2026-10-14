@@ -2,7 +2,7 @@
   import { tick } from "svelte";
   import { open } from "@tauri-apps/plugin-dialog";
   import { openUrl } from "@tauri-apps/plugin-opener";
-  import { api, type AvailableUpdate, type BrowserGame, type CatalogView, type Emulator, type EmulatorDef, type PortDef, type ReleaseDetails } from "$lib/api";
+  import { api, type AvailableUpdate, type BrowserGame, type CatalogView, type Emulator, type EmulatorDef, type MashupDef, type PortDef, type ReleaseDetails } from "$lib/api";
   import { app } from "$lib/store.svelte";
   import { focusFirst } from "$lib/nav";
   import { bytes, norm } from "$lib/format";
@@ -14,7 +14,7 @@
   let cat = $state<CatalogView | null>(null);
   let updates = $state<AvailableUpdate[] | null>(null);
   let consoleFilter = $state<string | null>(null);
-  let sheet = $state<{ kind: "port"; p: PortDef } | { kind: "emu"; e: EmulatorDef } | { kind: "web"; b: BrowserGame } | { kind: "add" } | null>(null);
+  let sheet = $state<{ kind: "port"; p: PortDef } | { kind: "emu"; e: EmulatorDef } | { kind: "web"; b: BrowserGame } | { kind: "mash"; m: MashupDef } | { kind: "add" } | null>(null);
   let sheetEl = $state<HTMLElement>();
   const tab = $derived(app.view.tab ?? "ports");
 
@@ -22,6 +22,7 @@
     ["ports", "cart", "Ports"],
     ["emulators", "pad", "Emulators"],
     ["browser", "globe", "Browser"],
+    ["mashups", "mix", "Mashups"],
     ["updates", "refresh", "Updates"],
   ];
 
@@ -77,9 +78,11 @@
       const p = cat.ports.find((x) => x.id === item);
       const e = cat.emulators.find((x) => x.id === item);
       const b = cat.browser.find((x) => x.id === item);
+      const m = cat.mashups.find((x) => x.id === item);
       if (p) showSheet({ kind: "port", p });
       else if (e) showSheet({ kind: "emu", e });
       else if (b) showSheet({ kind: "web", b });
+      else if (m) showSheet({ kind: "mash", m });
     }
   }
   const loadUpdates = () => api.availableUpdates().then((u) => (updates = u)).catch(() => (updates = updates ?? []));
@@ -123,8 +126,51 @@
   const emuStatus = (e: EmulatorDef, f: Emulator | undefined) =>
     f ? (f.managed ? "Installed by OnionRing" : "Found on this PC") : e.repo ? "Ready to install" : "From its website";
 
+  // ---- mashups: the game each one is added to, and what it still needs
+  const mState = $derived(new Map((cat?.mashupStates ?? []).map((s) => [s.id, s])));
+  const mashups = $derived(
+    [...(cat?.mashups ?? [])].sort(
+      (a, b) => Number(installed.has(b.id)) - Number(installed.has(a.id)) || Number(b.featured) - Number(a.featured) || a.title.localeCompare(b.title),
+    ),
+  );
+  /** Ready to play once installed: the game is there and nothing else is missing. */
+  const mReady = (id: string) => {
+    const s = mState.get(id);
+    return !!s?.host.dir && s.needs.every((n) => n.ok);
+  };
+  async function chooseHost(hostId: string, name: string) {
+    const dir = await open({ directory: true, multiple: false, title: `The folder ${name} is installed in` });
+    if (typeof dir !== "string") return;
+    try {
+      await api.setHostDir(hostId, dir);
+      await load();
+      app.loadCatalog();
+    } catch (e) {
+      app.toast(String(e), "error");
+    }
+  }
+  async function forgetHost(hostId: string) {
+    await api.setHostDir(hostId, null).catch((e) => app.toast(String(e), "error"));
+    await load();
+      app.loadCatalog();
+  }
+  let removing = $state<string | null>(null);
+  async function removeMashup(m: MashupDef) {
+    removing = m.id;
+    try {
+      await api.removeMashup(m.id);
+      app.toast(m.deploy === "game" ? `Took ${m.name} back out of ${mState.get(m.id)?.host.name ?? "the game"}` : `Removed ${m.name}`, "ok");
+      await load();
+      app.loadCatalog();
+    } catch (e) {
+      app.toast(String(e), "error", 12000);
+    }
+    removing = null;
+  }
+
   /** Where an update's picture comes from. */
-  function upArt(u: AvailableUpdate): { kind: "port" | "emulator"; id: string; system: string | null } {
+  function upArt(u: AvailableUpdate): { kind: "port" | "emulator" | "mashup"; id: string; system: string | null } {
+    if (u.kind === "mashup") return { kind: "mashup", id: u.id, system: null };
     if (u.kind === "port") {
       const p = cat?.ports.find((x) => x.id === u.id);
       return { kind: "port", id: u.id, system: platformOf(p?.original[0]) };
@@ -141,7 +187,7 @@
   async function showSheet(s: NonNullable<typeof sheet>) {
     sheet = s;
     rel = null;
-    const rid = s.kind === "port" ? s.p.id : s.kind === "emu" && s.e.repo ? s.e.id : null;
+    const rid = s.kind === "port" ? s.p.id : s.kind === "mash" ? s.m.id : s.kind === "emu" && s.e.repo ? s.e.id : null;
     if (rid) {
       relLoading = true;
       api.releaseDetails(rid)
@@ -200,6 +246,7 @@
   function playWeb(b: BrowserGame) {
     api.openBrowserGame(b.id).catch((e) => app.toast(String(e), "error"));
   }
+  const siteOf = (u: string) => host(u);
   const hover = (e: MouseEvent) => (e.currentTarget as HTMLElement).focus({ preventScroll: true });
   const host = (u: string) => {
     try {
@@ -305,6 +352,37 @@
         </button>
       {/each}
     </div>
+  {:else if tab === "mashups"}
+    <div class="grid">
+      {#each mashups as m, i (m.id)}
+        {@const inst = installed.get(m.id)}
+        {@const busy = app.installing[m.id]}
+        {@const s = mState.get(m.id)}
+        <button class="card" data-nav style:--i={Math.min(i, 24)} onclick={() => showSheet({ kind: "mash", m })} onmouseenter={hover}>
+          <span class="cp"><Pic kind="mashup" id={m.id} icon="mix" system={null} /></span>
+          <span class="body">
+            <span class="name">{m.title}</span>
+            <span class="by">{m.name}{m.author ? ` · ${m.author}` : ""}</span>
+          </span>
+          <span class="foot">
+            <span class="kind label host" class:faint={!s?.host.dir}><Glyph name={s?.host.dir ? "check" : "alert"} size={12} /><span>{s?.host.name ?? m.host}</span></span>
+            <span class="state" class:hot={inst && upById.has(m.id)}>
+              {#if busy}
+                <span class="prog" style:--p={pct(busy)}></span>
+              {:else if inst && upById.has(m.id)}
+                <span class="label">Update</span><Glyph name="refresh" size={24} />
+              {:else if inst}
+                <Glyph name={mReady(m.id) ? "check" : "alert"} size={24} />
+              {:else}
+                <Glyph name="get" size={24} />
+              {/if}
+            </span>
+          </span>
+        </button>
+      {:else}
+        <p class="empty">No mashups yet.</p>
+      {/each}
+    </div>
   {:else}
     <!-- Updates -->
     {#if updates === null}
@@ -323,7 +401,7 @@
           </svg>
         {/if}
         <h2>Everything is up to date</h2>
-        <p>New versions of your emulators and ports show up here.</p>
+        <p>New versions of your emulators, ports and mashups show up here.</p>
       </div>
     {:else}
       <div class="uphead">
@@ -341,10 +419,10 @@
           {@const def = u.managed ? null : defOf(u.id)}
           <article class="up" style:--i={i}>
             <span class="thumb">
-              <Pic kind={a.kind} id={a.id} icon={a.kind === "port" ? "cart" : "pad"} system={a.system} skip={a.kind === "emulator"} />
+              <Pic kind={a.kind} id={a.id} icon={a.kind === "port" ? "cart" : a.kind === "mashup" ? "mix" : "pad"} system={a.system} skip={a.kind === "emulator"} />
             </span>
             <div class="who">
-              <span class="label">{u.kind === "port" ? "Port" : "Emulator"}{u.managed ? "" : " · on this PC"}</span>
+              <span class="label">{u.kind === "port" ? "Port" : u.kind === "mashup" ? "Mashup" : "Emulator"}{u.managed ? "" : " · on this PC"}</span>
               <h3>{u.name}</h3>
             </div>
             <div class="vers">
@@ -415,6 +493,83 @@
             <Glyph name={inst ? "refresh" : "get"} size={24} />{inst ? (up ? `Update to ${up.latest}` : "Reinstall") : "Get"}
           </button>
           <button class="btn big" data-nav onclick={() => fromFile(p.id)}><Glyph name="zip" size={24} />From a zip</button>
+        {/if}
+      </div>
+    {:else if sheet.kind === "mash"}
+      {@const m = sheet.m}
+      {@const inst = installed.get(m.id)}
+      {@const up = upById.get(m.id)}
+      {@const s = mState.get(m.id)}
+      {@const host = s?.host}
+      <div class="hero"><Pic kind="mashup" id={m.id} icon="mix" system={null} /></div>
+      <div class="sbody">
+        <div class="kicker">
+          <span class="chip"><Glyph name="mix" size={12} />Mashup</span>
+          <span class="chip">{host?.name ?? m.host}</span>
+          <span class="chip">{m.brings}</span>
+        </div>
+        <h2>{m.title}</h2>
+        <div class="sub">{m.name}{m.author ? ` by ${m.author}` : ""}</div>
+        {#if m.blurb}<p class="blurb">{m.blurb}</p>{/if}
+
+        {#if host && !host.dir}
+          <div class="callout">
+            <Glyph name="alert" size={24} />
+            <div>
+              <span class="label">{host.name} isn't installed</span>
+              <p>{m.name} is added to your own copy of {host.name}.{host.steam ? " Install it through Steam, or show OnionRing where it is." : " Show OnionRing where it is."}</p>
+              <div class="whybtns">
+                {#if host.steam}<button class="btn" data-nav onclick={() => openUrl(`https://store.steampowered.com/app/${host.steam}`)}><Glyph name="globe" size={24} />Steam page</button>{/if}
+                <button class="btn" data-nav onclick={() => chooseHost(host.id, host.name)}><Glyph name="folder" size={24} />Choose its folder</button>
+              </div>
+            </div>
+          </div>
+        {/if}
+        {#if s?.needs.length}
+          <ul class="needs">
+            {#each s.needs as n (n.what)}
+              <li class:ok={n.ok}>
+                <Glyph name={n.ok ? "check" : "alert"} size={24} />
+                <div><b>{n.what}</b>{#if !n.ok}<span>{n.help}</span>{/if}</div>
+                {#if !n.ok && n.url}<button class="btn" data-nav onclick={() => openUrl(n.url!)}><Glyph name="globe" size={24} />Get it</button>{/if}
+              </li>
+            {/each}
+          </ul>
+        {/if}
+        {#if m.requires}<div class="callout"><Glyph name="alert" size={24} /><div><span class="label">You will also need</span><p>{m.requires}</p></div></div>{/if}
+
+        <dl class="facts">
+          {#if host?.dir}
+            <div><dt><Glyph name="pad" size={24} />Your game</dt><dd>
+              <button class="link" data-nav onclick={() => api.openFolder(host.dir!).catch((e) => app.toast(String(e), "error"))}>{host.chosen ? "In the folder you chose" : "Found in Steam"}</button>
+              {#if host.chosen}<button class="link" data-nav onclick={() => forgetHost(host.id)}>Use Steam's</button>{:else}<button class="link" data-nav onclick={() => chooseHost(host.id, host.name)}>Choose another</button>{/if}
+            </dd></div>
+          {/if}
+          <div><dt><Glyph name="folder" size={24} />Goes</dt><dd>{m.deploy === "game" ? `Into your ${host?.name ?? "game"} folder. Remove takes every file back out.` : "In its own folder. Your game files aren't changed."}</dd></div>
+          <div><dt><Glyph name="globe" size={24} />Source</dt><dd><button class="link" data-nav onclick={() => openUrl(`https://github.com/${m.repo}`)}>github.com/{m.repo}</button></dd></div>
+          {#if m.page}<div><dt><Glyph name="info" size={24} />Mod page</dt><dd><button class="link" data-nav onclick={() => openUrl(m.page!)}>{siteOf(m.page)}</button></dd></div>{/if}
+          {#if m.licence}<div><dt><Glyph name="info" size={24} />Licence</dt><dd>{m.licence}</dd></div>{/if}
+          {#if rel}
+            <div><dt><Glyph name="refresh" size={24} />Latest</dt><dd>{rel.tag}{rel.published ? ` · ${day(rel.published)}` : ""}</dd></div>
+            {#if rel.size}<div><dt><Glyph name="disk" size={24} />Size</dt><dd>{bytes(rel.size)} download</dd></div>{/if}
+          {:else if relLoading}
+            <div><dt><Glyph name="refresh" size={24} />Latest</dt><dd class="faint">Checking…</dd></div>
+          {/if}
+          {#if inst}<div><dt><Glyph name="check" size={24} />Installed</dt><dd>{inst.version}{inst.source.verified ? " · download checked" : ""}</dd></div>{/if}
+        </dl>
+      </div>
+      <div class="actions">
+        {#if app.installing[m.id]}
+          <div class="progress"><div class="prog wide" style:--p={pct(app.installing[m.id])}></div><span class="label">{app.installing[m.id]}</span></div>
+        {:else}
+          <button class="btn big primary" data-nav onclick={() => install(m.id)} disabled={m.deploy === "game" && !host?.dir}>
+            <Glyph name={inst ? "refresh" : "get"} size={24} />{inst ? (up ? `Update to ${up.latest}` : "Reinstall") : "Get"}
+          </button>
+          {#if inst}
+            <button class="btn big" data-nav onclick={() => removeMashup(m)} disabled={removing === m.id}><Glyph name="close" size={24} />{removing === m.id ? "Removing…" : "Remove"}</button>
+          {:else}
+            <button class="btn big" data-nav onclick={() => fromFile(m.id)} disabled={m.deploy === "game" && !host?.dir}><Glyph name="zip" size={24} />From a zip</button>
+          {/if}
         {/if}
       </div>
     {:else if sheet.kind === "web"}
@@ -728,6 +883,14 @@
     align-items: center;
     gap: 6px;
     white-space: nowrap;
+  }
+  /* A mashup's game: long names give way to the install state. */
+  .kind.host {
+    min-width: 0;
+  }
+  .kind.host > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   :global(:root[data-theme="pixel"]) .card {
@@ -1245,6 +1408,62 @@
   }
   :global(:root[data-theme="paper"]) .callout.hot > :global(svg) {
     color: var(--accent-2);
+  }
+  .callout .whybtns {
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  /* Files a mashup needs in the game's folder: a tick when found, what to do when not. */
+  .needs {
+    list-style: none;
+    margin: 16px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .needs li {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+  }
+  .needs b {
+    display: block;
+    font-family: var(--label);
+    font-size: 15px;
+  }
+  .needs span {
+    display: block;
+    margin-top: 2px;
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--muted);
+  }
+  :global(:root[data-theme="pixel"]) .needs li {
+    border: 2px solid var(--line);
+  }
+  :global(:root[data-theme="pixel"]) .needs li.ok {
+    border-style: dashed;
+    border-color: var(--faint);
+  }
+  :global(:root[data-theme="paper"]) .needs li {
+    background: color-mix(in srgb, var(--accent) 7%, var(--panel));
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+  :global(:root[data-theme="paper"]) .needs li > :global(svg) {
+    color: var(--accent);
+  }
+  :global(:root[data-theme="paper"]) .needs li.ok {
+    background: color-mix(in srgb, var(--fg) 4%, var(--panel));
+    box-shadow: inset 3px 0 0 color-mix(in srgb, var(--fg) 30%, transparent);
+  }
+  :global(:root[data-theme="paper"]) .needs li.ok > :global(svg) {
+    color: var(--muted);
+  }
+  .facts dd .link + .link {
+    margin-left: 16px;
   }
   .facts {
     display: flex;

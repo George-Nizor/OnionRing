@@ -28,3 +28,6 @@ percent-encoding = "2"
 rayon = "1"
 strsim = "0.11"
 url = "2"
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.56"

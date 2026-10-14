@@ -35,7 +35,7 @@ pub struct AppSource {
 pub struct InstalledApp {
     pub id: String,
     pub name: String,
-    /// "port" or "emulator"
+    /// "port", "emulator" or "mashup"
     pub kind: String,
     pub version: String,
     pub installed_at: i64,
@@ -91,10 +91,50 @@ pub struct Target {
     pub persist: Vec<String>,
     pub carry: Vec<String>,
     pub portable_marker: Option<String>,
+    /// The download must contain a program to start (ports and emulators do; a mashup copied
+    /// into a game is started by the game's own loader).
+    pub find_exe: bool,
+    /// Unpack as-is, even when everything is inside one folder (a mod's `SKSE\` is meaningful).
+    pub keep_root: bool,
+    /// A mashup copied into a game's folder after it is unpacked.
+    pub deploy: Option<DeployTo>,
+}
+
+#[derive(Clone, Debug)]
+pub struct DeployTo {
+    /// The game, in plain words, for messages.
+    pub host: String,
+    /// Where the files go; `None` when the game isn't installed.
+    pub dir: Option<PathBuf>,
 }
 
 impl Target {
     pub fn from_catalog(cat: &Catalog, id: &str) -> Result<Target> {
+        if let Some(m) = cat.mashup(id) {
+            let host = cat.host(&m.host);
+            let deploy = (m.deploy == "game").then(|| DeployTo {
+                host: host.map(|h| h.name.clone()).unwrap_or_else(|| m.host.clone()),
+                dir: host.and_then(crate::mashups::host_dir).and_then(|d| crate::mashups::deploy_dir(m, &d)),
+            });
+            let from_app = m.launch.from == "app";
+            return Ok(Target {
+                id: m.id.clone(),
+                name: m.name.clone(),
+                kind: "mashup",
+                repo: Some(m.repo.clone()),
+                asset: Some(m.asset.clone()),
+                prerelease: m.prerelease,
+                exe: from_app.then(|| m.launch.exe.clone()),
+                exe_regex: None,
+                configure_exe: None,
+                persist: vec![],
+                carry: vec![],
+                portable_marker: None,
+                find_exe: from_app,
+                keep_root: deploy.is_some(),
+                deploy,
+            });
+        }
         if let Some(p) = cat.port(id) {
             return Ok(Target {
                 id: p.id.clone(),
@@ -109,6 +149,9 @@ impl Target {
                 persist: p.persist.clone(),
                 carry: p.carry.clone(),
                 portable_marker: None,
+                find_exe: true,
+                keep_root: false,
+                deploy: None,
             });
         }
         if let Some(e) = cat.emulator(id) {
@@ -125,6 +168,9 @@ impl Target {
                 persist: e.persist.clone(),
                 carry: e.carry.clone(),
                 portable_marker: e.portable.clone(),
+                find_exe: true,
+                keep_root: false,
+                deploy: None,
             });
         }
         bail!("{id} is not in the catalog")
@@ -228,6 +274,7 @@ pub fn install_archive(
     if !archive.is_file() {
         bail!("{} does not exist", archive.display());
     }
+    let deploy_dir = deploy_dir(t)?;
     progress("Checking archive");
     let sha = sha256_file(archive)?;
     let known = known.or_else(|| t.repo.as_deref().and_then(|r| identify(root, r, &sha)));
@@ -270,7 +317,7 @@ pub fn install_archive(
     }
     extract(&kept, &staging)?;
     let entries: Vec<_> = std::fs::read_dir(&staging)?.filter_map(|e| e.ok()).collect();
-    let content = if entries.len() == 1 && entries[0].path().is_dir() { entries[0].path() } else { staging.clone() };
+    let content = if !t.keep_root && entries.len() == 1 && entries[0].path().is_dir() { entries[0].path() } else { staging.clone() };
 
     let vdir = app_dir.join(&vname);
     if vdir.exists() {
@@ -322,7 +369,15 @@ pub fn install_archive(
     remove_link(&current);
     junction::create(&vdir, &current).context("pointing current at the new version")?;
 
-    let exe = detect_exe(&vdir, t).context("could not find the program to start in this download")?;
+    let exe = match detect_exe(&vdir, t) {
+        Some(e) => e,
+        None if !t.find_exe => String::new(),
+        None => bail!("could not find the program to start in this download"),
+    };
+    if let (Some(d), Some(dir)) = (&t.deploy, &deploy_dir) {
+        progress(&format!("Adding it to {}", d.host));
+        crate::mashups::deploy(root, &t.id, &vdir, dir, progress)?;
+    }
     let mut versions: Vec<String> = previous.as_ref().map(|p| p.versions.clone()).unwrap_or_default();
     versions.retain(|v| v != &version);
     versions.insert(0, version.clone());
@@ -368,8 +423,21 @@ fn unlink_persist(vdir: &Path, persist: &[String]) {
     }
 }
 
+/// Where a mashup that goes into a game's folder will be copied; fails, before anything is
+/// downloaded, when the game isn't installed.
+fn deploy_dir(t: &Target) -> Result<Option<PathBuf>> {
+    match &t.deploy {
+        None => Ok(None),
+        Some(DeployTo { dir: Some(d), .. }) => Ok(Some(d.clone())),
+        Some(DeployTo { host, .. }) => {
+            bail!("{} goes into {}, which isn't installed. Install it through Steam, or choose its folder.", t.name, host)
+        }
+    }
+}
+
 /// Download the latest release from GitHub and install it.
 pub fn install_latest(root: &DataRoot, t: &Target, progress: &dyn Fn(&str)) -> Result<InstalledApp> {
+    deploy_dir(t)?;
     let repo = t.repo.as_deref().context("this entry has no GitHub releases; download it from its homepage")?;
     let pattern = t.asset.as_deref().context("no Windows download pattern for this entry")?;
     progress("Looking up the latest release");

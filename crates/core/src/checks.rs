@@ -220,7 +220,7 @@ fn unquote(v: &str) -> String {
 }
 
 /// Files directly in `dir` whose names match `pattern` (`*` and `?`, any case), sorted.
-fn glob(dir: &Path, pattern: &str) -> Vec<PathBuf> {
+pub(crate) fn glob(dir: &Path, pattern: &str) -> Vec<PathBuf> {
     let Ok(rd) = std::fs::read_dir(dir) else { return vec![] };
     let pattern: Vec<char> = pattern.to_lowercase().chars().collect();
     let mut out: Vec<PathBuf> = rd

@@ -82,10 +82,10 @@ class AppStore {
   accents = $state<Record<string, string>>({});
   catalog = $state<CatalogView | null>(null);
 
-  /** Search across everything: your games, and every port, emulator and browser game. */
+  /** Search across everything: your games, and every port, emulator, browser game and mashup. */
   everything = $derived.by(() => {
     const q = norm(this.query);
-    const empty = { games: [] as Game[], ports: [] as CatalogView["ports"], emulators: [] as CatalogView["emulators"], browser: [] as CatalogView["browser"] };
+    const empty = { games: [] as Game[], ports: [] as CatalogView["ports"], emulators: [] as CatalogView["emulators"], browser: [] as CatalogView["browser"], mashups: [] as CatalogView["mashups"] };
     if (!q) return empty;
     const hit = (...s: (string | null | undefined)[]) => norm(s.filter(Boolean).join(" ")).includes(q);
     const c = this.catalog;
@@ -94,6 +94,7 @@ class AppStore {
       ports: (c?.ports ?? []).filter((p) => hit(p.game, p.name, p.original.join(" "))).slice(0, 12),
       emulators: (c?.emulators ?? []).filter((e) => hit(e.name, e.platforms.map((p) => this.platforms.get(p)?.name).join(" "))).slice(0, 8),
       browser: (c?.browser ?? []).filter((b) => hit(b.title, b.project, b.original)).slice(0, 12),
+      mashups: (c?.mashups ?? []).filter((m) => hit(m.title, m.name, m.brings, m.author)).slice(0, 8),
     };
   });
 
@@ -142,6 +143,7 @@ class AppStore {
       this.toast(`${e.payload.name} updated to ${e.payload.version}`, "ok", 6000);
       this.loadCatalog();
     });
+    await listen("catalog-changed", () => this.loadCatalog());
     await listen<{ id: string; message: string; done: boolean; error: string | null }>("install", (e) => {
       const { id, message, done, error } = e.payload;
       if (done) {

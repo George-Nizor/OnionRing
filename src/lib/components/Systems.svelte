@@ -26,7 +26,7 @@
   // One card per platform you have games for, any platform an emulator covers, and every
   // platform OnionRing can get an emulator for (so you can set up a console before adding games).
   const rows = $derived.by(() => {
-    const ids = new Set<string>([...app.counts.keys()].filter((p) => p !== "port"));
+    const ids = new Set<string>([...app.counts.keys()].filter((p) => p !== "port" && p !== "mashup"));
     for (const e of emulators) for (const p of e.platforms) ids.add(p);
     for (const e of app.catalog?.emulators ?? []) for (const p of e.platforms) ids.add(p);
     return [...ids]

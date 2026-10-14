@@ -1,0 +1,56 @@
+{
+  "hosts": [
+    { "id": "skyrim-se", "name": "Skyrim Special Edition", "steam": 489830, "exe": "SkyrimSE.exe" },
+    { "id": "elden-ring", "name": "Elden Ring", "steam": 1245620, "exe": "Game\\eldenring.exe" }
+  ],
+  "mashups": [
+    {
+      "id": "skycraft",
+      "title": "Minecraft in Skyrim",
+      "name": "SkyCraft",
+      "author": "chasmlol",
+      "host": "skyrim-se",
+      "brings": "Minecraft",
+      "repo": "chasmlol/SkyCraft",
+      "asset": "^SkyCraft-[0-9][0-9.]*\\.zip$",
+      "deploy": "game",
+      "into": "Data",
+      "launch": { "from": "game", "exe": "skse64_loader.exe" },
+      "needs": [
+        {
+          "what": "SKSE64",
+          "paths": ["skse64_loader.exe"],
+          "url": "https://skse.silverlock.org/",
+          "help": "Download the build for your Skyrim version and copy its files next to SkyrimSE.exe."
+        },
+        {
+          "what": "Address Library for SKSE Plugins",
+          "paths": ["Data\\SKSE\\Plugins\\versionlib-1-6-*.bin", "Data\\SKSE\\Plugins\\versionlib-1-7-*.bin"],
+          "url": "https://www.nexusmods.com/skyrimspecialedition/mods/32444",
+          "help": "Get the \"All in one (Anniversary Edition)\" file from Nexus Mods and install it with your mod manager."
+        }
+      ],
+      "requires": "Skyrim Special Edition 1.6 or 1.7 (not 1.5.97 or VR), and a Microsoft account that owns Minecraft: Java Edition. The first start asks you to sign in and downloads Minecraft (about 1.5 GB). It uses about 3 GB more memory. Start from a save made after Helgen, or use Alternate Start.",
+      "licence": "MIT",
+      "blurb": "Real Minecraft runs hidden next to Skyrim and takes over movement, mining, building, crafting, hunger and combat, while Skyrim draws the world and keeps its people, quests and saves. Friends with their own copy can join your Minecraft world. Early and experimental.",
+      "featured": true
+    },
+    {
+      "id": "eldencraft",
+      "title": "Minecraft in Elden Ring",
+      "name": "EldenCraft",
+      "author": "SocketByte",
+      "host": "elden-ring",
+      "brings": "Minecraft",
+      "repo": "SocketByte/EldenCraft",
+      "asset": "^EldenCraft-.*-windows-x64\\.zip$",
+      "deploy": "folder",
+      "launch": { "from": "app", "exe": "EldenCraft.cmd" },
+      "requires": "Elden Ring on Steam, updated to 1.17.1 (EldenCraft refuses any other version), and a Microsoft account that owns Minecraft: Java Edition. It plays offline only: Elden Ring starts with online play and Easy Anti-Cheat off, on a separate save. The first start downloads Minecraft, Java and its tools and asks you to sign in.",
+      "licence": "MIT",
+      "blurb": "Minecraft and Elden Ring run together and are drawn as one picture: the Lands Between, its enemies and bosses, with Minecraft's blocks, inventory, tools, crafting and HUD. Your Elden Ring game files are never changed. Early alpha.",
+      "page": "https://www.nexusmods.com/eldenring/mods/11259",
+      "featured": true
+    }
+  ]
+}

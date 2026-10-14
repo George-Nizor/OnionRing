@@ -1,7 +1,7 @@
 //! Tauri shell: exposes the core to the UI as commands, streams progress as events.
 
 use onionring_core::backups::{self, Backup, SaveSource};
-use onionring_core::catalog::{BrowserGame, Catalog, EmulatorDef, Platform, PortDef};
+use onionring_core::catalog::{BrowserGame, Catalog, EmulatorDef, MashupDef, Platform, PortDef};
 use onionring_core::checks::{self, EmulatorChecks};
 use onionring_core::db::Db;
 use onionring_core::install::{self, ArchiveMode, InstalledApp, Target, UpdateInfo};
@@ -11,6 +11,7 @@ use onionring_core::model::{
 use onionring_core::paths::{AppConfig, DataRoot, suggest_data_root, suggest_emulation_dirs};
 use onionring_core::updates::{self, AvailableUpdate};
 use onionring_core::watch::{self, PathKind};
+use onionring_core::mashups::{self, MashupState};
 use onionring_core::{art, launch, scan, storage, util};
 use serde::Serialize;
 use std::path::{Path, PathBuf};
@@ -78,7 +79,7 @@ fn emit_progress(app: &AppHandle) -> impl Fn(Progress) + Sync + use<> {
 
 fn use_root(app: &AppHandle, root: DataRoot) -> Res<()> {
     app.asset_protocol_scope().allow_directory(&root.root, true).map_err(err)?;
-    let cat = Catalog::load(Some(&root.local_catalog())).map_err(err)?;
+    let cat = Catalog::load_layers(onionring_core::catalog::live_layer(&root).as_deref(), Some(&root.local_catalog())).map_err(err)?;
     let st = app.state::<AppState>();
     *st.catalog.lock().unwrap() = Arc::new(cat);
     st.shared.lock().unwrap().root = Some(root);
@@ -356,6 +357,33 @@ struct AppUpdated {
     version: String,
 }
 
+/// Fetch the live catalog from `main` at start and every six hours, so new emulators and ports
+/// show up without a new OnionRing release. Offline just keeps the last copy.
+fn keep_catalog_current(app: &AppHandle) {
+    let app = app.clone();
+    std::thread::spawn(move || {
+        loop {
+            let Ok(root) = app.state::<AppState>().root() else {
+                // No data root yet (first run): look again shortly.
+                std::thread::sleep(std::time::Duration::from_secs(60));
+                continue;
+            };
+            let Some(live) = onionring_core::catalog::live_layer(&root) else { return };
+            match onionring_core::catalog::refresh_live(&live) {
+                Ok(true) => match reload_catalog(&app) {
+                    Ok(()) => {
+                        let _ = app.emit("catalog-changed", ());
+                    }
+                    Err(e) => eprintln!("live catalog: {e}"),
+                },
+                Ok(false) => {}
+                Err(e) => eprintln!("live catalog: {e:#}"),
+            }
+            std::thread::sleep(std::time::Duration::from_secs(6 * 3600));
+        }
+    });
+}
+
 /// Keep everything OnionRing installed on its latest release: emulators, ports and AnyPS5.
 /// Runs 30 s after start, then every six hours, and waits while a game is being played.
 /// Emulators found on the PC (not installed by OnionRing) are left alone; the Updates tab lists
@@ -470,14 +498,53 @@ struct CatalogView {
     ports: Vec<PortDef>,
     emulators: Vec<EmulatorDef>,
     browser: Vec<BrowserGame>,
+    mashups: Vec<MashupDef>,
+    /// Per mashup: where its game is and what it still needs.
+    mashup_states: Vec<MashupState>,
     installed: Vec<InstalledApp>,
 }
 
 #[tauri::command]
 fn catalog(st: State<AppState>) -> Res<CatalogView> {
     let cat = st.cat();
-    let installed = st.shared.lock().unwrap().root.as_ref().map(install::installed_apps).unwrap_or_default();
-    Ok(CatalogView { ports: cat.ports.clone(), emulators: cat.emulators.clone(), browser: cat.browser.clone(), installed })
+    let root = st.shared.lock().unwrap().root.clone();
+    let installed = root.as_ref().map(install::installed_apps).unwrap_or_default();
+    let mashup_states = root.as_ref().map(|r| mashups::states(r, &cat)).unwrap_or_default();
+    Ok(CatalogView {
+        ports: cat.ports.clone(),
+        emulators: cat.emulators.clone(),
+        browser: cat.browser.clone(),
+        mashups: cat.mashups.clone(),
+        mashup_states,
+        installed,
+    })
+}
+
+/// Take a mashup out of its game (putting back anything it replaced) and uninstall it.
+#[tauri::command]
+async fn remove_mashup(app: AppHandle, id: String) -> Res<()> {
+    blocking(move || {
+        let st = app.state::<AppState>();
+        if st.cat().mashup(&id).is_none() {
+            return Err(format!("{id} is not a mashup"));
+        }
+        {
+            let _guard = st.work.lock().unwrap();
+            mashups::remove(&st.root()?, &id).map_err(err)?;
+            st.db()?.forget_game(&format!("mashup:{id}")).map_err(err)?;
+        }
+        let _ = app.emit("library-changed", ());
+        Ok(())
+    })
+    .await
+}
+
+/// Where the player keeps a game mashups are added to; `None` goes back to finding it in Steam.
+#[tauri::command]
+fn set_host_dir(app: AppHandle, st: State<AppState>, id: String, path: Option<String>) -> Res<()> {
+    let host = st.cat().host(&id).cloned().ok_or_else(|| format!("{id} is not a known game"))?;
+    onionring_core::catalog::set_local_host_dir(&st.root()?.local_catalog(), &host, path.as_deref().map(Path::new)).map_err(err)?;
+    reload_catalog(&app)
 }
 
 /// A picture for a system, emulator, port or browser game (fetched once, then cached).
@@ -504,7 +571,8 @@ async fn release_details(app: AppHandle, id: String) -> Res<Option<install::Rele
 
 fn reload_catalog(app: &AppHandle) -> Res<()> {
     let st = app.state::<AppState>();
-    let cat = Catalog::load(Some(&st.root()?.local_catalog())).map_err(err)?;
+    let root = st.root()?;
+    let cat = Catalog::load_layers(onionring_core::catalog::live_layer(&root).as_deref(), Some(&root.local_catalog())).map_err(err)?;
     *st.catalog.lock().unwrap() = Arc::new(cat);
     Ok(())
 }
@@ -1087,6 +1155,7 @@ pub fn run() {
                     Err(e) => eprintln!("data root unavailable: {e:#}"),
                 }
             }
+            keep_catalog_current(app.handle());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -1140,6 +1209,8 @@ pub fn run() {
             open_browser_game,
             add_browser_game,
             remove_browser_game,
+            remove_mashup,
+            set_host_dir,
             picture,
             release_details,
         ])

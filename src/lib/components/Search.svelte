@@ -20,7 +20,7 @@
   const installed = $derived(new Set((app.catalog?.installed ?? []).map((i) => i.id)));
 
   type Item = { id: string; name: string; meta: string };
-  type Group = { tab: "ports" | "emulators" | "browser"; icon: string; label: string; kind: "port" | "emulator" | "browser"; items: Item[]; all: number };
+  type Group = { tab: "ports" | "emulators" | "browser" | "mashups"; icon: string; label: string; kind: "port" | "emulator" | "browser" | "mashup"; items: Item[]; all: number };
   const games = $derived(r.games.slice(0, 9));
   const groups = $derived(
     (
@@ -35,10 +35,11 @@
           items: r.emulators.slice(0, 6).map((e) => ({ id: e.id, name: e.name, meta: e.platforms.map((p) => app.platforms.get(p)?.short ?? p).join(" · ") })),
         },
         { tab: "browser", icon: "globe", label: "Browser games", kind: "browser", all: r.browser.length, items: r.browser.slice(0, 6).map((b) => ({ id: b.id, name: b.title, meta: b.original ?? b.project })) },
+        { tab: "mashups", icon: "mix", label: "Mashups", kind: "mashup", all: r.mashups.length, items: r.mashups.slice(0, 6).map((m) => ({ id: m.id, name: m.title, meta: m.name })) },
       ] satisfies Group[]
     ).filter((g) => g.items.length),
   );
-  const total = $derived(r.games.length + r.ports.length + r.emulators.length + r.browser.length);
+  const total = $derived(r.games.length + r.ports.length + r.emulators.length + r.browser.length + r.mashups.length);
 
   // Ctrl+K, "/" or the controller's Y ask for the field.
   $effect(() => {

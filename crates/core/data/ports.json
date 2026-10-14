@@ -27,6 +27,28 @@
     "featured": true
   },
   {
+    "id": "gow3-windows",
+    "game": "God of War III Remastered",
+    "name": "God of War III Remastered for PC",
+    "kind": "Native port",
+    "original": [
+      "PlayStation 4"
+    ],
+    "repo": "FelipePrado0/gow3_pc",
+    "asset": "^gow3-windows\\.zip$",
+    "exe": "Play God of War III.exe",
+    "configureExe": "God of War III.exe",
+    "persist": [
+      "user"
+    ],
+    "requires": "Your own PS4 dump of God of War III Remastered (CUSA01623, update 01.02): the folder with eboot.bin, sce_module and sce_sys. Pick it once in the launcher.",
+    "licence": "GPL-2.0",
+    "blurb": "The original PS4 game running natively on Windows, with shadPS4's Vulkan video core, a 240 FPS patch, in-game menu and cheats. A fork of the bbport lineage by FelipePrado0.",
+    "art": "launcher/gow3.png",
+    "accent": "#b03a2e",
+    "featured": true
+  },
+  {
     "id": "actraiser-recompiled",
     "game": "ActRaiser",
     "name": "ActRaiser Recompiled",
