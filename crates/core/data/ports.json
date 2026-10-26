@@ -209,22 +209,6 @@
     "featured": false
   },
   {
-    "id": "renut-banjo-kazooie-nuts-bolts",
-    "game": "Banjo-Kazooie: Nuts & Bolts",
-    "name": "reNut (Banjo-Kazooie: Nuts & Bolts)",
-    "kind": "Native port",
-    "original": [
-      "Xbox 360"
-    ],
-    "repo": "masterspike52/reNut",
-    "asset": "auto",
-    "prerelease": false,
-    "requires": "Your own disc/XBLA dump.",
-    "licence": null,
-    "blurb": "By masterspike52. Active.",
-    "featured": false
-  },
-  {
     "id": "banjo-tooie-recompiled",
     "game": "Banjo-Tooie",
     "name": "Banjo-Tooie: Recompiled",
@@ -794,7 +778,7 @@
     ],
     "repo": "eandis/SDOJ-Recomp",
     "asset": "auto",
-    "prerelease": true,
+    "prerelease": false,
     "requires": "Your own disc/XBLA dump.",
     "licence": null,
     "blurb": "By eandis. Slow.",
@@ -1010,22 +994,6 @@
     "featured": false
   },
   {
-    "id": "phase-distorter-earthbound",
-    "game": "EarthBound",
-    "name": "Phase Distorter (EarthBound)",
-    "kind": "Native port",
-    "original": [
-      "SNES"
-    ],
-    "repo": "TheRunaway5/Phase-Distorter",
-    "asset": "auto",
-    "prerelease": false,
-    "requires": "Your own ROM dump.",
-    "licence": null,
-    "blurb": "By TheRunaway5. Active.",
-    "featured": false
-  },
-  {
     "id": "earthbound-native",
     "game": "EarthBound",
     "name": "EarthBound Native",
@@ -1039,6 +1007,22 @@
     "requires": "Your own ROM dump.",
     "licence": null,
     "blurb": "By seanstaggsQU. Active.",
+    "featured": false
+  },
+  {
+    "id": "phase-distorter-earthbound",
+    "game": "EarthBound",
+    "name": "Phase Distorter (EarthBound)",
+    "kind": "Native port",
+    "original": [
+      "SNES"
+    ],
+    "repo": "TheRunaway5/Phase-Distorter",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By TheRunaway5. Active.",
     "featured": false
   },
   {
@@ -1122,22 +1106,6 @@
     "featured": false
   },
   {
-    "id": "f-zero-recomp",
-    "game": "F-Zero",
-    "name": "F-Zero Recomp",
-    "kind": "Recomp",
-    "original": [
-      "SNES"
-    ],
-    "repo": "craigshaw/FZeroRecomp",
-    "asset": "auto",
-    "prerelease": false,
-    "requires": "Your own ROM dump.",
-    "licence": null,
-    "blurb": "By Craig Shaw. Active.",
-    "featured": false
-  },
-  {
     "id": "fzerosnesrecomp-f-zero",
     "game": "F-Zero",
     "name": "FZeroSNESRecomp (F-Zero)",
@@ -1151,6 +1119,22 @@
     "requires": "Your own ROM dump.",
     "licence": null,
     "blurb": "By mstan. Active.",
+    "featured": false
+  },
+  {
+    "id": "f-zero-recomp",
+    "game": "F-Zero",
+    "name": "F-Zero Recomp",
+    "kind": "Recomp",
+    "original": [
+      "SNES"
+    ],
+    "repo": "craigshaw/FZeroRecomp",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By Craig Shaw. Active.",
     "featured": false
   },
   {
@@ -1846,22 +1830,6 @@
     "featured": false
   },
   {
-    "id": "ninja-s-dawn-ninja-gaiden-ii",
-    "game": "Ninja Gaiden II",
-    "name": "Ninja's Dawn (Ninja Gaiden II)",
-    "kind": "Recomp",
-    "original": [
-      "Xbox 360"
-    ],
-    "repo": "TheSaltTrader/Ninja-s-Dawn---A-Ninja-Gaiden-2-Recompilation-Project",
-    "asset": "auto",
-    "prerelease": false,
-    "requires": "Your own disc/XBLA dump.",
-    "licence": null,
-    "blurb": "By TheSaltTrader. Active.",
-    "featured": false
-  },
-  {
     "id": "ogre-battle-64-recomp-ogre-battle-64-person-of-lordly-caliber",
     "game": "Ogre Battle 64: Person of Lordly Caliber",
     "name": "Ogre Battle 64: Recomp (Ogre Battle 64: Person of Lordly Caliber)",
@@ -1939,6 +1907,22 @@
     "requires": "Your own disc/XBLA dump.",
     "licence": null,
     "blurb": "By TekRantGaming. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "p-t-for-pc",
+    "game": "P.T.",
+    "name": "P.T. for PC",
+    "kind": "Native port",
+    "original": [
+      "PlayStation 4"
+    ],
+    "repo": "LoreanXavier/pt-pc",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own decrypted game dump.",
+    "licence": null,
+    "blurb": "By LoreanXavier. Active.",
     "featured": false
   },
   {
@@ -2047,22 +2031,6 @@
     "featured": false
   },
   {
-    "id": "birdman64-pilotwings-64",
-    "game": "Pilotwings 64",
-    "name": "Birdman64 (Pilotwings 64)",
-    "kind": "Native port",
-    "original": [
-      "Nintendo 64"
-    ],
-    "repo": "NoahVl/Birdman64",
-    "asset": "auto",
-    "prerelease": false,
-    "requires": "Your own ROM dump.",
-    "licence": null,
-    "blurb": "By NoahVl. Active (README mentions AI tooling).",
-    "featured": false
-  },
-  {
     "id": "pilotwings-64-recompiled",
     "game": "Pilotwings 64",
     "name": "Pilotwings 64: Recompiled",
@@ -2076,6 +2044,22 @@
     "requires": "Your own ROM dump.",
     "licence": null,
     "blurb": "By danielgomesvieira2000. Active (README mentions AI tooling).",
+    "featured": false
+  },
+  {
+    "id": "birdman64-pilotwings-64",
+    "game": "Pilotwings 64",
+    "name": "Birdman64 (Pilotwings 64)",
+    "kind": "Native port",
+    "original": [
+      "Nintendo 64"
+    ],
+    "repo": "NoahVl/Birdman64",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own ROM dump.",
+    "licence": null,
+    "blurb": "By NoahVl. Active (README mentions AI tooling).",
     "featured": false
   },
   {
@@ -2334,6 +2318,22 @@
     "requires": "Your own original game data.",
     "licence": null,
     "blurb": "By OpenRCT2. Active.",
+    "featured": false
+  },
+  {
+    "id": "sega-superstars-tennis-rematch",
+    "game": "Sega Superstars Tennis",
+    "name": "Sega Superstars Tennis ReMatch",
+    "kind": "Native port",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "m1ndcrap/Sega-Superstars-Tennis-ReMatch",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By m1ndcrap. Slow.",
     "featured": false
   },
   {
@@ -2971,7 +2971,7 @@
     ],
     "repo": "999sian/melee-pc",
     "asset": "auto",
-    "prerelease": true,
+    "prerelease": false,
     "requires": "Your own disc image.",
     "licence": null,
     "blurb": "By 999sian. Active.",
@@ -3039,22 +3039,6 @@
     "requires": "Your own original game data.",
     "licence": null,
     "blurb": "By Taisei Project. Slow.",
-    "featured": false
-  },
-  {
-    "id": "tekken3recomp-tekken-3",
-    "game": "Tekken 3",
-    "name": "Tekken3Recomp (Tekken 3)",
-    "kind": "Recomp",
-    "original": [
-      "PlayStation"
-    ],
-    "repo": "fabioap-cpu/Tekken3Recomp",
-    "asset": "auto",
-    "prerelease": false,
-    "requires": "Your own disc image.",
-    "licence": null,
-    "blurb": "By fabioap-cpu. Active.",
     "featured": false
   },
   {
@@ -3393,22 +3377,6 @@
     "requires": "Your own original game data.",
     "licence": null,
     "blurb": "By andyvand. Stale.",
-    "featured": false
-  },
-  {
-    "id": "ufc-3-recomp-ufc-undisputed-3",
-    "game": "UFC Undisputed 3",
-    "name": "UFC 3 Recomp (UFC Undisputed 3)",
-    "kind": "Recomp",
-    "original": [
-      "Xbox 360"
-    ],
-    "repo": "paulogaab21/ufc3recomp",
-    "asset": "auto",
-    "prerelease": false,
-    "requires": "Your own disc/XBLA dump.",
-    "licence": null,
-    "blurb": "By paulogaab21. Active.",
     "featured": false
   },
   {
