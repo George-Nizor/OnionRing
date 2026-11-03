@@ -251,6 +251,14 @@
             {#if port.blurb}<p class="blurb">{port.blurb}</p>{/if}
             {#if port.requires}<p class="needs"><Glyph name="alert" size={12} /><span><b>You need</b> {port.requires}</span></p>{/if}
           </section>
+          {#if port.about}
+            {@const a = port.about}
+            <section>
+              <div class="sh"><Glyph name="star" size={24} /><h2 class="label">About the game</h2><span class="rule"></span></div>
+              {#if a.summary}<p class="blurb">{a.summary}</p>{/if}
+              <p class="gamefacts">{[a.released?.slice(0, 4), a.developer, a.genres.slice(0, 2).join(", "), a.series].filter(Boolean).join(" · ")}</p>
+            </section>
+          {/if}
         {/if}
 
         {#if mashup}
@@ -659,6 +667,12 @@
   }
   :global(:root[data-theme="pixel"]) .blurb {
     color: var(--fg);
+  }
+  .gamefacts {
+    margin: 12px 0 0;
+    font-family: var(--label);
+    font-size: 14px;
+    color: var(--faint);
   }
   .needs {
     display: flex;

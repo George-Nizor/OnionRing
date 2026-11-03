@@ -1,6 +1,6 @@
 {
   "name": "onionring",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "One launcher for your emulators, native PC ports, recomps and decomps",
   "type": "module",
   "private": true,
@@ -16,7 +16,8 @@
     "app": "tauri dev",
     "release:build": "tauri build",
     "cli": "cargo run -q -p onionring-core --bin onionring-cli --",
-    "ports:refresh": "node scripts/build-ports.mjs"
+    "ports:refresh": "node scripts/build-ports.mjs && node scripts/game-info.mjs",
+    "ports:info": "node scripts/game-info.mjs"
   },
   "license": "MIT",
   "dependencies": {

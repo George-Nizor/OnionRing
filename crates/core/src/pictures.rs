@@ -4,7 +4,9 @@
 //!
 //! - system:   the console's photo from its Wikipedia article
 //! - emulator: the project's GitHub owner avatar (usually its logo), else Wikipedia
-//! - port:     the original game's box art (libretro), else its cover from Wikipedia, else a
+//! - port:     the game's SteamGridDB art named in the catalog (wide grids, then the hero
+//!   banner, then the portrait cover), else the original game's box art (libretro), else its
+//!   cover from Wikipedia, else a
 //!   screenshot from the README, else the repository's own preview image, else an in-game
 //!   screenshot from libretro, else the README's other images (shots of settings or controls,
 //!   art kept in another repository)
@@ -836,6 +838,9 @@ fn sources<'a>(root: &'a DataRoot, cat: &'a Catalog, kind: &str, id: &str) -> Ve
             if let Some(p) = cat.port(id) {
                 let (consoles, game, repo) = (p.original.clone(), p.game.clone(), p.repo.clone());
                 let readme: Rc<OnceCell<Readme>> = Rc::default();
+                if let Some(pics) = p.pictures.clone() {
+                    out.push(Box::new(move || pics.grids.into_iter().chain(pics.hero).chain(pics.cover).collect()));
+                }
                 {
                     let (consoles, game) = (consoles.clone(), game.clone());
                     out.push(Box::new(move || libretro(root, cat, &consoles, &game, "Named_Boxarts")));

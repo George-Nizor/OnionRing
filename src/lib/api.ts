@@ -90,6 +90,21 @@ export interface PortDef {
   blurb: string | null;
   accent: string | null;
   featured: boolean;
+  /** Facts about the original game, from Wikidata and Wikipedia. */
+  about: GameAbout | null;
+  /** SteamGridDB image URLs; the app shows them through `picture`. */
+  pictures: { cover: string | null; grids: string[]; hero: string | null; logo: string | null } | null;
+}
+
+export interface GameAbout {
+  summary: string | null;
+  /** YYYY, YYYY-MM or YYYY-MM-DD, as precise as known. */
+  released: string | null;
+  developer: string | null;
+  publisher: string | null;
+  genres: string[];
+  series: string | null;
+  wikipedia: string | null;
 }
 
 export interface InstalledApp {

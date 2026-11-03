@@ -3,7 +3,8 @@
 //! - Box art and screenshots from the libretro thumbnail server, matched by No-Intro/Redump
 //!   names (exact first, then fuzzy within the same region).
 //! - PS3 folder games ship their own ICON0/PIC1 artwork.
-//! - Ports can point at artwork inside their install.
+//! - Ports can point at artwork inside their install, and use the SteamGridDB art the catalog
+//!   names for their game (looked up when the catalog is built, so no key is needed here).
 //!
 //! Everything is cached under `Media\<hash>\`. Grid thumbnails are resized JPEGs so the
 //! library scrolls smoothly with hundreds of covers.
@@ -157,6 +158,18 @@ fn process(root: &DataRoot, cat: &Catalog, job: &Job, indexes: &Mutex<HashMap<(S
                 let ext = src.extension().map(|e| e.to_string_lossy().to_string()).unwrap_or_else(|| "png".into());
                 f.logo = copy_local(&src, &dir.join(format!("logo.{ext}")));
             }
+            // The catalog's SteamGridDB art, where the build found some; libretro fills the gaps.
+            if let Some(pics) = &def.pictures {
+                let get = |url: &Option<String>, name: &str| {
+                    let url = url.as_deref()?;
+                    let ext = Path::new(url).extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_else(|| "png".into());
+                    let dest = dir.join(format!("{name}.{ext}"));
+                    fetch(url, &dest).ok().map(|_| dest)
+                };
+                f.cover = get(&pics.cover, "cover");
+                f.hero = get(&pics.hero, "hero");
+                f.logo = f.logo.take().or_else(|| get(&pics.logo, "logo"));
+            }
             system = def
                 .original
                 .iter()
@@ -198,7 +211,7 @@ fn process(root: &DataRoot, cat: &Catalog, job: &Job, indexes: &Mutex<HashMap<(S
         if let Some(name) = best_match(&names, &stem, &job.title) {
             let url = format!("{BASE}/{}/Named_Boxarts/{}.png", utf8_percent_encode(&system, PATH_ENC), utf8_percent_encode(&name, PATH_ENC));
             let dest = dir.join("cover.png");
-            if fetch(&url, &dest).is_ok() {
+            if f.cover.is_none() && fetch(&url, &dest).is_ok() {
                 f.cover = Some(dest);
             }
             if f.hero.is_none() {

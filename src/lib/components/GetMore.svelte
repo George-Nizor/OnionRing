@@ -68,6 +68,9 @@
   const projectName = (p: PortDef) => p.name.replace(/\s*\(([^()]*)\)\s*$/, (m, g: string) => (norm(g) === norm(p.game) ? "" : m)).trim() || p.name;
   const day = (iso: string | null | undefined) =>
     iso ? new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : null;
+  /** A release date that may be only a year ("1997") or a month ("1997-09"). */
+  const releasedOn = (d: string) =>
+    d.length === 4 ? d : d.length === 7 ? new Date(`${d}-01`).toLocaleDateString(undefined, { month: "short", year: "numeric" }) : day(d);
 
   // ---- data
   async function load() {
@@ -289,7 +292,7 @@
             <span class="by">{projectName(p)}</span>
           </span>
           <span class="foot">
-            <span class="chips">{#each p.original.slice(0, 2) as o (o)}<span class="chip">{short(o)}</span>{/each}</span>
+            <span class="chips">{#each p.original.slice(0, 2) as o (o)}<span class="chip">{short(o)}</span>{/each}{#if p.about?.released}<span class="chip">{p.about.released.slice(0, 4)}</span>{/if}</span>
             <span class="state" class:hot={inst && upById.has(p.id)}>
               {#if busy}
                 <span class="prog" style:--p={pct(busy)}></span>
@@ -484,6 +487,21 @@
           {/if}
           {#if inst}<div><dt><Glyph name="check" size={24} />Installed</dt><dd>{inst.version}{inst.source.verified ? " · download checked" : ""}</dd></div>{/if}
         </dl>
+        {#if p.about}
+          {@const a = p.about}
+          <h3 class="gh label">About the game</h3>
+          {#if a.summary}<p class="blurb">{a.summary}</p>{/if}
+          <dl class="facts">
+            {#if a.released}<div><dt><Glyph name="clock" size={24} />Released</dt><dd>{releasedOn(a.released)}</dd></div>{/if}
+            {#if a.developer}<div><dt><Glyph name="pad" size={24} />Developer</dt><dd>{a.developer}</dd></div>{/if}
+            {#if a.publisher && a.publisher !== a.developer}<div><dt><Glyph name="disk" size={24} />Publisher</dt><dd>{a.publisher}</dd></div>{/if}
+            {#if a.genres.length}<div><dt><Glyph name="star" size={24} />Genre</dt><dd>{a.genres.join(", ")}</dd></div>{/if}
+            {#if a.series}<div><dt><Glyph name="library" size={24} />Series</dt><dd>{a.series}</dd></div>{/if}
+          </dl>
+          <p class="credit">
+            Game info from {#if a.wikipedia}<button class="link" data-nav onclick={() => openUrl(a.wikipedia!)}>Wikipedia</button>{:else}Wikidata{/if}{p.pictures ? ", artwork from SteamGridDB" : ""}.
+          </p>
+        {/if}
       </div>
       <div class="actions">
         {#if app.installing[p.id]}
@@ -1469,6 +1487,15 @@
     display: flex;
     flex-direction: column;
     margin: 16px 0 0;
+  }
+  .gh {
+    margin: 28px 0 0;
+    color: var(--muted);
+  }
+  .credit {
+    margin: 12px 0 0;
+    font-size: 13px;
+    color: var(--faint);
   }
   .facts > div {
     display: grid;

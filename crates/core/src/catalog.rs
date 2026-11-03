@@ -159,6 +159,52 @@ pub struct PortDef {
     pub accent: Option<String>,
     #[serde(default)]
     pub featured: bool,
+    /// The game's artwork from SteamGridDB, looked up by `scripts/game-info.mjs`.
+    #[serde(default)]
+    pub pictures: Option<PortPictures>,
+    /// Facts about the original game from Wikidata and Wikipedia, looked up by `scripts/game-info.mjs`.
+    #[serde(default)]
+    pub about: Option<GameAbout>,
+}
+
+/// Image URLs for a port's game. Any of them can be missing.
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct PortPictures {
+    /// Portrait box art (600x900).
+    #[serde(default)]
+    pub cover: Option<String>,
+    /// Landscape art (920x430), best first; a second port of the same game takes the next one.
+    #[serde(default)]
+    pub grids: Vec<String>,
+    /// Wide banner (1920x620).
+    #[serde(default)]
+    pub hero: Option<String>,
+    /// Transparent title logo.
+    #[serde(default)]
+    pub logo: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct GameAbout {
+    /// The opening of its Wikipedia article.
+    #[serde(default)]
+    pub summary: Option<String>,
+    /// First release, as precise as known: `YYYY`, `YYYY-MM` or `YYYY-MM-DD`.
+    #[serde(default)]
+    pub released: Option<String>,
+    #[serde(default)]
+    pub developer: Option<String>,
+    #[serde(default)]
+    pub publisher: Option<String>,
+    #[serde(default)]
+    pub genres: Vec<String>,
+    #[serde(default)]
+    pub series: Option<String>,
+    /// The game's Wikipedia article.
+    #[serde(default)]
+    pub wikipedia: Option<String>,
 }
 
 /// A game that runs in a web page (WebAssembly/WebGL). Only legitimate builds are listed:

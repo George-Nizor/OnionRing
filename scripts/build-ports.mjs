@@ -7,6 +7,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { execSync } from "node:child_process";
+import { applyInfo } from "./game-info.mjs";
 
 const root = new URL("..", import.meta.url);
 const read = (p) => JSON.parse(readFileSync(new URL(p, root), "utf8"));
@@ -96,7 +97,8 @@ async function worker() {
 }
 await Promise.all(Array.from({ length: 8 }, worker));
 
-const ports = [...out.values()].sort((a, b) => Number(!!b.featured) - Number(!!a.featured) || a.game.localeCompare(b.game));
+// Pictures and game facts already looked up (scripts/game-info.mjs looks up new games).
+const ports = applyInfo([...out.values()]).sort((a, b) => Number(!!b.featured) - Number(!!a.featured) || a.game.localeCompare(b.game));
 writeFileSync(new URL("crates/core/data/ports.json", root), JSON.stringify(ports, null, 2) + "\n");
 console.log(`${ports.length} installable ports written (${skipped.length} skipped).`);
 if (process.argv.includes("--verbose")) console.log(skipped.join("\n"));

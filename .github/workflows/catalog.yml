@@ -23,6 +23,11 @@ jobs:
       - run: node scripts/build-ports.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Game facts (Wikipedia/Wikidata) and box art (SteamGridDB) for new games. Art is skipped,
+      # with a warning, until the SGDB_API_KEY secret is set.
+      - run: node scripts/game-info.mjs
+        env:
+          SGDB_API_KEY: ${{ secrets.SGDB_API_KEY }}
       - uses: peter-evans/create-pull-request@v6
         with:
           branch: catalog/refresh
