@@ -211,6 +211,33 @@
     }
   },
   {
+    "id": "animal-crossing-pc-port",
+    "game": "Animal Crossing",
+    "name": "Animal Crossing PC Port",
+    "kind": "Native port",
+    "original": [
+      "GameCube"
+    ],
+    "repo": "flyngmt/ACGC-PC-Port",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc image.",
+    "licence": null,
+    "blurb": "By flyngmt. Slow (README mentions AI tooling).",
+    "featured": false,
+    "about": {
+      "summary": "Animal Crossing, known in Japan as Dōbutsu no Mori, is a social simulation game developed and published by Nintendo. It was first released in 2001 for the Nintendo 64 in Japan, followed by an enhanced port for the GameCube. The GameCube version was localized for North America, Australia, and Europe between 2002 and 2004. It is the first game in the Animal Crossing series.",
+      "released": "2001-12-15",
+      "developer": "Nintendo Entertainment Analysis & Development",
+      "publisher": "Nintendo",
+      "genres": [
+        "Life simulation game"
+      ],
+      "series": "Animal Crossing",
+      "wikipedia": "https://en.wikipedia.org/wiki/Animal_Crossing_(video_game)"
+    }
+  },
+  {
     "id": "apeescaperecomp-ape-escape",
     "game": "Ape Escape",
     "name": "ApeEscapeRecomp (Ape Escape)",
@@ -347,35 +374,6 @@
       ],
       "series": "Banjo-Kazooie",
       "wikipedia": "https://en.wikipedia.org/wiki/Banjo-Kazooie_(video_game)"
-    }
-  },
-  {
-    "id": "renut-banjo-kazooie-nuts-bolts",
-    "game": "Banjo-Kazooie: Nuts & Bolts",
-    "name": "reNut (Banjo-Kazooie: Nuts & Bolts)",
-    "kind": "Native port",
-    "original": [
-      "Xbox 360"
-    ],
-    "repo": "masterspike52/reNut",
-    "asset": "auto",
-    "prerelease": false,
-    "requires": "Your own disc/XBLA dump.",
-    "licence": null,
-    "blurb": "By masterspike52. Active.",
-    "featured": false,
-    "about": {
-      "summary": "Banjo-Kazooie: Nuts & Bolts is a 2008 platform game developed by Rare and published by Microsoft Game Studios for the Xbox 360. Set eight years after Banjo-Tooie (2000), Nuts & Bolts follows the bear-and-bird duo Banjo & Kazooie as they compete with the witch Gruntilda for ownership of their home. Although Nuts & Bolts retains the structure of previous Banjo-Kazooie games—collecting jigsaw puzzle pieces to progress—it shifts the focus from exploration to vehicle construction. The player designs vehicles, including automobiles, boats, and aeroplanes, and uses them to complete challenges across various worlds. In multiplayer modes, players can compete or share their vehicles over Xbox Live.",
-      "released": "2008-11-11",
-      "developer": "Rare Ltd.",
-      "publisher": "Xbox Game Studios",
-      "genres": [
-        "Vehicular combat game",
-        "Construction and management simulation",
-        "Action-adventure game"
-      ],
-      "series": "Banjo-Kazooie",
-      "wikipedia": "https://en.wikipedia.org/wiki/Banjo-Kazooie%3A_Nuts_%26_Bolts"
     }
   },
   {
@@ -1362,7 +1360,7 @@
     ],
     "repo": "eandis/SDOJ-Recomp",
     "asset": "auto",
-    "prerelease": true,
+    "prerelease": false,
     "requires": "Your own disc/XBLA dump.",
     "licence": null,
     "blurb": "By eandis. Slow.",
@@ -1747,19 +1745,19 @@
     }
   },
   {
-    "id": "phase-distorter-earthbound",
+    "id": "earthbound-native",
     "game": "EarthBound",
-    "name": "Phase Distorter (EarthBound)",
+    "name": "EarthBound Native",
     "kind": "Native port",
     "original": [
       "SNES"
     ],
-    "repo": "TheRunaway5/Phase-Distorter",
+    "repo": "seanstaggsQU/EarthboundNativePublic",
     "asset": "auto",
     "prerelease": false,
     "requires": "Your own ROM dump.",
     "licence": null,
-    "blurb": "By TheRunaway5. Active.",
+    "blurb": "By seanstaggsQU. Active.",
     "featured": false,
     "about": {
       "summary": "EarthBound, originally released in Japan as Mother 2: Gīgu no Gyakushū, is a 1994 role-playing video game developed by Ape Inc. and HAL Laboratory and published by Nintendo for the Super Nintendo Entertainment System. The second entry in the Mother series, it follows a young boy named Ness and his party of Paula, Jeff and Poo, as they travel the world to collect melodies from eight Sanctuaries to defeat the universal cosmic destroyer Giygas.",
@@ -1775,19 +1773,19 @@
     }
   },
   {
-    "id": "earthbound-native",
+    "id": "phase-distorter-earthbound",
     "game": "EarthBound",
-    "name": "EarthBound Native",
+    "name": "Phase Distorter (EarthBound)",
     "kind": "Native port",
     "original": [
       "SNES"
     ],
-    "repo": "seanstaggsQU/EarthboundNativePublic",
+    "repo": "TheRunaway5/Phase-Distorter",
     "asset": "auto",
     "prerelease": false,
     "requires": "Your own ROM dump.",
     "licence": null,
-    "blurb": "By seanstaggsQU. Active.",
+    "blurb": "By TheRunaway5. Active.",
     "featured": false,
     "about": {
       "summary": "EarthBound, originally released in Japan as Mother 2: Gīgu no Gyakushū, is a 1994 role-playing video game developed by Ape Inc. and HAL Laboratory and published by Nintendo for the Super Nintendo Entertainment System. The second entry in the Mother series, it follows a young boy named Ness and his party of Paula, Jeff and Poo, as they travel the world to collect melodies from eight Sanctuaries to defeat the universal cosmic destroyer Giygas.",
@@ -2266,34 +2264,6 @@
       ],
       "series": "Heroes of Might and Magic",
       "wikipedia": "https://en.wikipedia.org/wiki/Heroes_of_Might_and_Magic_III"
-    }
-  },
-  {
-    "id": "hyrule-warriors-definitive-edition-recomp",
-    "game": "Hyrule Warriors: Definitive Edition",
-    "name": "Hyrule Warriors: Definitive Edition Recomp",
-    "kind": "Recomp",
-    "original": [
-      "Nintendo Switch"
-    ],
-    "repo": "sonsegajp/HWDER",
-    "asset": "auto",
-    "prerelease": false,
-    "requires": "Your own game dump + keys?.",
-    "licence": null,
-    "blurb": "By sonsegajp. Active.",
-    "featured": false,
-    "about": {
-      "summary": null,
-      "released": "2018-03-22",
-      "developer": "Omega Force, Team Ninja",
-      "publisher": "Nintendo, Koei Tecmo Holdings",
-      "genres": [
-        "Hack and slash",
-        "Action game"
-      ],
-      "series": "The Legend of Zelda",
-      "wikipedia": null
     }
   },
   {
@@ -3175,34 +3145,6 @@
     }
   },
   {
-    "id": "ninja-s-dawn-ninja-gaiden-ii",
-    "game": "Ninja Gaiden II",
-    "name": "Ninja's Dawn (Ninja Gaiden II)",
-    "kind": "Recomp",
-    "original": [
-      "Xbox 360"
-    ],
-    "repo": "TheSaltTrader/Ninja-s-Dawn---A-Ninja-Gaiden-2-Recompilation-Project",
-    "asset": "auto",
-    "prerelease": false,
-    "requires": "Your own disc/XBLA dump.",
-    "licence": null,
-    "blurb": "By TheSaltTrader. Active.",
-    "featured": false,
-    "about": {
-      "summary": "Ninja Gaiden II is a 2008 action-adventure game developed by Team Ninja and published by Microsoft Game Studios for the Xbox 360. It was the last game directed by Tomonobu Itagaki before his departure from Tecmo. An alternative version, Ninja Gaiden Sigma 2, was released by Tecmo Koei for the PlayStation 3 in 2009, and for the PlayStation Vita in 2013. A remaster, Ninja Gaiden 2 Black, was released for PlayStation 5, Windows and Xbox Series X/S on 23 January 2025.",
-      "released": "2008-06-03",
-      "developer": "Team Ninja",
-      "publisher": "Microsoft",
-      "genres": [
-        "Action-adventure game",
-        "Hack and slash"
-      ],
-      "series": "Ninja Gaiden",
-      "wikipedia": "https://en.wikipedia.org/wiki/Ninja_Gaiden_II"
-    }
-  },
-  {
     "id": "ogre-battle-64-recomp-ogre-battle-64-person-of-lordly-caliber",
     "game": "Ogre Battle 64: Person of Lordly Caliber",
     "name": "Ogre Battle 64: Recomp (Ogre Battle 64: Person of Lordly Caliber)",
@@ -3337,6 +3279,33 @@
       ],
       "series": null,
       "wikipedia": "https://en.wikipedia.org/wiki/Outpost_Kaloki"
+    }
+  },
+  {
+    "id": "p-t-for-pc",
+    "game": "P.T.",
+    "name": "P.T. for PC",
+    "kind": "Native port",
+    "original": [
+      "PlayStation 4"
+    ],
+    "repo": "LoreanXavier/pt-pc",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own decrypted game dump.",
+    "licence": null,
+    "blurb": "By LoreanXavier. Active.",
+    "featured": false,
+    "about": {
+      "summary": "P.T. is a 2014 interactive teaser for the video game Silent Hills, a cancelled installment in the Silent Hill series. It is a psychological horror game developed by Kojima Productions under the pseudonym \"7780s Studio\" and published by Konami Digital Entertainment. It was directed and designed by Hideo Kojima in collaboration with filmmaker Guillermo del Toro, and was released for free on the PlayStation 4.",
+      "released": "2014-08-12",
+      "developer": "Kojima Productions",
+      "publisher": "Konami",
+      "genres": [
+        "Survival horror"
+      ],
+      "series": "Silent Hill",
+      "wikipedia": "https://en.wikipedia.org/wiki/P.T._(video_game)"
     }
   },
   {
@@ -4005,6 +3974,34 @@
       ],
       "series": "RollerCoaster Tycoon",
       "wikipedia": "https://en.wikipedia.org/wiki/RollerCoaster_Tycoon_2"
+    }
+  },
+  {
+    "id": "sega-superstars-tennis-rematch",
+    "game": "Sega Superstars Tennis",
+    "name": "Sega Superstars Tennis ReMatch",
+    "kind": "Native port",
+    "original": [
+      "Xbox 360"
+    ],
+    "repo": "m1ndcrap/Sega-Superstars-Tennis-ReMatch",
+    "asset": "auto",
+    "prerelease": false,
+    "requires": "Your own disc/XBLA dump.",
+    "licence": null,
+    "blurb": "By m1ndcrap. Slow.",
+    "featured": false,
+    "about": {
+      "summary": "Sega Superstars Tennis is a sports video game developed by Sumo Digital and published by Sega. It is the second title in the Sega All-Stars series, preceded by Sega Superstars (2004), and crosses over characters, locations, and soundtracks from several Sega franchises, including Sonic the Hedgehog, Space Channel 5, and Super Monkey Ball. It is the first and only Sega-themed tennis game to represent multiple franchises, and is the first game to feature Alex Kidd since the release of Alex Kidd in Shinobi World (1990).",
+      "released": "2008-03-18",
+      "developer": "Sumo Digital",
+      "publisher": "Sega",
+      "genres": [
+        "Tennis video game",
+        "Crossover fiction"
+      ],
+      "series": "Sega Superstars",
+      "wikipedia": "https://en.wikipedia.org/wiki/Sega_Superstars_Tennis"
     }
   },
   {
@@ -5044,19 +5041,19 @@
     }
   },
   {
-    "id": "melee-unlocked-super-smash-bros-melee",
+    "id": "melee-pc-super-smash-bros-melee",
     "game": "Super Smash Bros. Melee",
-    "name": "Melee Unlocked (Super Smash Bros. Melee)",
+    "name": "melee-pc (Super Smash Bros. Melee)",
     "kind": "Native port",
     "original": [
       "GameCube"
     ],
-    "repo": "Hero88go/melee-unlocked",
+    "repo": "999sian/melee-pc",
     "asset": "auto",
     "prerelease": false,
     "requires": "Your own disc image.",
     "licence": null,
-    "blurb": "By Hero88go. Active.",
+    "blurb": "By 999sian. Active.",
     "featured": false,
     "about": {
       "summary": "Super Smash Bros. Melee is a 2001 crossover fighting game developed by HAL Laboratory and published by Nintendo for the GameCube. It is the second installment in the Super Smash Bros. series. It features characters from Nintendo video game franchises such as Mario, The Legend of Zelda, Star Fox, Pokémon, and Donkey Kong among others. The stages and gameplay modes reference or take designs from these franchises as well.",
@@ -5072,19 +5069,19 @@
     }
   },
   {
-    "id": "melee-pc-super-smash-bros-melee",
+    "id": "melee-unlocked-super-smash-bros-melee",
     "game": "Super Smash Bros. Melee",
-    "name": "melee-pc (Super Smash Bros. Melee)",
+    "name": "Melee Unlocked (Super Smash Bros. Melee)",
     "kind": "Native port",
     "original": [
       "GameCube"
     ],
-    "repo": "999sian/melee-pc",
+    "repo": "Hero88go/melee-unlocked",
     "asset": "auto",
-    "prerelease": true,
+    "prerelease": false,
     "requires": "Your own disc image.",
     "licence": null,
-    "blurb": "By 999sian. Active.",
+    "blurb": "By Hero88go. Active.",
     "featured": false,
     "about": {
       "summary": "Super Smash Bros. Melee is a 2001 crossover fighting game developed by HAL Laboratory and published by Nintendo for the GameCube. It is the second installment in the Super Smash Bros. series. It features characters from Nintendo video game franchises such as Mario, The Legend of Zelda, Star Fox, Pokémon, and Donkey Kong among others. The stages and gameplay modes reference or take designs from these franchises as well.",
@@ -5208,33 +5205,6 @@
       ],
       "series": null,
       "wikipedia": null
-    }
-  },
-  {
-    "id": "tekken3recomp-tekken-3",
-    "game": "Tekken 3",
-    "name": "Tekken3Recomp (Tekken 3)",
-    "kind": "Recomp",
-    "original": [
-      "PlayStation"
-    ],
-    "repo": "fabioap-cpu/Tekken3Recomp",
-    "asset": "auto",
-    "prerelease": false,
-    "requires": "Your own disc image.",
-    "licence": null,
-    "blurb": "By fabioap-cpu. Active.",
-    "featured": false,
-    "about": {
-      "summary": "Tekken 3 (鉄拳3) is a 1997 fighting game developed and published by Namco. It is the third installment in the Tekken series and the first game built on the Namco System 12 arcade hardware. The game takes place nineteen years after Tekken 2 (1995) and features a largely new cast of characters, including the debut of several staple characters such as Jin Kazama, Ling Xiaoyu and Bryan Fury, and adds a sidestepping ability to every character. Tekken 3 was ported to the PlayStation in 1998 with additional content, including a beat 'em up mode called Tekken Force.",
-      "released": "1996-11-28",
-      "developer": "Namco",
-      "publisher": "Namco",
-      "genres": [
-        "3D fighting game"
-      ],
-      "series": "Tekken",
-      "wikipedia": "https://en.wikipedia.org/wiki/Tekken_3"
     }
   },
   {
@@ -5811,33 +5781,6 @@
       ],
       "series": null,
       "wikipedia": "https://en.wikipedia.org/wiki/Tyrian_2000"
-    }
-  },
-  {
-    "id": "ufc-3-recomp-ufc-undisputed-3",
-    "game": "UFC Undisputed 3",
-    "name": "UFC 3 Recomp (UFC Undisputed 3)",
-    "kind": "Recomp",
-    "original": [
-      "Xbox 360"
-    ],
-    "repo": "paulogaab21/ufc3recomp",
-    "asset": "auto",
-    "prerelease": false,
-    "requires": "Your own disc/XBLA dump.",
-    "licence": null,
-    "blurb": "By paulogaab21. Active.",
-    "featured": false,
-    "about": {
-      "summary": "UFC Undisputed 3 is a mixed martial arts video game featuring Ultimate Fighting Championship properties and fighters developed by Yuke's and published by THQ. It was released for PlayStation 3 and Xbox 360. It is a sequel to UFC Undisputed 2010, making it the third and last game to be released under THQ's 2007 agreement with the UFC.",
-      "released": "2012-02-14",
-      "developer": "Yuke's",
-      "publisher": "THQ",
-      "genres": [
-        "Fighting game"
-      ],
-      "series": null,
-      "wikipedia": "https://en.wikipedia.org/wiki/UFC_Undisputed_3"
     }
   },
   {

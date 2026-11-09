@@ -83,6 +83,22 @@
     },
     "aboutChecked": "2026-11-03T04:12:09.981Z"
   },
+  "animal crossing": {
+    "game": "Animal Crossing",
+    "wikidataId": "Q5345827",
+    "about": {
+      "summary": "Animal Crossing, known in Japan as Dōbutsu no Mori, is a social simulation game developed and published by Nintendo. It was first released in 2001 for the Nintendo 64 in Japan, followed by an enhanced port for the GameCube. The GameCube version was localized for North America, Australia, and Europe between 2002 and 2004. It is the first game in the Animal Crossing series.",
+      "released": "2001-12-15",
+      "developer": "Nintendo Entertainment Analysis & Development",
+      "publisher": "Nintendo",
+      "genres": [
+        "Life simulation game"
+      ],
+      "series": "Animal Crossing",
+      "wikipedia": "https://en.wikipedia.org/wiki/Animal_Crossing_(video_game)"
+    },
+    "aboutChecked": "2026-11-09T11:23:50.919Z"
+  },
   "ape escape": {
     "game": "Ape Escape",
     "wikidataId": "Q960773",
@@ -1855,6 +1871,22 @@
     },
     "aboutChecked": "2026-11-03T04:12:09.981Z"
   },
+  "p t": {
+    "game": "P.T.",
+    "wikidataId": "Q18182633",
+    "about": {
+      "summary": "P.T. is a 2014 interactive teaser for the video game Silent Hills, a cancelled installment in the Silent Hill series. It is a psychological horror game developed by Kojima Productions under the pseudonym \"7780s Studio\" and published by Konami Digital Entertainment. It was directed and designed by Hideo Kojima in collaboration with filmmaker Guillermo del Toro, and was released for free on the PlayStation 4.",
+      "released": "2014-08-12",
+      "developer": "Kojima Productions",
+      "publisher": "Konami",
+      "genres": [
+        "Survival horror"
+      ],
+      "series": "Silent Hill",
+      "wikipedia": "https://en.wikipedia.org/wiki/P.T._(video_game)"
+    },
+    "aboutChecked": "2026-11-09T11:23:50.919Z"
+  },
   "paper mario": {
     "game": "Paper Mario",
     "wikidataId": "Q149998",
@@ -2212,6 +2244,23 @@
       "wikipedia": "https://en.wikipedia.org/wiki/RollerCoaster_Tycoon_2"
     },
     "aboutChecked": "2026-11-03T04:12:09.981Z"
+  },
+  "sega superstars tennis": {
+    "game": "Sega Superstars Tennis",
+    "wikidataId": "Q2451357",
+    "about": {
+      "summary": "Sega Superstars Tennis is a sports video game developed by Sumo Digital and published by Sega. It is the second title in the Sega All-Stars series, preceded by Sega Superstars (2004), and crosses over characters, locations, and soundtracks from several Sega franchises, including Sonic the Hedgehog, Space Channel 5, and Super Monkey Ball. It is the first and only Sega-themed tennis game to represent multiple franchises, and is the first game to feature Alex Kidd since the release of Alex Kidd in Shinobi World (1990).",
+      "released": "2008-03-18",
+      "developer": "Sumo Digital",
+      "publisher": "Sega",
+      "genres": [
+        "Tennis video game",
+        "Crossover fiction"
+      ],
+      "series": "Sega Superstars",
+      "wikipedia": "https://en.wikipedia.org/wiki/Sega_Superstars_Tennis"
+    },
+    "aboutChecked": "2026-11-09T11:23:50.919Z"
   },
   "shantae": {
     "game": "Shantae",
